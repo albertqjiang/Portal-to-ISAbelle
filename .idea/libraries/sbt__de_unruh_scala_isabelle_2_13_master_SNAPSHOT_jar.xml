@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="sbt: de.unruh:scala-isabelle_2.13:master-SNAPSHOT:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/local/de.unruh/scala-isabelle_2.13/master-SNAPSHOT/jars/scala-isabelle_2.13.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.ivy2/local/de.unruh/scala-isabelle_2.13/master-SNAPSHOT/docs/scala-isabelle_2.13-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/local/de.unruh/scala-isabelle_2.13/master-SNAPSHOT/srcs/scala-isabelle_2.13-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

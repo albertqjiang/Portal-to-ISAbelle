@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="sbt: net.liftweb:lift-json_2.13:3.4.3:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/net/liftweb/lift-json_2.13/3.4.3/lift-json_2.13-3.4.3.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/net/liftweb/lift-json_2.13/3.4.3/lift-json_2.13-3.4.3-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/net/liftweb/lift-json_2.13/3.4.3/lift-json_2.13-3.4.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,6 @@
+project/*
+target/*
+*.pyc
+.bloop/*
+.metals/*
+.vscode/*

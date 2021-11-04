@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="sbt: dev.zio:izumi-reflect-thirdparty-boopickle-shaded_2.13:1.0.0-M9:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/dev/zio/izumi-reflect-thirdparty-boopickle-shaded_2.13/1.0.0-M9/izumi-reflect-thirdparty-boopickle-shaded_2.13-1.0.0-M9.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/dev/zio/izumi-reflect-thirdparty-boopickle-shaded_2.13/1.0.0-M9/izumi-reflect-thirdparty-boopickle-shaded_2.13-1.0.0-M9-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/dev/zio/izumi-reflect-thirdparty-boopickle-shaded_2.13/1.0.0-M9/izumi-reflect-thirdparty-boopickle-shaded_2.13-1.0.0-M9-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

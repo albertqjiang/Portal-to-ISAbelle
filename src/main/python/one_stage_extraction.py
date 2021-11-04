@@ -1,0 +1,96 @@
+import os
+import json
+import grpc
+import argparse
+
+from copy import copy
+from func_timeout import func_set_timeout, FunctionTimedOut
+
+import server_pb2
+import server_pb2_grpc
+
+
+MAX_MESSAGE_LENGTH = 10485760
+
+def analyse_whole_file(whole_file_string):
+    transitions = whole_file_string.split("<\TRANSEP>")
+    state_action_pairs = list()
+    problem_names = list()
+    proof_open = False
+    last_state = ""
+    for transition in transitions:
+        if not transition:
+            continue
+        state, action = transition.split("<\STATESEP>")
+        state = state.strip()
+        action = action.strip()
+        if action.startswith("lemma") or action.startswith("theorem"):
+            problem_names.append(action)
+            state_action_pairs.append((state, action))
+            proof_open = True
+        elif proof_open:
+            state_action_pairs.append((state, action))
+
+        if "subgoal" in last_state and "subgoal" not in state:
+            proof_open = False
+    return {
+        "problem_names": problem_names,
+        "translations": state_action_pairs
+    }
+
+@func_set_timeout(120)
+def isa_step(stub, theory_file_path):
+    stub.IsabelleContext(server_pb2.IsaContext(context=theory_file_path))
+    return stub.IsabelleCommand(server_pb2.IsaCommand(command="PISA extract data")).state
+
+
+def extract_file(isa_path, theory_file_path, working_directory, saving_directory, port=9000):
+    channel = grpc.insecure_channel('localhost:{}'.format(port),
+                                    options=[('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
+                                    ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH)])
+    stub = server_pb2_grpc.ServerStub(channel)
+
+    stub.InitialiseIsabelle(server_pb2.IsaPath(path=isa_path))
+    stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=working_directory))
+
+    close_program = False
+    try:
+        whole_file_parsed = isa_step(stub, theory_file_path)
+        stub.IsabelleCommand(server_pb2.IsaCommand(command="exit"))
+    except (Exception, FunctionTimedOut) as e:
+        close_program = True
+        with open(os.path.join(saving_directory,
+                               "project_{}_file_{}_bug_report.txt".format(
+                                   working_directory.split("/")[-1], theory_file_path.split("/")[-1])), "w") as fout:
+            fout.write(str(e))
+
+    file_analysis = analyse_whole_file(whole_file_parsed)
+    file_info = {
+        "file_name": theory_file_path,
+        "working_directory": working_directory,
+        **file_analysis
+    }
+    if not os.path.isdir(saving_directory):
+        os.makedirs(saving_directory)
+    json.dump(file_info,
+              open(os.path.join(saving_directory,
+                                "_".join(theory_file_path.split(".thy")[0].split("/"))+"_ground_truth.json"), "w"))
+
+    if close_program:
+        stub.IsabelleCommand(server_pb2.IsaCommand(command="exit"))
+    channel.close()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Extracting an Isabelle theory file.')
+    parser.add_argument('--isa-path', help='The path to the Isabelle executable',
+                        default="/Applications/Isabelle2020.app/Isabelle")
+    parser.add_argument('--working-directory', '-wd', help='Path to the AFP project')
+    parser.add_argument('--theory-file-path', '-tfp', help='Path to the file to parse')
+    parser.add_argument('--saving-directory', '-sd', help='Where the save the parsed json files')
+    parser.add_argument('--port', '-p', help='Port to use to communicate', default=9000, type=int)
+    args = parser.parse_args()
+
+    # for file_name in os.listdir(args.working_directory):
+    #     if file_name.endswith(".thy"):
+    #         full_file_path = os.path.join(args.working_directory, file_name)
+    extract_file(args.isa_path, args.theory_file_path, args.working_directory, args.saving_directory, args.port)

@@ -1,0 +1,114 @@
+from __future__ import print_function
+
+import os
+import json
+import grpc
+
+from copy import copy
+from func_timeout import func_set_timeout
+
+import server_pb2
+import server_pb2_grpc
+
+
+def create_stub(port=9000):
+    channel = grpc.insecure_channel('localhost:{}'.format(port))
+    return server_pb2_grpc.ServerStub(channel)
+
+
+class IsaFlexEnv:
+    def __init__(self, port=9000, isa_path="/Applications/Isabelle2020.app/Isabelle",
+                 starter_string="theory Test imports Complex_Main begin",
+                 working_directory="/Users/qj213/Projects/afp-2021-02-11/thys/Functional-Automata"):
+        self.port = port
+        self.isa_path = isa_path
+        self.starter_string = starter_string
+        self.working_directory = working_directory
+
+        self.stub = None
+        self.obs_string = None
+        self.reset()
+
+    def observation(self):
+        return self.obs_string
+
+    def is_finished(self, last_obs_string):
+        if not last_obs_string:
+            return False
+
+        # print(last_obs_string, self.obs_string)
+        # print("subgoal" in last_obs_string)
+        # print("subgoal" not in self.obs_string)
+        if "subgoal" in last_obs_string and "subgoal" not in self.obs_string:
+            return True
+        return False
+
+    @staticmethod
+    def reward(done):
+        return 1. if done else 0.
+
+    def reset(self):
+        self.stub = create_stub(port=self.port)
+        try:
+            print(self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path)))
+            print(self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory)))
+            print(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string)))
+        except Exception as e:
+            print("Failure at initialising Isabelle process. "
+                  "Make sure the path your provide is where the Isabelle executable is.")
+            print(e)
+        return self.obs_string
+
+    @func_set_timeout(20)
+    def step(self, action):
+        last_obs_string = self.obs_string
+        try:
+            self.obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
+        except Exception as e:
+            print("***Something went wrong***")
+            print(e)
+
+        done = self.is_finished(last_obs_string)
+
+        return self.obs_string, self.reward(done), done, {}
+
+    def human_play(self):
+        done = False
+        while not done:
+            print(self.obs_string)
+            human_proof_line = input("Your tactic is my command: ")
+            if human_proof_line == "exit":
+                break
+            else:
+                obs, _, done, _ = self.step(human_proof_line)
+                print(obs)
+                print("=" * 50)
+
+
+def parsed_json_to_env_and_dict(path_to_json, afp_path, port=9000, isa_path="/Applications/Isabelle2020.app/Isabelle"):
+    save_dict = json.load(open(path_to_json))
+    project = save_dict["project"]
+    wd = os.path.join(afp_path, "thys", project)
+    segments = save_dict["segments"]
+    # Find starter string
+    starter_string = None
+    for line in segments:
+        if line.strip().startswith("theory"):
+            starter_string = " ".join(line.strip().split("\n"))
+            break
+    assert starter_string
+    # print(port, isa_path, starter_string, wd, segments)
+    return IsaFlexEnv(port=port, isa_path=isa_path,
+                     starter_string=starter_string,
+                     working_directory=wd), save_dict
+
+
+if __name__ == '__main__':
+    ipe, save_dict = parsed_json_to_env_and_dict("data/Functional-Automata/AutoProj.json", "/Users/qj213/Projects/afp-2021-02-11")
+    for line in save_dict["segments"]:
+        print("=" * 50)
+        print(line)
+        obs, reward, done, _ = ipe.step(line)
+        print(obs)
+        print(reward)
+        print(done)
