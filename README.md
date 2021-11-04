@@ -97,6 +97,8 @@
    - REPL-like environment to talk to Isabelle directly via gRPC
    - Setup to evaluate automated agents
 
+# Acknowledgement
+This library is heavily based on [scala-isabelle](https://github.com/dominique-unruh/scala-isabelle), the work of Dominique Unruh. We are very grateful to Dominique for his kind help and guidance.
 
 # Citation
 If you use this directory, or our code, please cite the paper we had in AITP 2021.
