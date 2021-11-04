@@ -21,8 +21,8 @@
 2. **Clone project and make sure it compiles**
 
     ```shell
-    git clone https://github.com/albertqjiang/PISA
-    cd PISA
+    git clone https://github.com/albertqjiang/Portal-to-ISAbelle.git
+    cd Portal-to-ISAbelle
     sbt compile
     ```
    
@@ -128,7 +128,7 @@ After the heap images have been built, experiments of proof searching can be run
 2. Get the universal test theorem names
 
    ```shell
-   cd PISA
+   cd Portal-to-ISAbelle
    wget http://www.cs.toronto.edu/~ajiang/universal_test_theorems.tar.gz
    tar -xzvf universal_test_theorems.tar.gz
    ```
