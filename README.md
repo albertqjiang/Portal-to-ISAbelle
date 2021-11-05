@@ -1,4 +1,9 @@
 # PISA (Portal to ISAbelle)
+PISA is a tool that allows flexible communication and manipulation of proof objects with a running session of the interactive theorem prover [Isabelle](https://isabelle.in.tum.de).
+
+We used PISA to extract the datasets used in our AITP 2021 paper [LISA: Language models of ISAbelle proofs](http://aitp-conference.org/2021/abstract/paper_17.pdf). It also supports us to perform search when proving theorems.
+
+
 ## Installation
 1. **Scala configuration**
    
@@ -49,7 +54,13 @@
    export AFP=afp-2021-10-22/thys
    isabelle build -b -D $AFP
    ```
-   This takes ~24 hours on 8 CPUs.
+   This takes ~24 hours on 8 CPUs. We can extract ~93% of all afp theory files.
+
+   We built the heap images of Isabelle2021 with afp-2021-10-22 for linux machines (ubuntu). You can download it at:
+   https://storage.googleapis.com/n2formal-public-data/isabelle_heaps.tar.gz
+   and decompress it as ~/.isabelle.
+
+   Note: this does not always work on different operating systems.
 
 ## Extract PISA dataset
    ### Archive of formal proofs
@@ -75,7 +86,7 @@
    bash afp_extract_script_${port_number_n}.sh &
    ```
 
-   With a single process, the extraction takes ~5 days. This will extract files to the directory afp_extractions.
+   With a single process, the extraction takes ~5 days. This will extract files to the directory afp_extractions. We have also extracted this dataset, available for download at https://storage.googleapis.com/n2formal-public-data/afp_extractions.tar.gz.
 
    To extract state-only source-to-target pairs, run the following command:
    ```shell
@@ -94,7 +105,7 @@
    Note that extraction involving proofs will take pretty long and will result in large files. State-only files amount to 8.1G.
 
 # To be released
-   - REPL-like environment to talk to Isabelle directly via gRPC
+   - REPL-like environment to talk to Isabelle running sessions via gRPC
    - Setup to evaluate automated agents
 
 # Acknowledgement
