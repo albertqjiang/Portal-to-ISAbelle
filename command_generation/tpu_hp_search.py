@@ -20,10 +20,7 @@ if __name__ == "__main__":
     mql_sweep = 16
     temperature = 1.0
 
-    if use_quick_ones.startswith("t") or use_quick_ones.startswith("T"):
-        pattern = "universal_test_theorems/quick_test_name_*.json"
-    else:
-        pattern = "universal_test_theorems/test_name_*.json"
+    
 
     results_dir = ""
     if use_conj.startswith("t"):
@@ -40,10 +37,17 @@ if __name__ == "__main__":
         shutil.rmtree(results_dir)
     os.makedirs(results_dir)
 
-    for file_name in glob.glob(pattern, recursive=True):
-        total_cmds.append(script.format(file_name, use_proof, use_conj, use_state_first, results_dir,
+    if use_quick_ones.startswith("t") or use_quick_ones.startswith("T"):
+        pattern = "universal_test_theorems/quick_test_name_{}.json"
+        for i in range (1, 301):
+            total_cmds.append(script.format(pattern.format(i), use_proof, use_conj, use_state_first, results_dir,
                                         search_width, mql_sweep, temperature, max_tokens, max_trials, timeout))
-
+    else:
+        pattern = "universal_test_theorems/test_name_{}.json"
+        for i in range (1, 3001):
+            total_cmds.append(script.format(pattern.format(i), use_proof, use_conj, use_state_first, results_dir,
+                                        search_width, mql_sweep, temperature, max_tokens, max_trials, timeout))
+    
     process_number_to_cmds = {i: [] for i in range(number_of_processes)}
     for i, cmd in enumerate(total_cmds):
         process_number_to_cmds[i%number_of_processes].append(cmd)
