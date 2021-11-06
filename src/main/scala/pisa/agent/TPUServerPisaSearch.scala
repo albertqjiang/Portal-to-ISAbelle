@@ -5,6 +5,7 @@ import de.unruh.isabelle.pure.ToplevelState
 import net.liftweb.json._
 import pisa.server.PisaOS
 
+import util.control.Breaks
 import java.io.PrintWriter
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -148,8 +149,11 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
     var trials = 0
     var proved : Boolean = false
+    val continue = new Breaks
 
+    Breaks.breakable {
     while (accumulative_logprob_toplevel_pq.nonEmpty && trials <= max_trials) {
+      continue.breakable {
       trials += 1
       val acc_logprob_toplevel_tuple = accumulative_logprob_toplevel_pq.dequeue
       // Get the logprob and the state string for the current toplevel
@@ -166,25 +170,41 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
         else false
       }
 
-      val proof_string : String = proof_till_now.split("<conj_sep>").last.trim
-        .replace("\\", "\\\\")
-        .replace("\"", "\\\"")
-        .replaceAll("'", raw"""\\u0027""")
-        .replace("\n", "\\\\n")
-      val state_string : String = {
-        if (use_conjecture) {
-          pisaos.getStateString(parent_toplevel_state).replace(
-            "\n", " \\n ").replaceAll(" +", " ").trim.replace(
-            "\\", "\\\\").replace("\"", "\\\"").replaceAll(
-            "'", raw"""\\u0027""")
-        } else {
-          process_string(pisaos.getStateString(parent_toplevel_state))
+        val proof_string : String = proof_till_now.split("<conj_sep>").last.trim
             .replace("\\", "\\\\")
             .replace("\"", "\\\"")
-            .replace("\n", "\\\\n")
             .replaceAll("'", raw"""\\u0027""")
+            .replace("\n", "\\\\n")
+        var state_string = "Empty state"
+        try {
+            state_string = {
+                var raw_state_string = ""
+                var future_function : Future[Unit] = Future.apply {
+                    raw_state_string = pisaos.getStateString(parent_toplevel_state)
+                }
+                Await.result(future_function, Duration(5000, "millis"))
+                if (use_conjecture) {
+                    raw_state_string.replace(
+                    "\n", " \\n ").replaceAll(" +", " ").trim.replace(
+                    "\\", "\\\\").replace("\"", "\\\"").replaceAll(
+                    "'", raw"""\\u0027""")
+                } else {
+                process_string(raw_state_string)
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\\\n")
+                    .replaceAll("'", raw"""\\u0027""")
+                }
+            }
+        } catch {
+            case t: TimeoutException => {
+                continue.break
+            }
+            case _: Throwable => {
+                println("This is wrong")
+            }
         }
-      }
+      
 
       val before_query = System.nanoTime
       var request_string = get_request_string(proof_string, state_string, initial_step = initial_step)
@@ -338,8 +358,9 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
             accumulative_logprob_toplevel_pq.length - maximum_queue_length)
         }
       }
-
     }
+    }
+}
     if (accumulative_logprob_toplevel_pq.isEmpty) Tuple5(0, "Queue empty", "", longest_proof_length, index_to_successful_skeletons.toMap)
     else Tuple5(0, "Out of fuel", "", longest_proof_length, index_to_successful_skeletons.toMap)
   }
