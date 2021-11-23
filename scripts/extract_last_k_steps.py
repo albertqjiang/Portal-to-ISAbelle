@@ -18,7 +18,7 @@ if __name__ == "__main__":
         for line in tqdm(f_in.readlines()):
             line = line.strip()
             proof = line.split("<PS_SEP>")[0].strip().lstrip("Proof: ")
-            state = line.split("State: ")[1].strip()
+            state = line.split("State:")[1].strip()
             
             proof_steps = proof.split("\\n")
             last_k_proof_steps = [element.strip() for element in proof_steps[-k_step:]]
