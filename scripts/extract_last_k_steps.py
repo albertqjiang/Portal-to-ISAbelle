@@ -1,5 +1,6 @@
 import argparse
 import os
+from tqdm import tqdm
 
 
 if __name__ == "__main__":
@@ -14,7 +15,7 @@ if __name__ == "__main__":
 
     with open(os.path.join(args.dump_path, f"last_{k_step}_step_{file_name}"), "w") as f_out, \
             open(args.path_to_proof_and_state_file) as f_in:
-        for line in f_in.readlines():
+        for line in tqdm(f_in.readlines()):
             line = line.strip()
             proof = line.split("<PS_SEP>")[0].strip().lstrip("Proof: ")
             state = line.split("State: ")[1].strip()
