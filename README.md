@@ -1,9 +1,9 @@
 # PISA (Portal to ISAbelle)
 PISA supports automated proof search with the interactive theorem prover [Isabelle](https://isabelle.in.tum.de).
 
-See [this](https://terminalizer.com/view/cb6ea5dd5395) for an example of the gRPC communication allowing a Python client to talk to Isabelle.
+See [this](https://terminalizer.com/view/cb6ea5dd5395) for how to write proofs with a Python script with PISA.
 
-We used PISA to extract the datasets used in our AITP 2021 paper [LISA: Language models of ISAbelle proofs](http://aitp-conference.org/2021/abstract/paper_17.pdf). It also supports us to perform search when proving theorems.
+PISA can also be used to extract proof corpus. We extracted the datasets in our AITP 2021 paper [LISA: Language models of ISAbelle proofs](http://aitp-conference.org/2021/abstract/paper_17.pdf) with it.
 
 
 ## Installation
