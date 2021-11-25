@@ -1,7 +1,9 @@
 # PISA (Portal to ISAbelle)
-PISA is a tool that allows flexible communication and manipulation of proof objects with a running session of the interactive theorem prover [Isabelle](https://isabelle.in.tum.de).
+PISA supports automated proof search with the interactive theorem prover [Isabelle](https://isabelle.in.tum.de).
 
-We used PISA to extract the datasets used in our AITP 2021 paper [LISA: Language models of ISAbelle proofs](http://aitp-conference.org/2021/abstract/paper_17.pdf). It also supports us to perform search when proving theorems.
+See [this](https://terminalizer.com/view/cb6ea5dd5395) for how to write proofs with a Python script with PISA.
+
+PISA can also be used to extract proof corpus. We extracted the datasets in our AITP 2021 paper [LISA: Language models of ISAbelle proofs](http://aitp-conference.org/2021/abstract/paper_17.pdf) with it.
 
 
 ## Installation
