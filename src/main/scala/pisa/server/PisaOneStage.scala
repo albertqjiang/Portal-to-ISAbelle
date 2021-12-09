@@ -353,7 +353,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
   def copy_tls: MLValue[ToplevelState] = toplevel.mlValue
 
   def clone_tls(tls_name: String): Unit = {
-    top_level_state_map += (tls_name -> copy_tls())
+    top_level_state_map += (tls_name -> copy_tls)
   }
 
   def retrieve_tls(tls_name: String) : ToplevelState = ToplevelState.instantiate(top_level_state_map(tls_name))
