@@ -394,7 +394,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       proof_state = pisaos.step(isa_command.command)
       pisaos = null
     } else if (isa_command.command.trim.startsWith("<clone>")){
-      val tls_name : String = isa_command.trim.stripPrefix("<clone>").trim
+      val tls_name : String = isa_command.command.trim.stripPrefix("<clone>").trim
       pisaos.clone_tls(tls_name)
       proof_state = "Successfully copied top level state named: " + tls_name
     } else {
