@@ -211,8 +211,11 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
       importMap += (theoryName.replace("\"", "") -> sanitisedName)
     }
   }
+
 //  println("The import map:")
 //  println(importMap)
+
+  var top_level_state_map(tls_name) : Map[String, MLValue] = Map()
 
   val theoryStarter : TheoryManager.Text = TheoryManager.Text(starter_string, setup.workingDirectory.resolve(""))
 //  println("Successfully set up the Isabelle executable")
@@ -348,6 +351,12 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
   }
 
   def copy_tls: MLValue[ToplevelState] = toplevel.mlValue
+
+  def clone_tls(tls_name: String): Unit = {
+    top_level_state_map += (tls_name -> copy_tls())
+  }
+
+  def retrieve_tls(tls_name: String) : ToplevelState = ToplevelState.instantiate(top_level_state_map(tls_name))
 }
 
 class OneStageBody extends ZServer[ZEnv, Any] {
@@ -384,6 +393,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     } else if (isa_command.command == "exit") {
       proof_state = pisaos.step(isa_command.command)
       pisaos = null
+    } else if (isa_command.command.trim.startsWith("<clone>")){
+      val tls_name : String = isa_command.trim.stripPrefix("<clone>").trim
+      pisaos.clone_tls(tls_name)
+      proof_state = "Successfully copied top level state named: " + tls_name
     } else {
       proof_state = pisaos.step(isa_command.command)
     }

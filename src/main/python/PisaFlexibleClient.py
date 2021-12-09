@@ -84,6 +84,15 @@ class IsaFlexEnv:
                 print(obs)
                 print("=" * 50)
 
+    def clone_top_level_state(self, tls_name):
+        try:
+            message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<clone> {tls_name}")).state
+            print(message)
+            print(f"Cloned state called {tls_name}")
+        except Exception as e:
+            print("**Clone unsuccessful**")
+            print(e)
+        
 
 def parsed_json_to_env_and_dict(path_to_json, afp_path, port=9000, isa_path="/Applications/Isabelle2020.app/Isabelle"):
     save_dict = json.load(open(path_to_json))
