@@ -215,7 +215,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
 //  println("The import map:")
 //  println(importMap)
 
-  var top_level_state_map(tls_name) : Map[String, MLValue] = Map()
+  var top_level_state_map : Map[String, MLValue] = Map()
 
   val theoryStarter : TheoryManager.Text = TheoryManager.Text(starter_string, setup.workingDirectory.resolve(""))
 //  println("Successfully set up the Isabelle executable")
