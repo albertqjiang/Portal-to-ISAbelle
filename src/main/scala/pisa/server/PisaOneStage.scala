@@ -249,6 +249,11 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
 
   def getStateString: String = getStateString(toplevel)
 
+  def getProofLevel(top_level_state: ToplevelState) : Int =
+    proof_level(top_level_state).retrieveNow
+
+  def getProofLevel : Int = getProofLevel(toplevel)
+
   def singleTransition(single_transition: Transition.T, top_level_state: ToplevelState) : ToplevelState = {
     command_exception(true, single_transition, top_level_state).retrieveNow.force
   }
@@ -266,11 +271,12 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
     val continue = new Breaks
     // Initialising the state string
     var stateString = getStateString
+    var proof_level_number = getProofLevel
     Breaks.breakable {
       for ((transition, text) <- parse_text(thy1, isarString).force.retrieveNow)
         continue.breakable {
           if (text.trim.isEmpty) continue.break
-          stateActionTotal = stateActionTotal + (stateString + "<\\STATESEP>" + text.trim + "<\\TRANSEP>")
+          stateActionTotal = stateActionTotal + (stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$getProofLevel" + "<\\TRANSEP>")
           stateString = singleTransition(transition)
         }
     }
