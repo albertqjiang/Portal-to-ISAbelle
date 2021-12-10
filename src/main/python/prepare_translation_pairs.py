@@ -40,19 +40,25 @@ def extract_siblings(proof_steps, current_step_index):
             # Higher level steps
             return sibling_indices, search_index
         search_index -= 1
+    return [], None
 
 def extract_needed(proof_steps, current_step_index, needed_found):
     if needed_found[current_step_index]:
         return needed_found[current_step_index]
     sibling_indices, search_index = extract_siblings(proof_steps, current_step_index)
-    return extract_needed(proof_steps, search_index, needed_found) + sibling_indices
+    if search_index > 0:
+        return extract_needed(proof_steps, search_index, needed_found) + [search_index] + sibling_indices
+    elif search_index == 0:
+        return [search_index] + sibling_indices
+    else:
+        raise AssertionError
 
 
 def process_translations_for_a_problem(transitions_for_a_problem, proof=False, state=False, needed=False):
     """Transform the transitions for a problem to translation pairs"""
     # The first one is the lemma/theorem definition
     previous_proof_segment = transitions_for_a_problem[0][1]
-    needed_found = {i: False for i in range(1, len(transitions_for_a_problem))}
+    needed_found = {i: False for i in range(len(transitions_for_a_problem))}
 
     translation_pairs = []
     for i in range(1, len(transitions_for_a_problem)):
