@@ -24,7 +24,7 @@ def analyse_whole_file(whole_file_string):
         state, action, proof_level = transition.split("<\STATESEP>")
         state = state.strip()
         action = action.strip()
-        proof_level = proof_level.strip()
+        proof_level = int(proof_level.strip())
         if action.startswith("lemma") or action.startswith("theorem"):
             problem_names.append(action)
             state_action_proof_level_tuples.append((state, action, proof_level))
