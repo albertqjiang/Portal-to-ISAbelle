@@ -365,7 +365,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
   }
 
   def register_tls(name: String, tls : ToplevelState) : Unit = {
-    top_level_state_map += (name -> tls.MLValue)
+    top_level_state_map += (name -> tls.mlValue)
   }
 
   def retrieve_tls(tls_name: String) : ToplevelState = ToplevelState.instantiate(top_level_state_map(tls_name))
