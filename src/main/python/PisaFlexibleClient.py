@@ -61,9 +61,10 @@ class IsaFlexEnv:
 
     @func_set_timeout(20)
     def step_to_top_level_state(self, action, tls_name):
-        last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}"))
+        last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
         try:
-            obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<apply to top level state> {tls_name} <apply to top level state> {action}"))
+            obs_string = self.stub.IsabelleCommand(
+                server_pb2.IsaCommand(command=f"<apply to top level state> {tls_name} <apply to top level state> {action}")).state
         except Exception as e:
             print("***Something went wrong***")
             print(e)
