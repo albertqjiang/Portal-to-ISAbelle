@@ -395,7 +395,21 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     zio.ZEnv, Status, IsaState] = {
     var proof_state : String = null
 
-    if (isa_command.command.startsWith("<proceed before>")){
+    if (isa_command.command.startsWith("<get state>")) {
+      val tls_name : String = isa_command.command.stripPrefix("<get state>").trim
+      if (pisaos.top_level_state_map.contains(tls_name)) proof_state = "Didn't find top level state of given name"
+      else proof_state = pisaos.getStateString(pisaos.top_level_state_map(tls_name))
+    }
+    else if (isa_command.command.startsWith("<apply to top level state>")) {
+      val tls_name : String = isa_command.command.split("<apply to top level state>")._1.trim
+      val action : String = isa_command.command.split("<apply to top level state>")._2.trim
+      if (pisaos.top_level_state_map.contains(tls_name)) proof_state = "Didn't find top level state of given name"
+      else {
+        pisaos.step(action, pisaos.top_level_state_map(tls_name), 10000)
+        proof_state = pisaos.getStateString(pisaos.top_level_state_map(tls_name))
+      }
+    }
+    else if (isa_command.command.startsWith("<proceed before>")){
       val true_command : String = isa_command.command.stripPrefix("<proceed before>").trim
       proof_state = pisaos.step_to_transition_text(true_command, after=false)
     } else if (isa_command.command.startsWith("<proceed after>")){
