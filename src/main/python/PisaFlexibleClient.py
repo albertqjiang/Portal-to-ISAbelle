@@ -68,7 +68,7 @@ class IsaFlexEnv:
         except Exception as e:
             print("***Something went wrong***")
             print(e)
-        done = self.is_finished(last_obs_string)
+        done = True if ("subgoal" in last_obs_string and "subgoal" not in obs_string) else False
         return obs_string, self.reward(done), done, {}
 
     @func_set_timeout(20)

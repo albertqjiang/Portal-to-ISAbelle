@@ -401,8 +401,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       else proof_state = "Didn't find top level state of given name"
     }
     else if (isa_command.command.startsWith("<apply to top level state>")) {
-      val tls_name : String = isa_command.command.split("<apply to top level state>")(0).trim
-      val action : String = isa_command.command.split("<apply to top level state>")(1).trim
+      val tls_name : String = isa_command.command.split("<apply to top level state>")(1).trim
+      val action : String = isa_command.command.split("<apply to top level state>")(2).trim
       if (pisaos.top_level_state_map.contains(tls_name)) {
         pisaos.step(action, pisaos.retrieve_tls(tls_name), 10000)
         proof_state = pisaos.getStateString(pisaos.retrieve_tls(tls_name))
