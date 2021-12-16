@@ -364,6 +364,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
     top_level_state_map += (tls_name -> copy_tls)
   }
 
+  def register_tls(name: String, tls : ToplevelState) : Unit = {
+    top_level_state_map += (name -> tls.MLValue)
+  }
+
   def retrieve_tls(tls_name: String) : ToplevelState = ToplevelState.instantiate(top_level_state_map(tls_name))
 }
 
@@ -403,9 +407,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     else if (isa_command.command.startsWith("<apply to top level state>")) {
       val tls_name : String = isa_command.command.split("<apply to top level state>")(1).trim
       val action : String = isa_command.command.split("<apply to top level state>")(2).trim
+      val new_name : String = isa_command.command.split("<apply to top level state>")(3).trim
       if (pisaos.top_level_state_map.contains(tls_name)) {
-        pisaos.step(action, pisaos.retrieve_tls(tls_name), 10000)
-        proof_state = pisaos.getStateString(pisaos.retrieve_tls(tls_name))
+        val new_state : ToplevelState = pisaos.step(action, pisaos.retrieve_tls(tls_name), 10000)
+        pisaos.register_tls(name=new_name, tls=new_state)
+        proof_state = s"New state '${new_name}': ${pisaos.getStateString(pisaos.retrieve_tls(new_name))}"
       }
       else proof_state = "Didn't find top level state of given name"
     }
