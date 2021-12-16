@@ -336,19 +336,21 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
     check_if_provable_with_Sledgehammer(toplevel)
   }
 
-  def step_to_transition_text(isar_string: String): String = {
-//    println("Start parsing")
+  def step_to_transition_text(isar_string: String, after: Boolean = true): String = {
+    // If after == true, step to after the text
+    // Otherwise, step to before it
     var stateString : String = ""
     val continue = new Breaks
     Breaks.breakable {
       for ((transition, text) <- parse_text(thy1, fileContent).force.retrieveNow) {
         continue.breakable {
           if (text.trim.isEmpty) continue.break
-          stateString = singleTransition(transition)
           val trimmed_text = text.trim.replaceAll("\n", " ").replaceAll(" +", " ")
           if (trimmed_text == isar_string) {
+            if (after) stateString = singleTransition(transition)
             return stateString
           }
+          stateString = singleTransition(transition)
         }
       }
     }
@@ -393,9 +395,12 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     zio.ZEnv, Status, IsaState] = {
     var proof_state : String = null
 
-    if (isa_command.command.startsWith("proceed:")){
-      val true_command : String = isa_command.command.stripPrefix("proceed:").trim
-      proof_state = pisaos.step_to_transition_text(true_command)
+    if (isa_command.command.startsWith("<proceed before>")){
+      val true_command : String = isa_command.command.stripPrefix("<proceed before>").trim
+      proof_state = pisaos.step_to_transition_text(true_command, after=false)
+    } else if (isa_command.command.startsWith("<proceed after>")){
+      val true_command : String = isa_command.command.stripPrefix("<proceed after>").trim
+      proof_state = pisaos.step_to_transition_text(true_command, after=true)
     } else if (isa_command.command == "exit") {
       proof_state = pisaos.step(isa_command.command)
       pisaos = null
