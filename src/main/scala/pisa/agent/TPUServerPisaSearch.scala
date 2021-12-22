@@ -21,7 +21,7 @@ import de.unruh.isabelle.pure.Implicits._
 class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false, use_state_first: Boolean = false,
                 debug_mode: Boolean = true, search_width : Int = 8, maximum_queue_length : Int = 16,
                  temperature : Double = 0.8, max_tokens : Int = 64, max_trials : Int = 200, timeout : Int = 240000,
-                 dump_path : String = "") {
+                 dump_path : String = "", t5 : Boolean = false) {
   implicit val formats : DefaultFormats = DefaultFormats
   implicit val ec: ExecutionContext = ExecutionContext.global
   val firstOrd : Ordering[(Double, ListBuffer[(ToplevelState, Int, String, Int)])] =
@@ -45,10 +45,18 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
   }
 
   def get_request_string(proof_string: String, state_string: String, initial_step : Boolean = false) : String = {
+    if (t5) {
+      s"""curl 
+          |--header "Content-Type: application/json" 
+          |--request POST
+          |--data '{"context": """".stripMargin + state_string + 
+          s"""", "n": $search_width}'
+          |http://localhost:5000/complete""".stripMargin
+    } else
       s"""curl
          |--header "Content-Type: application/json"
          |--request POST
-         |--data '{"context":"<IS_OBS>}""".stripMargin + " " + state_string + " " +
+         |--data '{"context":"<IS_OBS>""".stripMargin + " " + state_string + " " +
          s"""Cambridge", "temp": $temperature, "gen_tokens": $max_tokens, "n": $search_width, "top_p": 1.0}'
            |http://localhost:5000/complete
            |""".stripMargin
@@ -396,6 +404,10 @@ object TPUHPSearch {
     val max_tokens : Int = args(8).toInt
     val max_trials : Int = args(9).toInt
     val timeout : Int = args(10).toInt
+    val t5 : Boolean = {
+      if (args.length == 11) false
+      else args(11).toBoolean
+    }
 
     // val json = parse(Source.fromFile("20_calibration_names.json").mkString).children
     val json = parse(Source.fromFile(args(0)).mkString).children
@@ -410,7 +422,7 @@ object TPUHPSearch {
       use_state_first = use_state_first, debug_mode = debug_mode,
       search_width = search_width, maximum_queue_length = maximum_queue_length, temperature = temperature,
       max_tokens = max_tokens, max_trials = max_trials, timeout = timeout,
-      dump_path = dump_path
+      dump_path = dump_path, t5=t5
     )
     var result : (Int, String, String, Int, Map[Int, String]) = null
     for (element <- json) {

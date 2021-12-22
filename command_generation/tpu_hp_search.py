@@ -9,8 +9,9 @@ if __name__ == "__main__":
     use_conj = input("Want to conjecture? (true/false)\n").strip()
     use_quick_ones = input("Want to use quick ones? (true/false)\n").strip()
     use_state_first = input("Want to use the state-only agent for the first step? (true/false) (false recommended)\n").strip()
+    using_t5 = input("Are you using a T5 server? (true/false)\n").strip()
 
-    script = 'echo "y" | sbt "runMain pisa.agent.TPUHPSearch {} {} {} {} {} {} {} {} {} {} {}"'
+    script = 'echo "y" | sbt "runMain pisa.agent.TPUHPSearch {} {} {} {} {} {} {} {} {} {} {} {}"'
 
     max_tokens = 64
     max_trials = 100
@@ -19,19 +20,22 @@ if __name__ == "__main__":
     total_cmds = list()
     mql_sweep = 16
     temperature = 1.0
-
+    if using_t5.startswith("t"):
+        using_t5 = True
+    else:
+        using_t5 = False
     
 
     results_dir = ""
     if use_conj.startswith("t"):
-        results_dir = "results/search_eval_conj_search_width_{}_maximum_queue_length_{}_temperature_{}_max_tokens_{}_max_trials_{}_timeout_{}".format(
-            search_width, mql_sweep, temperature, max_tokens, max_trials, timeout)
+        results_dir = "results/search_eval_conj_search_width_{}_maximum_queue_length_{}_temperature_{}_max_tokens_{}_max_trials_{}_timeout_{}_usingT5_{}".format(
+            search_width, mql_sweep, temperature, max_tokens, max_trials, timeout, using_t5)
     elif use_proof.startswith("t"):
-        results_dir = "results/search_eval_proof_and_state_search_width_{}_maximum_queue_length_{}_temperature_{}_max_tokens_{}_max_trials_{}_timeout_{}".format(
-            search_width, mql_sweep, temperature, max_tokens, max_trials, timeout)
+        results_dir = "results/search_eval_proof_and_state_search_width_{}_maximum_queue_length_{}_temperature_{}_max_tokens_{}_max_trials_{}_timeout_{}_usingT5_{}".format(
+            search_width, mql_sweep, temperature, max_tokens, max_trials, timeout, using_t5)
     else:
-        results_dir = "results/search_eval_state_only_search_width_{}_maximum_queue_length_{}_temperature_{}_max_tokens_{}_max_trials_{}_timeout_{}".format(
-            search_width, mql_sweep, temperature, max_tokens, max_trials, timeout)
+        results_dir = "results/search_eval_state_only_search_width_{}_maximum_queue_length_{}_temperature_{}_max_tokens_{}_max_trials_{}_timeout_{}_usingT5_{}".format(
+            search_width, mql_sweep, temperature, max_tokens, max_trials, timeout, using_t5)
 
     if os.path.isdir(results_dir):
         shutil.rmtree(results_dir)
@@ -41,12 +45,12 @@ if __name__ == "__main__":
         pattern = "universal_test_theorems/quick_test_name_{}.json"
         for i in range (1, 301):
             total_cmds.append(script.format(pattern.format(i), use_proof, use_conj, use_state_first, results_dir,
-                                        search_width, mql_sweep, temperature, max_tokens, max_trials, timeout))
+                                        search_width, mql_sweep, temperature, max_tokens, max_trials, timeout, using_t5))
     else:
         pattern = "universal_test_theorems/test_name_{}.json"
         for i in range (1, 3001):
             total_cmds.append(script.format(pattern.format(i), use_proof, use_conj, use_state_first, results_dir,
-                                        search_width, mql_sweep, temperature, max_tokens, max_trials, timeout))
+                                        search_width, mql_sweep, temperature, max_tokens, max_trials, timeout, using_t5))
     
     process_number_to_cmds = {i: [] for i in range(number_of_processes)}
     for i, cmd in enumerate(total_cmds):
