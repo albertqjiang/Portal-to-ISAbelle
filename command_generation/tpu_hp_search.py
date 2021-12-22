@@ -21,9 +21,9 @@ if __name__ == "__main__":
     mql_sweep = 16
     temperature = 1.0
     if using_t5.startswith("t"):
-        using_t5 = True
+        using_t5 = "true"
     else:
-        using_t5 = False
+        using_t5 = "false"
     
 
     results_dir = ""
