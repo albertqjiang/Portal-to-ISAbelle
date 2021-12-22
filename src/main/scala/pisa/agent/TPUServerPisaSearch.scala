@@ -380,7 +380,7 @@ object TPUHPSearch {
 
   def update_path(original:String): String = {
     // val replacements = Map("/home/ywu/afp-2021-02-11/".r -> "/home/wenda/Libraries/afp2020/")
-    val replacements = Map("/home/ywu/afp-2021-02-11/".r -> "/home/qj213/afp-2021-02-11/")
+    val replacements = Map("/home/ywu/afp-2021-02-11/".r -> "/home/qj213/afp-2021-10-22/")
 
 //  val replacements = Map("/home/ywu/afp-2021-02-11/".r -> "/home/ywu/afp-2021-02-11/")
 
@@ -431,7 +431,7 @@ object TPUHPSearch {
       val temporary_wd = update_path(element(0).extract[String])
       val thys_index = temporary_wd.split("/").indexOf("thys")
 //      search_agent.register(path_to_isa_bin = "/Applications/Isabelle2020.app/Isabelle",
-        search_agent.register(path_to_isa_bin = "/home/qj213/Isabelle2020/",
+        search_agent.register(path_to_isa_bin = "/home/qj213/Isabelle2021/",
 
 //      search_agent.register(path_to_isa_bin = "/home/ywu/Isabelle2020/",
 
