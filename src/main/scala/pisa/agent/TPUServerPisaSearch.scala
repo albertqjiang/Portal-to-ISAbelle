@@ -70,13 +70,14 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     input_string.replaceAll("\n", "\\n").replaceAll(" +", " ").trim
 
   def process_json_value_to_texts_and_logprobs(json_value: JValue) : (List[String], List[Double]) = {
+    val text_buffer : ListBuffer[String] = new ListBuffer[String]()
+    val logprobs_buffer : ListBuffer[Double] = new ListBuffer[Double]()
     if (t5) {
-      val list_of_seqs : List[String] = (json_value \ "completion")(0)(0).extract[List[String]]
-      val list_of_scores : List[Double] = (json_value \"completion")(0)(1).extract[List[Double]]
-      Tuple2(list_of_seqs, list_of_scores) 
+      for (i <- List.range(0, search_width)) {
+        text_buffer += (json_value \ "completion")(i)(0).extract[String]
+        logprobs_buffer += (json_value \ "completion")(i)(1).extract[Double]
+      }
     } else {
-      val text_buffer : ListBuffer[String] = new ListBuffer[String]()
-      val logprobs_buffer : ListBuffer[Double] = new ListBuffer[Double]()
       for (i <- List.range(0, search_width)) {
         val list_of_tokens : List[String] = (json_value \ "completion")(i)(0).extract[List[String]].map(
           x => x.replace("\u0120", " "))
@@ -88,8 +89,8 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
         text_buffer += list_of_tokens.take(tokens_in_the_text).mkString("").replace("<|endoftext|>", "").trim
         logprobs_buffer += list_of_logprobs.take(tokens_in_the_text).sum
       }
-      Tuple2(text_buffer.toList, logprobs_buffer.toList)
     }
+    Tuple2(text_buffer.toList, logprobs_buffer.toList)
   }
 
 //  def process_json_value_to_logprobs(json_value: JValue) : List[Double] = {
