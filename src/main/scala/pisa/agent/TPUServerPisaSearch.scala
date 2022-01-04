@@ -225,10 +225,11 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
       var request_string = {
         if (t5) {
           get_request_string(proof_string.takeRight(500), state_string.takeRight(500), initial_step = initial_step) 
+        } else {
+          get_request_string(proof_string, state_string, initial_step = initial_step)
         }
-        get_request_string(proof_string, state_string, initial_step = initial_step)
       }
-//      println(request_string)
+      println(request_string)
       var returned_text = request_string.!!.trim
       total_query_time = total_query_time + (System.nanoTime - before_query) / 1e9d
 
