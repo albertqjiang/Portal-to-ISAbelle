@@ -60,6 +60,18 @@ class IsaFlexEnv:
         return self.obs_string
 
     @func_set_timeout(20)
+    def step_to_top_level_state(self, action, tls_name, new_name):
+        last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
+        try:
+            obs_string = self.stub.IsabelleCommand(
+                server_pb2.IsaCommand(command=f"<apply to top level state> {tls_name} <apply to top level state> {action} <apply to top level state> {new_name}")).state
+        except Exception as e:
+            print("***Something went wrong***")
+            print(e)
+        done = True if ("subgoal" in last_obs_string and "subgoal" not in obs_string) else False
+        return obs_string, self.reward(done), done, {}
+
+    @func_set_timeout(20)
     def step(self, action):
         last_obs_string = self.obs_string
         try:
@@ -92,7 +104,16 @@ class IsaFlexEnv:
         except Exception as e:
             print("**Clone unsuccessful**")
             print(e)
-        
+
+    def proceed_to_line(self, line_stirng, before_after):
+        assert before_after in ["before", "after"]
+        try:
+            message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<proceed {before_after}> {line_stirng}")).state
+            print(message)
+        except Exception as e:
+            print("Failure to proceed before line")
+            print(e)
+
 
 def parsed_json_to_env_and_dict(path_to_json, afp_path, port=9000, isa_path="/Applications/Isabelle2020.app/Isabelle"):
     save_dict = json.load(open(path_to_json))
@@ -112,12 +133,18 @@ def parsed_json_to_env_and_dict(path_to_json, afp_path, port=9000, isa_path="/Ap
                      working_directory=wd), save_dict
 
 
+def initialise_env(port, isa_path, theory_file_path=None, working_directory=None):
+    return IsaFlexEnv(port=port, isa_path=isa_path, starter_string=theory_file_path, working_directory=working_directory)
+
+
+def initialise_problem(env, problem_name):
+    env.proceed_to_line(problem_name, "after")
+    return env
+
+
 if __name__ == '__main__':
-    ipe, save_dict = parsed_json_to_env_and_dict("data/Functional-Automata/AutoProj.json", "/Users/qj213/Projects/afp-2021-02-11")
-    for line in save_dict["segments"]:
-        print("=" * 50)
-        print(line)
-        obs, reward, done, _ = ipe.step(line)
-        print(obs)
-        print(reward)
-        print(done)
+    env = initialise_env(8000, 
+        working_directory="/home/qj213/afp-2021-10-22/thys/FunWithFunctions", 
+        isa_path="/home/qj213/Isabelle2021", 
+        theory_file_path="/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy"
+    )

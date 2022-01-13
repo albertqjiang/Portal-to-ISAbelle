@@ -21,7 +21,7 @@ import de.unruh.isabelle.pure.Implicits._
 class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false, use_state_first: Boolean = false,
                 debug_mode: Boolean = true, search_width : Int = 8, maximum_queue_length : Int = 16,
                  temperature : Double = 0.8, max_tokens : Int = 64, max_trials : Int = 200, timeout : Int = 240000,
-                 dump_path : String = "") {
+                 dump_path : String = "", t5 : Boolean = false) {
   implicit val formats : DefaultFormats = DefaultFormats
   implicit val ec: ExecutionContext = ExecutionContext.global
   val firstOrd : Ordering[(Double, ListBuffer[(ToplevelState, Int, String, Int)])] =
@@ -45,6 +45,14 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
   }
 
   def get_request_string(proof_string: String, state_string: String, initial_step : Boolean = false) : String = {
+    if (t5) {
+      s"""curl 
+          |--header "Content-Type: application/json" 
+          |--request POST
+          |--data '{"context": """".stripMargin + state_string + 
+          s"""", "n": $search_width}'
+          |http://localhost:5000/complete""".stripMargin
+    } else
       s"""curl
          |--header "Content-Type: application/json"
          |--request POST
@@ -64,16 +72,23 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
   def process_json_value_to_texts_and_logprobs(json_value: JValue) : (List[String], List[Double]) = {
     val text_buffer : ListBuffer[String] = new ListBuffer[String]()
     val logprobs_buffer : ListBuffer[Double] = new ListBuffer[Double]()
-    for (i <- List.range(0, search_width)) {
-      val list_of_tokens : List[String] = (json_value \ "completion")(i)(0).extract[List[String]].map(
-        x => x.replace("\u0120", " "))
-      val list_of_logprobs : List[Double] = (json_value \ "completions")(i)(1).extract[List[Double]]
-      val endoftext_in_the_tokens = list_of_tokens.indexOf("<|endoftext|>")
-      val tokens_in_the_text =
-        if (endoftext_in_the_tokens == -1) list_of_tokens.length
-        else endoftext_in_the_tokens + 1
-      text_buffer += list_of_tokens.take(tokens_in_the_text).mkString("").replace("<|endoftext|>", "").trim
-      logprobs_buffer += list_of_logprobs.take(tokens_in_the_text).sum
+    if (t5) {
+      for (i <- List.range(0, search_width)) {
+        text_buffer += (json_value \ "completion")(i)(0).extract[String]
+        logprobs_buffer += (json_value \ "completion")(i)(1).extract[Double]
+      }
+    } else {
+      for (i <- List.range(0, search_width)) {
+        val list_of_tokens : List[String] = (json_value \ "completion")(i)(0).extract[List[String]].map(
+          x => x.replace("\u0120", " "))
+        val list_of_logprobs : List[Double] = (json_value \ "completions")(i)(1).extract[List[Double]]
+        val endoftext_in_the_tokens = list_of_tokens.indexOf("<|endoftext|>")
+        val tokens_in_the_text =
+          if (endoftext_in_the_tokens == -1) list_of_tokens.length
+          else endoftext_in_the_tokens + 1
+        text_buffer += list_of_tokens.take(tokens_in_the_text).mkString("").replace("<|endoftext|>", "").trim
+        logprobs_buffer += list_of_logprobs.take(tokens_in_the_text).sum
+      }
     }
     Tuple2(text_buffer.toList, logprobs_buffer.toList)
   }
@@ -207,8 +222,14 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
       
 
       val before_query = System.nanoTime
-      var request_string = get_request_string(proof_string, state_string, initial_step = initial_step)
-//      println(request_string)
+      var request_string = {
+        if (t5) {
+          get_request_string(proof_string.takeRight(500), state_string.takeRight(500), initial_step = initial_step) 
+        } else {
+          get_request_string(proof_string, state_string, initial_step = initial_step)
+        }
+      }
+      println(request_string)
       var returned_text = request_string.!!.trim
       total_query_time = total_query_time + (System.nanoTime - before_query) / 1e9d
 
@@ -372,7 +393,7 @@ object TPUHPSearch {
 
   def update_path(original:String): String = {
     // val replacements = Map("/home/ywu/afp-2021-02-11/".r -> "/home/wenda/Libraries/afp2020/")
-    val replacements = Map("/home/ywu/afp-2021-02-11/".r -> "/home/qj213/afp-2021-02-11/")
+    val replacements = Map("/home/ywu/afp-2021-02-11/".r -> "/home/qj213/afp-2021-10-22/")
 
 //  val replacements = Map("/home/ywu/afp-2021-02-11/".r -> "/home/ywu/afp-2021-02-11/")
 
@@ -396,6 +417,10 @@ object TPUHPSearch {
     val max_tokens : Int = args(8).toInt
     val max_trials : Int = args(9).toInt
     val timeout : Int = args(10).toInt
+    val t5 : Boolean = {
+      if (args.length == 11) false
+      else args(11).toBoolean
+    }
 
     // val json = parse(Source.fromFile("20_calibration_names.json").mkString).children
     val json = parse(Source.fromFile(args(0)).mkString).children
@@ -410,7 +435,7 @@ object TPUHPSearch {
       use_state_first = use_state_first, debug_mode = debug_mode,
       search_width = search_width, maximum_queue_length = maximum_queue_length, temperature = temperature,
       max_tokens = max_tokens, max_trials = max_trials, timeout = timeout,
-      dump_path = dump_path
+      dump_path = dump_path, t5=t5
     )
     var result : (Int, String, String, Int, Map[Int, String]) = null
     for (element <- json) {
@@ -419,7 +444,7 @@ object TPUHPSearch {
       val temporary_wd = update_path(element(0).extract[String])
       val thys_index = temporary_wd.split("/").indexOf("thys")
 //      search_agent.register(path_to_isa_bin = "/Applications/Isabelle2020.app/Isabelle",
-        search_agent.register(path_to_isa_bin = "/home/qj213/Isabelle2020/",
+        search_agent.register(path_to_isa_bin = "/home/qj213/Isabelle2021/",
 
 //      search_agent.register(path_to_isa_bin = "/home/ywu/Isabelle2020/",
 

@@ -14,28 +14,29 @@ MAX_MESSAGE_LENGTH = 10485760
 
 def analyse_whole_file(whole_file_string):
     transitions = whole_file_string.split("<\TRANSEP>")
-    state_action_pairs = list()
+    state_action_proof_level_tuples = list()
     problem_names = list()
     proof_open = False
     last_state = ""
     for transition in transitions:
         if not transition:
             continue
-        state, action = transition.split("<\STATESEP>")
+        state, action, proof_level = transition.split("<\STATESEP>")
         state = state.strip()
         action = action.strip()
+        proof_level = int(proof_level.strip())
         if action.startswith("lemma") or action.startswith("theorem"):
             problem_names.append(action)
-            state_action_pairs.append((state, action))
+            state_action_proof_level_tuples.append((state, action, proof_level))
             proof_open = True
         elif proof_open:
-            state_action_pairs.append((state, action))
+            state_action_proof_level_tuples.append((state, action, proof_level))
 
         if "subgoal" in last_state and "subgoal" not in state:
             proof_open = False
     return {
         "problem_names": problem_names,
-        "translations": state_action_pairs
+        "translations": state_action_proof_level_tuples
     }
 
 @func_set_timeout(120)
