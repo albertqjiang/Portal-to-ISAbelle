@@ -56,7 +56,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
       s"""curl
          |--header "Content-Type: application/json"
          |--request POST
-         |--data '{"context":"<IS_OBS>""".stripMargin + " " + state_string + " " +
+         |--data '{"context":"<ISA_OBS>""".stripMargin + " " + state_string + " " +
          s"""Cambridge", "temp": $temperature, "gen_tokens": $max_tokens, "n": $search_width, "top_p": 1.0}'
            |http://localhost:5000/complete
            |""".stripMargin
