@@ -81,7 +81,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
       for (i <- List.range(0, search_width)) {
         val list_of_tokens : List[String] = (json_value \ "completion")(i)(0).extract[List[String]].map(
           x => x.replace("\u0120", " "))
-        val list_of_logprobs : List[Double] = (json_value \ "completions")(i)(1).extract[List[Double]]
+        val list_of_logprobs : List[Double] = (json_value \ "completion")(i)(1).extract[List[Double]]
         val endoftext_in_the_tokens = list_of_tokens.indexOf("<|endoftext|>")
         val tokens_in_the_text =
           if (endoftext_in_the_tokens == -1) list_of_tokens.length
