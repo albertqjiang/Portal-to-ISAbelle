@@ -72,6 +72,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
   def process_json_value_to_texts_and_logprobs(json_value: JValue) : (List[String], List[Double]) = {
     val text_buffer : ListBuffer[String] = new ListBuffer[String]()
     val logprobs_buffer : ListBuffer[Double] = new ListBuffer[Double]()
+    
     if (t5) {
       for (i <- List.range(0, search_width)) {
         text_buffer += (json_value \ "completion")(i)(0).extract[String]
@@ -79,15 +80,21 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
       }
     } else {
       for (i <- List.range(0, search_width)) {
-        val list_of_tokens : List[String] = (json_value \ "completion")(i)(0).extract[List[String]].map(
-          x => x.replace("\u0120", " "))
-        val list_of_logprobs : List[Double] = (json_value \ "completion")(i)(1).extract[List[Double]]
-        val endoftext_in_the_tokens = list_of_tokens.indexOf("<|endoftext|>")
-        val tokens_in_the_text =
-          if (endoftext_in_the_tokens == -1) list_of_tokens.length
-          else endoftext_in_the_tokens + 1
-        text_buffer += list_of_tokens.take(tokens_in_the_text).mkString("").replace("<|endoftext|>", "").trim
-        logprobs_buffer += list_of_logprobs.take(tokens_in_the_text).sum
+        try {
+          val list_of_tokens : List[String] = (json_value \ "completion")(i)(0).extract[List[String]].map(
+            x => x.replace("\u0120", " "))
+          val list_of_logprobs : List[Double] = (json_value \ "completion")(i)(1).extract[List[Double]]
+          val endoftext_in_the_tokens = list_of_tokens.indexOf("<|endoftext|>")
+          val tokens_in_the_text =
+            if (endoftext_in_the_tokens == -1) list_of_tokens.length
+            else endoftext_in_the_tokens + 1
+          text_buffer += list_of_tokens.take(tokens_in_the_text).mkString("").replace("<|endoftext|>", "").trim
+          logprobs_buffer += list_of_logprobs.take(tokens_in_the_text).sum
+        } catch {
+          case _: Throwable => {
+                println("Not as many candidates as search width")
+          }
+        }
       }
     }
     Tuple2(text_buffer.toList, logprobs_buffer.toList)
