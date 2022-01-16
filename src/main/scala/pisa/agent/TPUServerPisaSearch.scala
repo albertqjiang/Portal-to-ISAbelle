@@ -212,27 +212,30 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
         val candidate_logprobs : List[Double] = candidates._2
         val candidate_commands_and_logprobs = coordinate_and_make_texts_and_logprobs_distinct(candidate_commands, candidate_logprobs)
         var proceed : Boolean = false
-        for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
-          val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
-          proceed = false
-          try {
-            val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
-            toplevel = child_toplevel
-            proof_till_now = proof_till_now + "\n" + proof_command
-            proceed = true
-            if (pisaos.proof_level(toplevel).retrieveNow == 0) {
-              index_to_successful_skeletons(0) = proof_till_now
-              return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
-            }
-          } catch {
-            case _: Throwable =>
-          }
 
-          if (proceed) break
-        }
-        if (!proceed) {
-          index_to_successful_skeletons(-1) = "Empty"
-          return (0, "Queue empty", "", -1, index_to_successful_skeletons.toMap)
+        Breaks.breakable {
+          for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
+            val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
+            proceed = false
+            try {
+              val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
+              toplevel = child_toplevel
+              proof_till_now = proof_till_now + "\n" + proof_command
+              proceed = true
+              if (pisaos.proof_level(toplevel).retrieveNow == 0) {
+                index_to_successful_skeletons(0) = proof_till_now
+                return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
+              }
+            } catch {
+              case _: Throwable =>
+            }
+
+            if (proceed) break
+          }
+          if (!proceed) {
+            index_to_successful_skeletons(-1) = "Empty"
+            return (0, "Queue empty", "", -1, index_to_successful_skeletons.toMap)
+          }
         }
       }
     }
