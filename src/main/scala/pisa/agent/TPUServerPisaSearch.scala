@@ -256,7 +256,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
           var parsed_value : JValue = null
           try parsed_value = parse(returned_text)
           //          println(parsed_value.toString)
-          catch case _: Throwable => break
+          catch {case _: Throwable => break}
           //          case e: Throwable => throw new RuntimeException(e.toString + '\n' + request_string + '\n' + returned_text)
             
           // Extract the candidate commands and their respective accumulative logprobs
@@ -282,7 +282,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
             val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
             println(proof_command)
             // We don't want the agent to cheat
-            if (proof_command.contains("sorry") || proof_command.contains("oops"))
+            if (proof_command.contains("sorry") || proof_command.contains("oops")) {}
             else {
               //            println(proof_command)
               //            println(candidate_commands_and_logprobs(i)._2)
