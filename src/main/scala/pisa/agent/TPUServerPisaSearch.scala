@@ -222,7 +222,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
                 if (pisaos.proof_level(toplevel) == 0) {
                   index_to_successful_skeletons(0) = proof_till_now
-                  return (1, "Proved", -1, index_to_successful_skeletons.toMap)
+                  return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
                 }
                 break
               } catch {
@@ -230,12 +230,12 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
               }
             }
             index_to_successful_skeletons(-1) = "Empty"
-            return (0, "Queue empty", -1, index_to_successful_skeletons.toMap)
+            return (0, "Queue empty", "", -1, index_to_successful_skeletons.toMap)
           }
         }
       }
       index_to_successful_skeletons(-1) = "Empty"
-      return (0, "Out of fuel", -1, index_to_successful_skeletons.toMap)
+      return (0, "Out of fuel", "", -1, index_to_successful_skeletons.toMap)
     }
   }
 
