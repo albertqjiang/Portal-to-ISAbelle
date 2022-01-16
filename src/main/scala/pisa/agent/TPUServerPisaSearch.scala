@@ -187,7 +187,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
   def prove_the_theorem_greedy : Tuple5[Int, String, String, Int, Map[Int, String]] = {
     var search_thread_index : Int = 0
-    var proof_till_now : String = ""
+    var proof_till_now : String = theorem_name
     var trials = 0
     implicit val isabelle: Isabelle = pisaos.isabelle
 
