@@ -217,7 +217,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
         Breaks.breakable{
           for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
-            if (proceed) break
+            if (proceed) {}
             else {
               val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
             
