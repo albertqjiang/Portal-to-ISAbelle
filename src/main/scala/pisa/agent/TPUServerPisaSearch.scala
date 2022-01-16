@@ -218,17 +218,17 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                 val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
                 toplevel = child_toplevel
                 proof_till_now = proof_till_now + "\n" + proof_command
-                if (pisaos.proof_level(toplevel) == 0) return (1, "Proved", -1, Map(0 -> proof_till_now))
+                if (pisaos.proof_level(toplevel) == 0) return (1, "Proved", -1, mutable.Map[Int, String]()(0 -> proof_till_now).toMap)
                 break
               } catch {
                 case _: Throwable =>
               }
             }
-            return (0, "Queue empty", -1, Map(-1 -> "Empty"))
+            return (0, "Queue empty", -1, mutable.Map[Int, String]()(-1 -> "Empty").toMap)
           }
         }
       }
-      return (0, "Out of fuel", -1, Map(-1 -> "Empty"))
+      return (0, "Out of fuel", -1, mutable.Map[Int, String]()(-1 -> "Empty").toMap)
     }
   }
 
