@@ -193,6 +193,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
     val continue = new Breaks
     var toplevel : ToplevelState = pisaos.toplevel
+    var proved : Boolean = false
     while (trials <= max_trials) {
       continue.breakable {
         trials += 1
@@ -212,12 +213,12 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
         val candidate_logprobs : List[Double] = candidates._2
         val candidate_commands_and_logprobs = coordinate_and_make_texts_and_logprobs_distinct(candidate_commands, candidate_logprobs)
         var proceed : Boolean = false
-        var proved : Boolean = false
+        
 
         Breaks.breakable{
           for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
             val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
-            proceed = false
+            
             try {
               val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
               toplevel = child_toplevel
@@ -240,8 +241,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
           }
           if (proved) return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
         }
-        }
-        
+      }
     }
     index_to_successful_skeletons(-1) = "Empty"
     return (0, "Out of fuel", "", -1, index_to_successful_skeletons.toMap)
