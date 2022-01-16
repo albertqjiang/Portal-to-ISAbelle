@@ -219,7 +219,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
               toplevel = child_toplevel
               proof_till_now = proof_till_now + "\n" + proof_command
 
-              if (pisaos.proof_level(toplevel) == 0) {
+              if (pisaos.proof_level(toplevel).retrieveNow == 0) {
                 index_to_successful_skeletons(0) = proof_till_now
                 return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
               }
