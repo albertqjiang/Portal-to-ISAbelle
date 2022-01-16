@@ -211,9 +211,10 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
         val candidate_commands : List[String] = candidates._1
         val candidate_logprobs : List[Double] = candidates._2
         val candidate_commands_and_logprobs = coordinate_and_make_texts_and_logprobs_distinct(candidate_commands, candidate_logprobs)
+        var proceed : Boolean = false
         for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
           val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
-          var proceed : Boolean = false
+          proceed = false
           try {
             val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
             toplevel = child_toplevel
