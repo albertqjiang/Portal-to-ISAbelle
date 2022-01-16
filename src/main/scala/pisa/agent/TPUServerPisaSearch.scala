@@ -192,51 +192,49 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     implicit val isabelle: Isabelle = pisaos.isabelle
 
     val continue = new Breaks
-    Breaks.breakable {
-      var toplevel : ToplevelState = pisaos.toplevel
-      while (trials <= max_trials) {
-        continue.breakable {
-          trials += 1
-          
-          var state_string = "Empty state"
-          try state_string = extract_state_string(toplevel)
-          catch {
-            case _: Throwable => throw new RuntimeException("Fail")
-          }
-          val request_string = get_request_string("", state_string, false)
-          val returned_text = request_string.!!.trim
-          breakable {
-            var parsed_value : JValue = null
-            try parsed_value = parse(returned_text)
-            catch {case _: Throwable => break}
-            val candidates : (List[String], List[Double]) = process_json_value_to_texts_and_logprobs(parsed_value)
-            val candidate_commands : List[String] = candidates._1
-            val candidate_logprobs : List[Double] = candidates._2
-            val candidate_commands_and_logprobs = coordinate_and_make_texts_and_logprobs_distinct(candidate_commands, candidate_logprobs)
-            for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
-              val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
-              try {
-                val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
-                toplevel = child_toplevel
-                proof_till_now = proof_till_now + "\n" + proof_command
+    var toplevel : ToplevelState = pisaos.toplevel
+    while (trials <= max_trials) {
+      continue.breakable {
+        trials += 1
+        
+        var state_string = "Empty state"
+        try state_string = extract_state_string(toplevel)
+        catch {
+          case _: Throwable => throw new RuntimeException("Fail")
+        }
+        val request_string = get_request_string("", state_string, false)
+        val returned_text = request_string.!!.trim
+        breakable {
+          var parsed_value : JValue = null
+          try parsed_value = parse(returned_text)
+          catch {case _: Throwable => break}
+          val candidates : (List[String], List[Double]) = process_json_value_to_texts_and_logprobs(parsed_value)
+          val candidate_commands : List[String] = candidates._1
+          val candidate_logprobs : List[Double] = candidates._2
+          val candidate_commands_and_logprobs = coordinate_and_make_texts_and_logprobs_distinct(candidate_commands, candidate_logprobs)
+          for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
+            val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
+            try {
+              val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
+              toplevel = child_toplevel
+              proof_till_now = proof_till_now + "\n" + proof_command
 
-                if (pisaos.proof_level(toplevel) == 0) {
-                  index_to_successful_skeletons(0) = proof_till_now
-                  return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
-                }
-                break
-              } catch {
-                case _: Throwable =>
+              if (pisaos.proof_level(toplevel) == 0) {
+                index_to_successful_skeletons(0) = proof_till_now
+                return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
               }
+              break
+            } catch {
+              case _: Throwable =>
             }
-            index_to_successful_skeletons(-1) = "Empty"
-            return (0, "Queue empty", "", -1, index_to_successful_skeletons.toMap)
           }
+          index_to_successful_skeletons(-1) = "Empty"
+          return (0, "Queue empty", "", -1, index_to_successful_skeletons.toMap)
         }
       }
-      index_to_successful_skeletons(-1) = "Empty"
-      return (0, "Out of fuel", "", -1, index_to_successful_skeletons.toMap)
     }
+    index_to_successful_skeletons(-1) = "Empty"
+    return (0, "Out of fuel", "", -1, index_to_successful_skeletons.toMap)
   }
 
   def prove_the_theorem : Tuple5[Int, String, String, Int, Map[Int, String]] = {
