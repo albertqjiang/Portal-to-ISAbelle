@@ -192,6 +192,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     implicit val isabelle: Isabelle = pisaos.isabelle
 
     val continue = new Breaks
+    val proceed = new Breaks
     var toplevel : ToplevelState = pisaos.toplevel
     while (trials <= max_trials) {
       continue.breakable {
@@ -204,7 +205,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
         }
         val request_string = get_request_string("", state_string, false)
         val returned_text = request_string.!!.trim
-        breakable {
+        proceed.breakable {
           var parsed_value : JValue = null
           try parsed_value = parse(returned_text)
           catch {case _: Throwable => break}
@@ -223,7 +224,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                 index_to_successful_skeletons(0) = proof_till_now
                 return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
               }
-              break
+              proceed.break
             } catch {
               case _: Throwable =>
             }
