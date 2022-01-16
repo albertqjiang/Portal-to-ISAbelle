@@ -187,7 +187,49 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
   def prove_the_theorem_greedy : Tuple5[Int, String, String, Int, Map[Int, String]] = {
     var search_thread_index : Int = 0
+    var proof_till_now : String = ""
     implicit val isabelle: Isabelle = pisaos.isabelle
+
+    val continue = new Breaks
+    Breaks.breakable {
+      var toplevel : ToplevelState = pisaos.toplevel
+      while (trials <= max_trials) {
+        continue.breakable {
+          trials += 1
+          
+          var state_string = "Empty state"
+          try state_string = extract_state_string(parent_toplevel_state)
+          catch {
+            case _: Throwable => throw new RuntimeException("Fail")
+          }
+          val request_string = get_request_string("", state_string, false)
+          val returned_text = request_string.!!.trim
+          breakable {
+            var parsed_value : JValue = null
+            try parsed_value = parse(returned_text)
+            catch {case _: Throwable => break}
+            val candidates : (List[String], List[Double]) = process_json_value_to_texts_and_logprobs(parsed_value)
+            val candidate_commands : List[String] = candidates._1
+            val candidate_logprobs : List[Double] = candidates._2
+            val candidate_commands_and_logprobs = coordinate_and_make_texts_and_logprobs_distinct(candidate_commands, candidate_logprobs)
+            for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
+              val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
+              try {
+                val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
+                toplevel = child_toplevel
+                proof_till_now = proof_till_now + "\n" + proof_command
+                if (pisaos.proof_level(toplevel) == 0) return (1, "Proved", -1, Map(0 -> proof_till_now))
+                break
+              } catch {
+                case _: Throwable =>
+              }
+            }
+            return (0, "Queue empty", -1, Map(-1 -> "Empty"))
+          }
+        }
+      }
+      return (0, "Out of fuel", -1, Map(-1 -> "Empty"))
+    }
   }
 
   def prove_the_theorem : Tuple5[Int, String, String, Int, Map[Int, String]] = {
@@ -212,168 +254,168 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     Breaks.breakable {
       while (accumulative_logprob_toplevel_pq.nonEmpty && trials <= max_trials) {
         continue.breakable {
-        trials += 1
-        val acc_logprob_toplevel_tuple = accumulative_logprob_toplevel_pq.dequeue
-        // Get the logprob and the state string for the current toplevel
-        val parent_logprob = acc_logprob_toplevel_tuple._1
-        val parent_toplevel_state_proof_level_list = acc_logprob_toplevel_tuple._2
+          trials += 1
+          val acc_logprob_toplevel_tuple = accumulative_logprob_toplevel_pq.dequeue
+          // Get the logprob and the state string for the current toplevel
+          val parent_logprob = acc_logprob_toplevel_tuple._1
+          val parent_toplevel_state_proof_level_list = acc_logprob_toplevel_tuple._2
 
-        val parent_toplevel_state = parent_toplevel_state_proof_level_list.head._1
-        val parent_toplevel_proof_level = parent_toplevel_state_proof_level_list.head._2
-        val proof_till_now = parent_toplevel_state_proof_level_list.head._3
-        val proof_length_till_now = parent_toplevel_state_proof_level_list.head._4
+          val parent_toplevel_state = parent_toplevel_state_proof_level_list.head._1
+          val parent_toplevel_proof_level = parent_toplevel_state_proof_level_list.head._2
+          val proof_till_now = parent_toplevel_state_proof_level_list.head._3
+          val proof_length_till_now = parent_toplevel_state_proof_level_list.head._4
 
-        val initial_step = {
-          if (proof_length_till_now == 0) true
-          else false
-        }
-
-        val proof_string : String = extract_proof_string_from_proof_till_now(proof_till_now)
-        var state_string = "Empty state"
-        try state_string = extract_state_string(parent_toplevel_state)
-        catch {
-            case t: TimeoutException => continue.break
-            case _: Throwable => println("This is wrong")
-        }
-
-        val before_query = System.nanoTime
-        var request_string = {
-          if (t5) get_request_string(proof_string.takeRight(500), state_string.takeRight(500), initial_step = initial_step) 
-          else get_request_string(proof_string, state_string, initial_step = initial_step)
-        }
-        println(request_string)
-        var returned_text = request_string.!!.trim
-        total_query_time = total_query_time + (System.nanoTime - before_query) / 1e9d
-
-        breakable {
-          if (returned_text.contains("error")) {
-            request_string = get_request_string(proof_string.takeRight(6000), state_string)
-            returned_text = request_string.!!.trim
-            if (returned_text.contains("error")) break
-            else {}
+          val initial_step = {
+            if (proof_length_till_now == 0) true
+            else false
           }
-          // println(returned_text)
-          var parsed_value : JValue = null
-          try parsed_value = parse(returned_text)
-          //          println(parsed_value.toString)
-          catch {case _: Throwable => break}
-          //          case e: Throwable => throw new RuntimeException(e.toString + '\n' + request_string + '\n' + returned_text)
-            
-          // Extract the candidate commands and their respective accumulative logprobs
-          //        val candidate_commands : List[String] = process_json_value_to_texts(parsed_value).distinct
-          //        val candidate_logprobs : List[Double] = process_json_value_to_logprobs(parsed_value).distinct
-          val candidates : (List[String], List[Double]) = process_json_value_to_texts_and_logprobs(parsed_value)
-          val candidate_commands : List[String] = candidates._1
-          val candidate_logprobs : List[Double] = candidates._2
-          val candidate_commands_and_logprobs = coordinate_and_make_texts_and_logprobs_distinct(candidate_commands, candidate_logprobs)
-          total_predictions = total_predictions + candidate_commands_and_logprobs.length
-          //      println("Length of the candidate commands: " + candidate_commands.length.toString)
-          //        assert(candidate_commands.distinct.length == candidate_logprobs.distinct.length)
-          // Create copies of the toplevel state for the search expansion
-          val child_toplevel_state_list_buffer : ListBuffer[ToplevelState] = new ListBuffer[ToplevelState]
-          for (_ <- List.range(0, candidate_commands_and_logprobs.length)) child_toplevel_state_list_buffer += ToplevelState.instantiate(parent_toplevel_state.mlValue)
-          val child_toplevel_state_list = child_toplevel_state_list_buffer.toList
 
-          // For each command candidate, apply the command to a copy of the top level state and retrieve the resulting top level state
-          //      println(candidate_commands.length)
-          for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
-            //        println("Trials: " + trials.toString)
-            //        println("i: " + i.toString)
-            val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
-            println(proof_command)
-            // We don't want the agent to cheat
-            if (proof_command.contains("sorry") || proof_command.contains("oops")) {}
-            else {
-              //            println(proof_command)
-              //            println(candidate_commands_and_logprobs(i)._2)
-              try {
-                val before_compilation = System.nanoTime
-                val child_toplevel : ToplevelState = pisaos.step(proof_command, child_toplevel_state_list(i), 10000)
-                total_compilation_time = total_compilation_time + (System.nanoTime - before_compilation) / 1e9d
-                val child_logprob : Double = parent_logprob + candidate_commands_and_logprobs(i)._2
-                val child_state_string : String = pisaos.getStateString(child_toplevel)
-                val child_proof_level : Int = pisaos.proof_level(child_toplevel).retrieveNow
+          val proof_string : String = extract_proof_string_from_proof_till_now(proof_till_now)
+          var state_string = "Empty state"
+          try state_string = extract_state_string(parent_toplevel_state)
+          catch {
+              case t: TimeoutException => continue.break
+              case _: Throwable => println("This is wrong")
+          }
 
-                // If everything works to this point, copy the
-                // parent (toplevel, proof_level, proof until this step, proof length until now) list to the child one
-                // Change the first element to the child one
-                val child_toplevel_state_proof_level_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int)]
-                for (i <- List.range(1, parent_toplevel_state_proof_level_list.length)) {
-                  val toplevel_state_and_proof_level_tuple = parent_toplevel_state_proof_level_list(i)
-                  child_toplevel_state_proof_level_listbuffer.append(
-                    (
-                      ToplevelState.instantiate(toplevel_state_and_proof_level_tuple._1.mlValue),
-                      toplevel_state_and_proof_level_tuple._2,
-                      toplevel_state_and_proof_level_tuple._3,
-                      toplevel_state_and_proof_level_tuple._4
-                    )
-                  )
-                }
+          val before_query = System.nanoTime
+          var request_string = {
+            if (t5) get_request_string(proof_string.takeRight(500), state_string.takeRight(500), initial_step = initial_step) 
+            else get_request_string(proof_string, state_string, initial_step = initial_step)
+          }
+          println(request_string)
+          var returned_text = request_string.!!.trim
+          total_query_time = total_query_time + (System.nanoTime - before_query) / 1e9d
 
-                if (use_conjecture && proof_command.startsWith("have")) {
-                  child_toplevel_state_proof_level_listbuffer.append(
-                    (
-                      ToplevelState.instantiate(child_toplevel.mlValue),
-                      child_proof_level,
-                      proof_till_now + " \n " + proof_command.trim,
-                      proof_length_till_now + 1
+          breakable {
+            if (returned_text.contains("error")) {
+              request_string = get_request_string(proof_string.takeRight(6000), state_string)
+              returned_text = request_string.!!.trim
+              if (returned_text.contains("error")) break
+              else {}
+            }
+            // println(returned_text)
+            var parsed_value : JValue = null
+            try parsed_value = parse(returned_text)
+            //          println(parsed_value.toString)
+            catch {case _: Throwable => break}
+            //          case e: Throwable => throw new RuntimeException(e.toString + '\n' + request_string + '\n' + returned_text)
+              
+            // Extract the candidate commands and their respective accumulative logprobs
+            //        val candidate_commands : List[String] = process_json_value_to_texts(parsed_value).distinct
+            //        val candidate_logprobs : List[Double] = process_json_value_to_logprobs(parsed_value).distinct
+            val candidates : (List[String], List[Double]) = process_json_value_to_texts_and_logprobs(parsed_value)
+            val candidate_commands : List[String] = candidates._1
+            val candidate_logprobs : List[Double] = candidates._2
+            val candidate_commands_and_logprobs = coordinate_and_make_texts_and_logprobs_distinct(candidate_commands, candidate_logprobs)
+            total_predictions = total_predictions + candidate_commands_and_logprobs.length
+            //      println("Length of the candidate commands: " + candidate_commands.length.toString)
+            //        assert(candidate_commands.distinct.length == candidate_logprobs.distinct.length)
+            // Create copies of the toplevel state for the search expansion
+            val child_toplevel_state_list_buffer : ListBuffer[ToplevelState] = new ListBuffer[ToplevelState]
+            for (_ <- List.range(0, candidate_commands_and_logprobs.length)) child_toplevel_state_list_buffer += ToplevelState.instantiate(parent_toplevel_state.mlValue)
+            val child_toplevel_state_list = child_toplevel_state_list_buffer.toList
+
+            // For each command candidate, apply the command to a copy of the top level state and retrieve the resulting top level state
+            //      println(candidate_commands.length)
+            for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
+              //        println("Trials: " + trials.toString)
+              //        println("i: " + i.toString)
+              val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
+              println(proof_command)
+              // We don't want the agent to cheat
+              if (proof_command.contains("sorry") || proof_command.contains("oops")) {}
+              else {
+                //            println(proof_command)
+                //            println(candidate_commands_and_logprobs(i)._2)
+                try {
+                  val before_compilation = System.nanoTime
+                  val child_toplevel : ToplevelState = pisaos.step(proof_command, child_toplevel_state_list(i), 10000)
+                  total_compilation_time = total_compilation_time + (System.nanoTime - before_compilation) / 1e9d
+                  val child_logprob : Double = parent_logprob + candidate_commands_and_logprobs(i)._2
+                  val child_state_string : String = pisaos.getStateString(child_toplevel)
+                  val child_proof_level : Int = pisaos.proof_level(child_toplevel).retrieveNow
+
+                  // If everything works to this point, copy the
+                  // parent (toplevel, proof_level, proof until this step, proof length until now) list to the child one
+                  // Change the first element to the child one
+                  val child_toplevel_state_proof_level_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int)]
+                  for (i <- List.range(1, parent_toplevel_state_proof_level_list.length)) {
+                    val toplevel_state_and_proof_level_tuple = parent_toplevel_state_proof_level_list(i)
+                    child_toplevel_state_proof_level_listbuffer.append(
+                      (
+                        ToplevelState.instantiate(toplevel_state_and_proof_level_tuple._1.mlValue),
+                        toplevel_state_and_proof_level_tuple._2,
+                        toplevel_state_and_proof_level_tuple._3,
+                        toplevel_state_and_proof_level_tuple._4
+                      )
                     )
-                  )
-                  child_toplevel_state_proof_level_listbuffer.prepend(
-                    (
-                      pisaos.step("sorry", child_toplevel),
-                      parent_toplevel_proof_level,
-                      proof_till_now + " \n " + proof_command.trim + " sorry",
-                      proof_length_till_now + 1
-                    )
-                  )
-                }
-                // If the proof of this level has been completed, do not add an element to the list
-                // Otherwise, do
-                else if (child_proof_level < parent_toplevel_proof_level) {
-                  if (debug_mode) {
-                    search_thread_index += 1
-                    index_to_successful_skeletons(search_thread_index) = s"Proof level: $child_proof_level\n" + proof_till_now + " \n " + proof_command.trim
-                    println(index_to_successful_skeletons)
                   }
+
+                  if (use_conjecture && proof_command.startsWith("have")) {
+                    child_toplevel_state_proof_level_listbuffer.append(
+                      (
+                        ToplevelState.instantiate(child_toplevel.mlValue),
+                        child_proof_level,
+                        proof_till_now + " \n " + proof_command.trim,
+                        proof_length_till_now + 1
+                      )
+                    )
+                    child_toplevel_state_proof_level_listbuffer.prepend(
+                      (
+                        pisaos.step("sorry", child_toplevel),
+                        parent_toplevel_proof_level,
+                        proof_till_now + " \n " + proof_command.trim + " sorry",
+                        proof_length_till_now + 1
+                      )
+                    )
+                  }
+                  // If the proof of this level has been completed, do not add an element to the list
+                  // Otherwise, do
+                  else if (child_proof_level < parent_toplevel_proof_level) {
+                    if (debug_mode) {
+                      search_thread_index += 1
+                      index_to_successful_skeletons(search_thread_index) = s"Proof level: $child_proof_level\n" + proof_till_now + " \n " + proof_command.trim
+                      println(index_to_successful_skeletons)
+                    }
+
+                    if (child_toplevel_state_proof_level_listbuffer.isEmpty) {
+                        successful_proof_length = proof_length_till_now + 1
+                        successful_proof_script = proof_till_now + " \n " + proof_command.trim
+                    } else {
+                      val first_element = child_toplevel_state_proof_level_listbuffer.head
+                      child_toplevel_state_proof_level_listbuffer.remove(0)
+                      child_toplevel_state_proof_level_listbuffer.prepend(
+                        (first_element._1, first_element._2, proof_till_now + " \n " + proof_command.trim + " <conj_sep> " + first_element._3, proof_length_till_now+1+first_element._4)
+                      )
+                    }
+                  }
+                  else child_toplevel_state_proof_level_listbuffer.prepend((child_toplevel, parent_toplevel_proof_level, proof_till_now + " \n " + proof_command.trim, proof_length_till_now + 1))
+                  
 
                   if (child_toplevel_state_proof_level_listbuffer.isEmpty) {
-                      successful_proof_length = proof_length_till_now + 1
-                      successful_proof_script = proof_till_now + " \n " + proof_command.trim
+                        //                println("Is empty")
+                    proved = true
                   } else {
-                    val first_element = child_toplevel_state_proof_level_listbuffer.head
-                    child_toplevel_state_proof_level_listbuffer.remove(0)
-                    child_toplevel_state_proof_level_listbuffer.prepend(
-                      (first_element._1, first_element._2, proof_till_now + " \n " + proof_command.trim + " <conj_sep> " + first_element._3, proof_length_till_now+1+first_element._4)
+                    accumulative_logprob_toplevel_pq += Tuple2(
+                      child_logprob,
+                      child_toplevel_state_proof_level_listbuffer
                     )
                   }
+                        // Update longest proof length
+                  if (proof_length_till_now + 1 > longest_proof_length) longest_proof_length = proof_length_till_now+1
+                } catch {
+                  case e: IsabelleException =>
+                  case _: TimeoutException =>
+                  case t: Throwable => throw new RuntimeException(t.toString)
                 }
-                else child_toplevel_state_proof_level_listbuffer.prepend((child_toplevel, parent_toplevel_proof_level, proof_till_now + " \n " + proof_command.trim, proof_length_till_now + 1))
-                
-
-                if (child_toplevel_state_proof_level_listbuffer.isEmpty) {
-                      //                println("Is empty")
-                  proved = true
-                } else {
-                  accumulative_logprob_toplevel_pq += Tuple2(
-                    child_logprob,
-                    child_toplevel_state_proof_level_listbuffer
-                  )
-                }
-                      // Update longest proof length
-                if (proof_length_till_now + 1 > longest_proof_length) longest_proof_length = proof_length_till_now+1
-              } catch {
-                case e: IsabelleException =>
-                case _: TimeoutException =>
-                case t: Throwable => throw new RuntimeException(t.toString)
               }
             }
-          }
 
-          if (proved) return Tuple5(1, "Proved!", successful_proof_script, successful_proof_length, index_to_successful_skeletons.toMap)
-          if (accumulative_logprob_toplevel_pq.length > maximum_queue_length) 
-            accumulative_logprob_toplevel_pq = accumulative_logprob_toplevel_pq.dropRight(accumulative_logprob_toplevel_pq.length - maximum_queue_length)
-            
+            if (proved) return Tuple5(1, "Proved!", successful_proof_script, successful_proof_length, index_to_successful_skeletons.toMap)
+            if (accumulative_logprob_toplevel_pq.length > maximum_queue_length) 
+              accumulative_logprob_toplevel_pq = accumulative_logprob_toplevel_pq.dropRight(accumulative_logprob_toplevel_pq.length - maximum_queue_length)
+              
           }
         }
       }
