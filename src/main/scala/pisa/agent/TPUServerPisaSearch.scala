@@ -217,29 +217,29 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
         Breaks.breakable{
           for (i <- List.range(0, candidate_commands_and_logprobs.length)) {
-            val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
-            
-            try {
-              val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
-              toplevel = child_toplevel
-              proof_till_now = proof_till_now + "\n" + proof_command
-              proceed = true
-              if (pisaos.proof_level(toplevel).retrieveNow == 0) {
-                proved = true
-                index_to_successful_skeletons(0) = proof_till_now
-                return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
-              }
-            } catch {
-              case _: Throwable =>
-            }
-
             if (proceed) break
+            else {
+              val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
+            
+              try {
+                val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
+                toplevel = child_toplevel
+                proof_till_now = proof_till_now + "\n" + proof_command
+                proceed = true
+                if (pisaos.proof_level(toplevel).retrieveNow == 0) {
+                  proved = true
+                  index_to_successful_skeletons(0) = proof_till_now
+                }
+              } catch {
+                case _: Throwable =>
+              }
+            }
           }
+          if (proved) return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
           if (!proceed) {
             index_to_successful_skeletons(-1) = "Empty"
             return (0, "Queue empty", "", -1, index_to_successful_skeletons.toMap)
           }
-          if (proved) return (1, "Proved", proof_till_now, -1, index_to_successful_skeletons.toMap)
         }
       }
     }
