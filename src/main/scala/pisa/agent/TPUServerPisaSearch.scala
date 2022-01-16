@@ -188,6 +188,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
   def prove_the_theorem_greedy : Tuple5[Int, String, String, Int, Map[Int, String]] = {
     var search_thread_index : Int = 0
     var proof_till_now : String = ""
+    var trials = 0
     implicit val isabelle: Isabelle = pisaos.isabelle
 
     val continue = new Breaks
@@ -198,7 +199,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
           trials += 1
           
           var state_string = "Empty state"
-          try state_string = extract_state_string(parent_toplevel_state)
+          try state_string = extract_state_string(toplevel)
           catch {
             case _: Throwable => throw new RuntimeException("Fail")
           }
@@ -218,17 +219,23 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                 val child_toplevel = pisaos.step(proof_command, ToplevelState.instantiate(toplevel.mlValue))
                 toplevel = child_toplevel
                 proof_till_now = proof_till_now + "\n" + proof_command
-                if (pisaos.proof_level(toplevel) == 0) return (1, "Proved", -1, mutable.Map[Int, String](0 -> proof_till_now).toMap)
+
+                if (pisaos.proof_level(toplevel) == 0) {
+                  index_to_successful_skeletons(0) = proof_till_now
+                  return (1, "Proved", -1, index_to_successful_skeletons.toMap)
+                }
                 break
               } catch {
                 case _: Throwable =>
               }
             }
-            return (0, "Queue empty", -1, mutable.Map[Int, String](-1 -> "Empty").toMap)
+            index_to_successful_skeletons(-1) = "Empty"
+            return (0, "Queue empty", -1, index_to_successful_skeletons.toMap)
           }
         }
       }
-      return (0, "Out of fuel", -1, mutable.Map[Int, String](-1 -> "Empty").toMap)
+      index_to_successful_skeletons(-1) = "Empty"
+      return (0, "Out of fuel", -1, index_to_successful_skeletons.toMap)
     }
   }
 
