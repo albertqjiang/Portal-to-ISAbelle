@@ -474,6 +474,10 @@ object TPUHPSearch {
       if (args.length == 11) false
       else args(11).toBoolean
     }
+    val greedy : Boolean = {
+      if (args.length == 12) false
+      else args(12).toBoolean
+    }
 
     // val json = parse(Source.fromFile("20_calibration_names.json").mkString).children
     val json = parse(Source.fromFile(args(0)).mkString).children
@@ -488,7 +492,7 @@ object TPUHPSearch {
       use_state_first = use_state_first, debug_mode = debug_mode,
       search_width = search_width, maximum_queue_length = maximum_queue_length, temperature = temperature,
       max_tokens = max_tokens, max_trials = max_trials, timeout = timeout,
-      dump_path = dump_path, t5=t5
+      dump_path = dump_path, t5=t5, greedy=greedy
     )
     var result : (Int, String, String, Int, Map[Int, String]) = null
     for (element <- json) {
