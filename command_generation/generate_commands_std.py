@@ -6,7 +6,7 @@ ports = [port for port in ports if port]
 import glob
 import os
 
-script = "python src/main/python/one_stage_extraction.py -wd {} --saving-directory std_extractions/{} --isa-path /home/ywu/Isabelle2020 -tfp {}"
+script = "python src/main/python/one_stage_extraction.py -wd {} --saving-directory std_extractions/{} --isa-path ~/Isabelle2021 -tfp {}"
 n_threads = 1
 
 cmds = []
@@ -15,12 +15,12 @@ IGNORED_THEORIES = {}
 IGNORED_ENTRIES = {}
 
 total_files = 0
-for project_name in glob.glob("/home/ywu/Isabelle2020/src/**/*.thy", recursive=True):
+for project_name in glob.glob("~/Isabelle2021/src/**/*.thy", recursive=True):
     project_single_name = project_name.split("/")[5]
     file_single_name = project_name.split("/")[-1]
 
     # Ignore already extracted files
-    if os.path.isfile("/home/ywu/PISA/std_extractions/{}/{}_ground_truth.json".format(
+    if os.path.isfile("~/Portal-to-ISAbelle/std_extractions/{}/{}_ground_truth.json".format(
             project_single_name, file_single_name.split(".thy")[0])):
         continue
 

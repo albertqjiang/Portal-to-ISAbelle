@@ -54,7 +54,7 @@ def extract_needed(proof_steps, current_step_index, needed_found):
         raise AssertionError
 
 
-def process_translations_for_a_problem(transitions_for_a_problem, proof=False, state=False, needed=False):
+def process_translations_for_a_problem(transitions_for_a_problem, proof=False, state=False, needed=False, last_k=False):
     """Transform the transitions for a problem to translation pairs"""
     # The first one is the lemma/theorem definition
     previous_proof_segment = transitions_for_a_problem[0][1]
@@ -69,6 +69,11 @@ def process_translations_for_a_problem(transitions_for_a_problem, proof=False, s
             needed_found[i] = needed_indices
             needed_segment = " \\n ".join([transitions_for_a_problem[index][1] for index in needed_indices])
             translation_src += f"Needed: {needed_segment} State: {transition[0]}"
+        elif last_k:
+            assert isinstance(last_k, int)
+            proof_lines = previous_proof_segment.strip().split(" \\n ")
+            last_k_proof_lines = " \\n ".join(proof_lines[-last_k:])
+            translation_src += f"<ISA_LAST_{last_k}> {last_k_proof_lines} <ISA_OBS> {transition[0]}"
         else:
             if proof:
                 translation_src += "Proof: {}".format(previous_proof_segment)
@@ -112,7 +117,7 @@ def random_split_file_names(file_names, val_test_files=100):
         file_names[-val_test_files:]
 
 
-def process_files_with_proof_statements(file_names, saving_directory, proof=False, state=False, needed=False):
+def process_files_with_proof_statements(file_names, saving_directory, proof=False, state=False, needed=False, last_k=False):
     problem_names_split = {
         "train": list(),
         "val": list(),
@@ -138,7 +143,7 @@ def process_files_with_proof_statements(file_names, saving_directory, proof=Fals
             split = get_split(problem_name)
             problem_names_split[split].append((original_file_name, problem_name))
             translation_pairs = process_translations_for_a_problem(transitions_split[problem_name],
-                                                                   proof=proof, state=state, needed=needed)
+                                                                   proof=proof, state=state, needed=needed, last_k=last_k)
             for x, y in translation_pairs:
                 sources[split].append(trim_string(x))
                 targets[split].append(trim_string(y))
@@ -163,6 +168,7 @@ if __name__ == "__main__":
     parser.add_argument('--proof', dest='proof', action='store_true')
     parser.add_argument('--state', dest='state', action='store_true')
     parser.add_argument('--needed', dest="needed", action='store_true')
+    parser.add_argument('--last_k', type=int, default=-1)
     args = parser.parse_args()
 
     assert args.proof or args.state or args.needed
@@ -174,6 +180,11 @@ if __name__ == "__main__":
         proof_state_suffix = "state"
     else:
         proof_state_suffix = "proof_and_state"
+    if args.last_k == -1:
+        last_k = False
+    else:
+        last_k = args.last_k
+    last_k = False if (args.last_k == -1) else args.last_k
 
     saving_directory = "{}_with_{}".format(args.saving_directory, proof_state_suffix)
     if os.path.isdir(saving_directory):
@@ -182,4 +193,4 @@ if __name__ == "__main__":
 
     file_names = list(glob.glob("{}/*/*_ground_truth.json".format(
         args.extraction_file_directory)))
-    process_files_with_proof_statements(file_names, saving_directory, proof=args.proof, state=args.state, needed=args.needed)
+    process_files_with_proof_statements(file_names, saving_directory, proof=args.proof, state=args.state, needed=args.needed, last_k=last_k)
