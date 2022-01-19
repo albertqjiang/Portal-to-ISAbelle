@@ -54,6 +54,9 @@ def extract_file(isa_path, theory_file_path, working_directory, saving_directory
     stub.InitialiseIsabelle(server_pb2.IsaPath(path=isa_path))
     stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=working_directory))
 
+
+    if not os.path.isdir(saving_directory):
+        os.makedirs(saving_directory)
     close_program = False
     try:
         whole_file_parsed = isa_step(stub, theory_file_path)
@@ -71,8 +74,7 @@ def extract_file(isa_path, theory_file_path, working_directory, saving_directory
         "working_directory": working_directory,
         **file_analysis
     }
-    if not os.path.isdir(saving_directory):
-        os.makedirs(saving_directory)
+    
     json.dump(file_info,
               open(os.path.join(saving_directory,
                                 "_".join(theory_file_path.split(".thy")[0].split("/"))+"_ground_truth.json"), "w"))
