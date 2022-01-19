@@ -6,7 +6,7 @@ ports = [port for port in ports if port]
 import glob
 import os
 
-script = "python src/main/python/one_stage_extraction.py -wd {} --saving-directory std_extractions/{} --isa-path /home/qj213/Isabelle2021 -tfp {}"
+script = "python3 src/main/python/one_stage_extraction.py -wd {} --saving-directory std_extractions/{} --isa-path /home/qj213/Isabelle2021 -tfp {}"
 n_threads = 1
 
 cmds = []
