@@ -209,6 +209,7 @@ def arrays_to_sequences_pad(token_list_iterable, pad_token_id,
     accum = []
     too_long = 0
     for chunk in tqdm(token_list_iterable):
+        chunk = chunk.tolist()
         n_sep_tokens = sum(x == sep_token_id for x in chunk)
         n_eos_tokens = sum(x == eos_token_id for x in chunk)
         assert n_sep_tokens == n_eos_tokens, print(n_sep_tokens,
