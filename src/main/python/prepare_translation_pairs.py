@@ -68,7 +68,7 @@ def process_translations_for_a_problem(transitions_for_a_problem, proof=False, s
             needed_indices = extract_needed(transitions_for_a_problem, i, needed_found)
             needed_found[i] = needed_indices
             needed_segment = " \\n ".join([transitions_for_a_problem[index][1] for index in needed_indices])
-            translation_src += f"Needed: {needed_segment} State: {transition[0]}"
+            translation_src += f"<ISA_NDS> {needed_segment} <ISA_OBS> {transition[0]}"
         elif last_k:
             assert isinstance(last_k, int)
             proof_lines = previous_proof_segment.strip().split(" \\n ")
