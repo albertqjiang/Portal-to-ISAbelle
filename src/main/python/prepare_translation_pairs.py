@@ -171,7 +171,7 @@ if __name__ == "__main__":
     parser.add_argument('--last_k', type=int, default=-1)
     args = parser.parse_args()
 
-    assert args.proof or args.state or args.needed
+    
     if args.needed:
         proof_state_suffix = "needed"
     elif args.proof and not args.state:
@@ -185,6 +185,7 @@ if __name__ == "__main__":
     else:
         last_k = args.last_k
     last_k = False if (args.last_k == -1) else args.last_k
+    assert args.proof or args.state or args.needed or last_k
 
     saving_directory = "{}_with_{}".format(args.saving_directory, proof_state_suffix)
     if os.path.isdir(saving_directory):
