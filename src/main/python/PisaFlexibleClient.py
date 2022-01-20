@@ -32,16 +32,23 @@ class IsaFlexEnv:
     def observation(self):
         return self.obs_string
 
-    def is_finished(self, last_obs_string):
-        if not last_obs_string:
-            return False
+    # def is_finished(self, last_obs_string):
+    #     if not last_obs_string:
+    #         return False
 
-        # print(last_obs_string, self.obs_string)
-        # print("subgoal" in last_obs_string)
-        # print("subgoal" not in self.obs_string)
-        if "subgoal" in last_obs_string and "subgoal" not in self.obs_string:
+    #     # print(last_obs_string, self.obs_string)
+    #     # print("subgoal" in last_obs_string)
+    #     # print("subgoal" not in self.obs_string)
+    #     if "subgoal" in last_obs_string and "subgoal" not in self.obs_string:
+    #         return True
+    #     return False
+
+    def is_finished(self, name_of_tls):
+        returned_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<is finished> {name_of_tls}")).state.strip()
+        if returned_string.starswith("t"):
             return True
-        return False
+        else:
+            return False
 
     @staticmethod
     def reward(done):
@@ -61,26 +68,29 @@ class IsaFlexEnv:
 
     @func_set_timeout(20)
     def step_to_top_level_state(self, action, tls_name, new_name):
-        last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
+        # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
         try:
             obs_string = self.stub.IsabelleCommand(
                 server_pb2.IsaCommand(command=f"<apply to top level state> {tls_name} <apply to top level state> {action} <apply to top level state> {new_name}")).state
         except Exception as e:
             print("***Something went wrong***")
             print(e)
-        done = True if ("subgoal" in last_obs_string and "subgoal" not in obs_string) else False
+
+        done = self.is_finished(new_name)
+        # done = True if ("subgoal" in last_obs_string and "subgoal" not in obs_string) else False
         return obs_string, self.reward(done), done, {}
 
     @func_set_timeout(20)
     def step(self, action):
-        last_obs_string = self.obs_string
+        # last_obs_string = self.obs_string
         try:
             self.obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
         except Exception as e:
             print("***Something went wrong***")
             print(e)
 
-        done = self.is_finished(last_obs_string)
+        # done = self.is_finished(self.obs_string)
+        done = self.is_finished("default")
 
         return self.obs_string, self.reward(done), done, {}
 

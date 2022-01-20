@@ -404,6 +404,19 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       if (pisaos.top_level_state_map.contains(tls_name)) proof_state = pisaos.getStateString(pisaos.retrieve_tls(tls_name))
       else proof_state = "Didn't find top level state of given name"
     }
+    else if (isa_command.command.startsWith("<is finished>")) {
+      val tls_name : String = isa_command.command.split("<is finished>").tail.trim
+      proof_state = {
+        if (tls_name == "default") {
+          if (pisaos.getProofLevel == 0) "true"
+          else "false"
+        }
+        else {
+          if (pisaos.getProofLevel(pisaos.retrieve_tls(tls_name)) == 0) "true"
+          else "false"
+        }
+      }
+    }
     else if (isa_command.command.startsWith("<apply to top level state>")) {
       val tls_name : String = isa_command.command.split("<apply to top level state>")(1).trim
       val action : String = isa_command.command.split("<apply to top level state>")(2).trim
@@ -411,7 +424,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       if (pisaos.top_level_state_map.contains(tls_name)) {
         val new_state : ToplevelState = pisaos.step(action, pisaos.retrieve_tls(tls_name), 10000)
         pisaos.register_tls(name=new_name, tls=new_state)
-        proof_state = s"New state '${new_name}': ${pisaos.getStateString(pisaos.retrieve_tls(new_name))}"
+        proof_state = s"${pisaos.getStateString(new_state)}"
       }
       else proof_state = "Didn't find top level state of given name"
     }
@@ -429,7 +442,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       pisaos.clone_tls(tls_name)
       proof_state = "Successfully copied top level state named: " + tls_name
     } else {
-      proof_state = pisaos.step(isa_command.command)
+      pisaos.step(isa_command.command)
+      proof_state = s"<ISA_OBS> 'default': ${pisaos.getStateString} <ISA_DONE> ${pisaos.proof_level==0}"
     }
     ZIO.succeed(IsaState(proof_state))
   }
