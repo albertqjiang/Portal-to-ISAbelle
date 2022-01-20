@@ -443,7 +443,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       proof_state = "Successfully copied top level state named: " + tls_name
     } else {
       pisaos.step(isa_command.command)
-      proof_state = s"<ISA_OBS> 'default': ${pisaos.getStateString} <ISA_DONE> ${pisaos.proof_level==0}"
+      proof_state = s"${pisaos.getStateString}"
     }
     ZIO.succeed(IsaState(proof_state))
   }

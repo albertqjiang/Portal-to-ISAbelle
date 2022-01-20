@@ -45,7 +45,7 @@ class IsaFlexEnv:
 
     def is_finished(self, name_of_tls):
         returned_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<is finished> {name_of_tls}")).state.strip()
-        if returned_string.starswith("t"):
+        if returned_string.startswith("t"):
             return True
         else:
             return False
