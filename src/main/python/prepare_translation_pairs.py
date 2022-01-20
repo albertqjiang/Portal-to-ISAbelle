@@ -46,7 +46,9 @@ def extract_needed(proof_steps, current_step_index, needed_found):
     if needed_found[current_step_index]:
         return needed_found[current_step_index]
     sibling_indices, search_index = extract_siblings(proof_steps, current_step_index)
-    if search_index > 0:
+    if search_index is None:
+        return sibling_indices
+    elif search_index > 0:
         return extract_needed(proof_steps, search_index, needed_found) + [search_index] + sibling_indices
     elif search_index == 0:
         return [search_index] + sibling_indices
