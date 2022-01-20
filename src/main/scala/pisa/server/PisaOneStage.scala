@@ -405,7 +405,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       else proof_state = "Didn't find top level state of given name"
     }
     else if (isa_command.command.startsWith("<is finished>")) {
-      val tls_name : String = isa_command.command.split("<is finished>").tail.trim
+      val tls_name : String = isa_command.command.split("<is finished>").last.trim
       proof_state = {
         if (tls_name == "default") {
           if (pisaos.getProofLevel == 0) "true"
