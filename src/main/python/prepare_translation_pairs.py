@@ -172,20 +172,24 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     
-    if args.needed:
-        proof_state_suffix = "needed"
-    elif args.proof and not args.state:
-        proof_state_suffix = "proof"
-    elif args.state and not args.proof:
-        proof_state_suffix = "state"
-    else:
-        proof_state_suffix = "proof_and_state"
     if args.last_k == -1:
         last_k = False
     else:
         last_k = args.last_k
     last_k = False if (args.last_k == -1) else args.last_k
     assert args.proof or args.state or args.needed or last_k
+
+    if args.needed:
+        proof_state_suffix = "needed"
+    elif args.proof and not args.state:
+        proof_state_suffix = "proof"
+    elif args.state and not args.proof:
+        proof_state_suffix = "state"
+    elif last_k:
+        proof_state_suffix = "last_{}".format(last_k)
+    else:
+        proof_state_suffix = "proof_and_state"
+    
 
     saving_directory = "{}_with_{}".format(args.saving_directory, proof_state_suffix)
     if os.path.isdir(saving_directory):
