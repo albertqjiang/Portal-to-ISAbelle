@@ -273,7 +273,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     var accumulative_logprob_toplevel_pq =
       new mutable.PriorityQueue[(Double, ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])])]()(firstOrd)
     val initial_toplevel_state_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])]
-    initial_toplevel_state_listbuffer += Tuple5(pisaos.toplevel, pisaos.proof_level(pisaos.toplevel).retrieveNow, theorem_name, 0, new ListBuffer[Int](pisaos.getProofLevel(pisaos.toplevel)))
+    initial_toplevel_state_listbuffer += Tuple5(pisaos.toplevel, pisaos.proof_level(pisaos.toplevel).retrieveNow, theorem_name, 0, ListBuffer[Int](pisaos.getProofLevel(pisaos.toplevel)))
     accumulative_logprob_toplevel_pq += Tuple2(0, initial_toplevel_state_listbuffer)
 
     var trials = 0
@@ -389,7 +389,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         child_proof_level,
                         proof_till_now + " \n " + proof_command.trim,
                         proof_length_till_now + 1,
-                        pisaos.getProofLevel(child_proof_level)
+                        pisaos.getProofLevel(child_toplevel)
                       )
                     )
                     val after_sorry : ToplevelState = pisaos.step("sorry", child_toplevel)
