@@ -72,11 +72,49 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     }
   }
 
-  def get_last_k_from_string(proof_string: String) : String = {
-    proof_string.split("\\\\n").takeRight(last_k).map(_.trim).mkString("\\\\n")
+  def extract_needed_steps(proof_string: String, proof_levels: ListBuffer[Int]) : String = {
+    val proof_steps : List[String] = proof_string.split("\\\\n").map(_.trim)
+    assert (proof_steps.length == proof_levels.length)
+    val indices: List[Int] = extract_needed(proof_steps, proof_steps.length-1, proof_levels)
+    indices.map(proof_steps).mkString(" \\\\n ")
   }
 
-  def get_request_string(proof_string: String, state_string: String, initial_step : Boolean = false) : String = {
+  def extract_siblings(proof_steps: List[String], current_step_index: Int, proof_levels: List[Int]) : (List[Int], Int) = {
+    var sibling_indices: ListBuffer[Int] = new ListBuffer[Int]
+    val current_proof_level: Int = proof_levels(current_step_index)
+    var search_index: Int = current_step_index - 1
+    while (search_index >= 0) {
+      if (proof_levels(search_index) > current_proof_level) {}
+      else if (proof_levels(search_index) == current_proof_level) {
+        search_index +=: sibling_indices
+      } else if (proof_levels(search_index) < current_proof_level) {
+        return (sibling_indices.toList, search_index)
+      }
+      search_index -= 1
+    }
+    return (List[Int](), -1)
+  }
+
+  def extract_needed(proof_steps: List[String], current_step_index: Int, proof_levels: List[Int]) : List[Int] = {
+    val (sibling_indices: List[Int], search_index: Int) = extract_siblings(proof_steps, current_step_index, proof_levels)
+    
+    if (search_index < 0) {
+      sibling_indices
+    } else if (search_index > 0) {
+      extract_needed(proof_steps, search_index, proof_levels) + List[Int](search_index) + sibling_indices
+    } else if (search_index == 0) {
+      List[Int](search_index) + sibling_indices
+    } else {
+      List[Int](-1)
+    }
+   }
+
+
+  def get_last_k_from_string(proof_string: String) : String = {
+    proof_string.split("\\\\n").takeRight(last_k).map(_.trim).mkString(" \\\\n ")
+  }
+
+  def get_request_string(proof_string: String, state_string: String, initial_step : Boolean = false, proof_levels: List[Int] = List[Int]()) : String = {
     if (t5) {
       s"""curl 
           |--header "Content-Type: application/json" 
@@ -91,6 +129,16 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
          |--header "Content-Type: application/json"
          |--request POST
          |--data '{"context":"<ISA_LAST_$last_k> $last_k_string <ISA_OBS>""".stripMargin + " " + state_string + " " +
+         s"""Cambridge", "temp": $temperature, "gen_tokens": $max_tokens, "n": $search_width, "top_p": 1.0}'
+           |http://localhost:5000/complete
+           |""".stripMargin
+    }
+    else if (needed) {
+      val needed_string: String = extract_needed_steps(proof_string, proof_levels)
+      s"""curl
+         |--header "Content-Type: application/json"
+         |--request POST
+         |--data '{"context":"<ISA_NDS> $needed_string <ISA_OBS>""".stripMargin + " " + state_string + " " +
          s"""Cambridge", "temp": $temperature, "gen_tokens": $max_tokens, "n": $search_width, "top_p": 1.0}'
            |http://localhost:5000/complete
            |""".stripMargin
