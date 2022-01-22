@@ -21,7 +21,7 @@ import de.unruh.isabelle.pure.Implicits._
 class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false, use_state_first: Boolean = false,
                 debug_mode: Boolean = true, search_width : Int = 8, maximum_queue_length : Int = 16,
                  temperature : Double = 0.8, max_tokens : Int = 64, max_trials : Int = 200, timeout : Int = 240000,
-                 dump_path : String = "", t5 : Boolean = false, greedy : Boolean = false) {
+                 dump_path : String = "", t5 : Boolean = false, greedy : Boolean = false, last_k : Int = 0, needed : Boolean = false) {
   implicit val formats : DefaultFormats = DefaultFormats
   implicit val ec: ExecutionContext = ExecutionContext.global
   val firstOrd : Ordering[(Double, ListBuffer[(ToplevelState, Int, String, Int)])] =
@@ -44,6 +44,38 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     )
   }
 
+  def extract_proof_string_from_proof_till_now(proof_till_now: String) : String = {
+    proof_till_now.split("<conj_sep>").last.trim
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replaceAll("'", raw"""\\u0027""")
+            .replace("\n", "\\\\n")
+  }
+
+  def extract_state_string(parent_toplevel_state : ToplevelState) : String = {
+    var raw_state_string = ""
+    var future_function : Future[Unit] = Future.apply {
+        raw_state_string = pisaos.getStateString(parent_toplevel_state)
+    }
+    Await.result(future_function, Duration(5000, "millis"))
+    if (use_conjecture) {
+        raw_state_string.replace(
+        "\n", " \\n ").replaceAll(" +", " ").trim.replace(
+        "\\", "\\\\").replace("\"", "\\\"").replaceAll(
+        "'", raw"""\\u0027""")
+    } else {
+    process_string(raw_state_string)
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\n", "\\\\n")
+        .replaceAll("'", raw"""\\u0027""")
+    }
+  }
+
+  def get_last_k_from_string(proof_string: String) : String = {
+    proof_string.split("\\\\n").takeRight(last_k).mkString("\\\\n")
+  }
+
   def get_request_string(proof_string: String, state_string: String, initial_step : Boolean = false) : String = {
     if (t5) {
       s"""curl 
@@ -52,7 +84,18 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
           |--data '{"context": """".stripMargin + state_string + 
           s"""", "n": $search_width}'
           |http://localhost:5000/complete""".stripMargin
-    } else
+    }
+    else if (last_k > 0) {
+      val last_k_string = get_last_k_from_string(proof_string)
+      s"""curl
+         |--header "Content-Type: application/json"
+         |--request POST
+         |--data '{"context":"<ISA_LAST_$last_k> $last_k_string <ISA_OBS>""".stripMargin + " " + state_string + " " +
+         s"""Cambridge", "temp": $temperature, "gen_tokens": $max_tokens, "n": $search_width, "top_p": 1.0}'
+           |http://localhost:5000/complete
+           |""".stripMargin
+    }
+    else {
       s"""curl
          |--header "Content-Type: application/json"
          |--request POST
@@ -60,6 +103,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
          s"""Cambridge", "temp": $temperature, "gen_tokens": $max_tokens, "n": $search_width, "top_p": 1.0}'
            |http://localhost:5000/complete
            |""".stripMargin
+    }
   }
 
   def process_string(input_string: String) : String =
@@ -119,34 +163,6 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 //    }
 //    logprobs_buffer.toList
 //  }
-
-  def extract_proof_string_from_proof_till_now(proof_till_now: String) : String = {
-    proof_till_now.split("<conj_sep>").last.trim
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replaceAll("'", raw"""\\u0027""")
-            .replace("\n", "\\\\n")
-  }
-
-  def extract_state_string(parent_toplevel_state : ToplevelState) : String = {
-    var raw_state_string = ""
-    var future_function : Future[Unit] = Future.apply {
-        raw_state_string = pisaos.getStateString(parent_toplevel_state)
-    }
-    Await.result(future_function, Duration(5000, "millis"))
-    if (use_conjecture) {
-        raw_state_string.replace(
-        "\n", " \\n ").replaceAll(" +", " ").trim.replace(
-        "\\", "\\\\").replace("\"", "\\\"").replaceAll(
-        "'", raw"""\\u0027""")
-    } else {
-    process_string(raw_state_string)
-        .replace("\\", "\\\\")
-        .replace("\"", "\\\"")
-        .replace("\n", "\\\\n")
-        .replaceAll("'", raw"""\\u0027""")
-    }
-  }
 
   def coordinate_and_make_texts_and_logprobs_distinct(texts: List[String], logprobs: List[Double])
       : (List[(String, Double)]) = {
@@ -468,14 +484,10 @@ object TPUHPSearch {
     val max_tokens : Int = args(8).toInt
     val max_trials : Int = args(9).toInt
     val timeout : Int = args(10).toInt
-    val t5 : Boolean = {
-      if (args.length == 11) false
-      else args(11).toBoolean
-    }
-    val greedy : Boolean = {
-      if (args.length == 12) false
-      else args(12).toBoolean
-    }
+    val t5 : Boolean = args(11).toBoolean
+    val greedy : Boolean = args(12).toBoolean
+    val last_k : Int = args(13).toInt
+    val needed : Boolean = args(14).toBoolean
 
     // val json = parse(Source.fromFile("20_calibration_names.json").mkString).children
     val json = parse(Source.fromFile(args(0)).mkString).children
@@ -490,7 +502,7 @@ object TPUHPSearch {
       use_state_first = use_state_first, debug_mode = debug_mode,
       search_width = search_width, maximum_queue_length = maximum_queue_length, temperature = temperature,
       max_tokens = max_tokens, max_trials = max_trials, timeout = timeout,
-      dump_path = dump_path, t5=t5, greedy=greedy
+      dump_path = dump_path, t5=t5, greedy=greedy, last_k=last_k, needed=needed
     )
     var result : (Int, String, String, Int, Map[Int, String]) = null
     for (element <- json) {
