@@ -426,7 +426,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         toplevel_state_and_proof_level_tuple._2,
                         toplevel_state_and_proof_level_tuple._3,
                         toplevel_state_and_proof_level_tuple._4,
-                        toplevel_state_and_proof_level_tuple._5
+                        toplevel_state_and_proof_level_tuple._5.clone.map(_.clone)
                       )
                     )
                   }
@@ -473,20 +473,22 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                           first_element._2, 
                           proof_till_now + " \n " + proof_command.trim + " <conj_sep> " + first_element._3,
                           proof_length_till_now+1+first_element._4, 
-                          first_element._5.addOne(pisaos.getProofLevel(first_element._1))
+                          first_element._5
                         )
                       )
                     }
                   }
-                  else child_toplevel_state_proof_level_listbuffer.prepend(
-                    (
-                      child_toplevel, 
-                      parent_toplevel_proof_level, 
-                      proof_till_now + " \n " + proof_command.trim, 
-                      proof_length_till_now + 1, 
-                      proof_levels_till_now.addOne(pisaos.getProofLevel(child_toplevel))
+                  else {
+                    child_toplevel_state_proof_level_listbuffer.prepend(
+                      (
+                        child_toplevel, 
+                        parent_toplevel_proof_level, 
+                        proof_till_now + " \n " + proof_command.trim, 
+                        proof_length_till_now + 1, 
+                        proof_levels_till_now.clone.map(_.clone).addOne(pisaos.getProofLevel(child_toplevel))
+                      )
                     )
-                  )
+                  }
                   
 
                   if (child_toplevel_state_proof_level_listbuffer.isEmpty) {
