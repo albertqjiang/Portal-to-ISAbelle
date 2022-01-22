@@ -271,9 +271,9 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     var successful_proof_length : Int = -1
     var successful_proof_script : String = ""
     var accumulative_logprob_toplevel_pq =
-      new mutable.PriorityQueue[(Double, ListBuffer[(ToplevelState, Int, String, Int)])]()(firstOrd)
-    val initial_toplevel_state_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int)]
-    initial_toplevel_state_listbuffer += Tuple4(pisaos.toplevel, pisaos.proof_level(pisaos.toplevel).retrieveNow, theorem_name, 0)
+      new mutable.PriorityQueue[(Double, ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])])]()(firstOrd)
+    val initial_toplevel_state_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])]
+    initial_toplevel_state_listbuffer += Tuple5(pisaos.toplevel, pisaos.proof_level(pisaos.toplevel).retrieveNow, theorem_name, 0, new ListBuffer[Int](pisaos.getProofLevel(pisaos.toplevel)))
     accumulative_logprob_toplevel_pq += Tuple2(0, initial_toplevel_state_listbuffer)
 
     var trials = 0
@@ -368,7 +368,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                   // If everything works to this point, copy the
                   // parent (toplevel, proof_level, proof until this step, proof length until now) list to the child one
                   // Change the first element to the child one
-                  val child_toplevel_state_proof_level_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int)]
+                  val child_toplevel_state_proof_level_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])]
                   for (i <- List.range(1, parent_toplevel_state_proof_level_list.length)) {
                     val toplevel_state_and_proof_level_tuple = parent_toplevel_state_proof_level_list(i)
                     child_toplevel_state_proof_level_listbuffer.append(
@@ -376,7 +376,8 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         ToplevelState.instantiate(toplevel_state_and_proof_level_tuple._1.mlValue),
                         toplevel_state_and_proof_level_tuple._2,
                         toplevel_state_and_proof_level_tuple._3,
-                        toplevel_state_and_proof_level_tuple._4
+                        toplevel_state_and_proof_level_tuple._4,
+                        toplevel_state_and_proof_level_tuple._5
                       )
                     )
                   }
@@ -387,15 +388,18 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         ToplevelState.instantiate(child_toplevel.mlValue),
                         child_proof_level,
                         proof_till_now + " \n " + proof_command.trim,
-                        proof_length_till_now + 1
+                        proof_length_till_now + 1,
+                        pisaos.getProofLevel(child_proof_level)
                       )
                     )
+                    val after_sorry : ToplevelState = pisaos.step("sorry", child_toplevel)
                     child_toplevel_state_proof_level_listbuffer.prepend(
                       (
-                        pisaos.step("sorry", child_toplevel),
+                        after_sorry,
                         parent_toplevel_proof_level,
                         proof_till_now + " \n " + proof_command.trim + " sorry",
-                        proof_length_till_now + 1
+                        proof_length_till_now + 1,
+                        pisaos.getProofLevel(after_sorry)
                       )
                     )
                   }
@@ -415,11 +419,25 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                       val first_element = child_toplevel_state_proof_level_listbuffer.head
                       child_toplevel_state_proof_level_listbuffer.remove(0)
                       child_toplevel_state_proof_level_listbuffer.prepend(
-                        (first_element._1, first_element._2, proof_till_now + " \n " + proof_command.trim + " <conj_sep> " + first_element._3, proof_length_till_now+1+first_element._4)
+                        (
+                          first_element._1, 
+                          first_element._2, 
+                          proof_till_now + " \n " + proof_command.trim + " <conj_sep> " + first_element._3,
+                          proof_length_till_now+1+first_element._4, 
+                          pisaos.getProofLevel(first_element._1)
+                        )
                       )
                     }
                   }
-                  else child_toplevel_state_proof_level_listbuffer.prepend((child_toplevel, parent_toplevel_proof_level, proof_till_now + " \n " + proof_command.trim, proof_length_till_now + 1))
+                  else child_toplevel_state_proof_level_listbuffer.prepend(
+                    (
+                      child_toplevel, 
+                      parent_toplevel_proof_level, 
+                      proof_till_now + " \n " + proof_command.trim, 
+                      proof_length_till_now + 1, 
+                      pisaos.getProofLevel(child_toplevel)
+                    )
+                  )
                   
 
                   if (child_toplevel_state_proof_level_listbuffer.isEmpty) {
