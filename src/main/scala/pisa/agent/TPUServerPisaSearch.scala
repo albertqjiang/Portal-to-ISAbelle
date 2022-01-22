@@ -92,7 +92,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
       }
       search_index -= 1
     }
-    return (List[Int](), -1)
+    return (sibling_indices.toList, search_index)
   }
 
   def extract_needed(proof_steps: List[String], current_step_index: Int, proof_levels: List[Int]) : List[Int] = {
