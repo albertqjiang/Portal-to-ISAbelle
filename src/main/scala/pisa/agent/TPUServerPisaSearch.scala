@@ -103,7 +103,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     } else if (search_index > 0) {
       extract_needed(proof_steps, search_index, proof_levels) ++ List[Int](search_index) ++ sibling_indices
     } else if (search_index == 0) {
-      List[Int](search_index) ++ sibling_indices
+      List[Int](search_index) ++ List[Int](search_index) ++ sibling_indices
     } else {
       List[Int](-1)
     }
