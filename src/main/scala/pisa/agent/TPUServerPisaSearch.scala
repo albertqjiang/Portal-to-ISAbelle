@@ -75,7 +75,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
   def extract_needed_steps(proof_string: String, proof_levels: List[Int]) : String = {
     val proof_steps : List[String] = proof_string.split("\\\\n").toList.map(_.trim)
     assert (proof_steps.length == proof_levels.length)
-    val indices: List[Int] = extract_needed(proof_steps, proof_steps.length, proof_levels)
+    val indices: List[Int] = extract_needed(proof_steps, proof_steps.length-1, proof_levels)
     indices.map(proof_steps).mkString(" \\\\n ")
   }
 
@@ -99,7 +99,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     val (sibling_indices: List[Int], search_index: Int) = extract_siblings(proof_steps, current_step_index, proof_levels)
     
     if (search_index < 0) {
-      sibling_indices
+      sibling_indices ++ List[Int](current_step_index)
     } else if (search_index > 0) {
       extract_needed(proof_steps, search_index, proof_levels) ++ List[Int](search_index) ++ sibling_indices
     } else if (search_index == 0) {
