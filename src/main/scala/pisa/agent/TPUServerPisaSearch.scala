@@ -358,8 +358,8 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
           val before_query = System.nanoTime
           var request_string = {
-            if (t5) get_request_string(proof_string.takeRight(500), state_string.takeRight(500), initial_step = initial_step, proof_levels=proof_levels_till_now) 
-            else get_request_string(proof_string, state_string, initial_step = initial_step, proof_levels=proof_levels_till_now)
+            if (t5) get_request_string(proof_string.takeRight(500), state_string.takeRight(500), initial_step = initial_step, proof_levels=proof_levels_till_now.toList) 
+            else get_request_string(proof_string, state_string, initial_step = initial_step, proof_levels=proof_levels_till_now.toList)
           }
           println(request_string)
           var returned_text = request_string.!!.trim
@@ -367,7 +367,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
           breakable {
             if (returned_text.contains("error")) {
-              request_string = get_request_string(proof_string.takeRight(6000), state_string, proof_levels=proof_levels_till_now)
+              request_string = get_request_string(proof_string.takeRight(6000), state_string, proof_levels=proof_levels_till_now.toList)
               returned_text = request_string.!!.trim
               if (returned_text.contains("error")) break
               else {}
