@@ -24,8 +24,8 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                  dump_path : String = "", t5 : Boolean = false, greedy : Boolean = false, last_k : Int = 0, needed : Boolean = false) {
   implicit val formats : DefaultFormats = DefaultFormats
   implicit val ec: ExecutionContext = ExecutionContext.global
-  val firstOrd : Ordering[(Double, ListBuffer[(ToplevelState, Int, String, Int)])] =
-    Ordering.by { t: (Double, ListBuffer[(ToplevelState, Int, String, Int)]) => t._1 }
+  val firstOrd : Ordering[(Double, ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])])] =
+    Ordering.by { t: (Double, ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])]) => t._1 }
 
   var pisaos : PisaOS = null
   var theorem_name : String = null
