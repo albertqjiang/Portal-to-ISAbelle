@@ -73,7 +73,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
   }
 
   def extract_needed_steps(proof_string: String, proof_levels: List[Int]) : String = {
-    val proof_steps : List[String] = proof_string.split("\\\\n").toList.map(_.trim)
+    val proof_steps : List[String] = proof_string.split("\\\\\\\\n").toList.map(_.trim)
     assert (proof_steps.length == proof_levels.length)
     val indices: List[Int] = extract_needed(proof_steps, proof_steps.length-1, proof_levels)
     indices.map(proof_steps).mkString(" \\\\n ")
@@ -111,7 +111,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
 
   def get_last_k_from_string(proof_string: String) : String = {
-    proof_string.split("\\\\n").takeRight(last_k).map(_.trim).mkString(" \\\\n ")
+    proof_string.split("\\\\\\\\n").takeRight(last_k).map(_.trim).mkString(" \\\\n ")
   }
 
   def get_request_string(proof_string: String, state_string: String, initial_step : Boolean = false, proof_levels: List[Int] = List[Int]()) : String = {
