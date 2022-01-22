@@ -293,6 +293,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
           val parent_toplevel_proof_level = parent_toplevel_state_proof_level_list.head._2
           val proof_till_now = parent_toplevel_state_proof_level_list.head._3
           val proof_length_till_now = parent_toplevel_state_proof_level_list.head._4
+          val proof_levels_till_now = parent_toplevel_state_proof_level_list.head._5
 
           val initial_step = {
             if (proof_length_till_now == 0) true
@@ -389,7 +390,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         child_proof_level,
                         proof_till_now + " \n " + proof_command.trim,
                         proof_length_till_now + 1,
-                        pisaos.getProofLevel(child_toplevel)
+                        proof_levels_till_now.addOne(pisaos.getProofLevel(child_toplevel))
                       )
                     )
                     val after_sorry : ToplevelState = pisaos.step("sorry", child_toplevel)
@@ -399,7 +400,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         parent_toplevel_proof_level,
                         proof_till_now + " \n " + proof_command.trim + " sorry",
                         proof_length_till_now + 1,
-                        pisaos.getProofLevel(after_sorry)
+                        proof_levels_till_now.addOne(pisaos.getProofLevel(after_sorry))
                       )
                     )
                   }
@@ -424,7 +425,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                           first_element._2, 
                           proof_till_now + " \n " + proof_command.trim + " <conj_sep> " + first_element._3,
                           proof_length_till_now+1+first_element._4, 
-                          pisaos.getProofLevel(first_element._1)
+                          first_element._5.addOne(pisaos.getProofLevel(first_element._1))
                         )
                       )
                     }
@@ -435,7 +436,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                       parent_toplevel_proof_level, 
                       proof_till_now + " \n " + proof_command.trim, 
                       proof_length_till_now + 1, 
-                      pisaos.getProofLevel(child_toplevel)
+                      proof_levels_till_now.addOne(pisaos.getProofLevel(child_toplevel))
                     )
                   )
                   
