@@ -73,7 +73,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
   }
 
   def get_last_k_from_string(proof_string: String) : String = {
-    proof_string.split("\\\\n").takeRight(last_k).map(x > x.trim).mkString("\\\\n")
+    proof_string.split("\\\\n").takeRight(last_k).map(_.trim).mkString("\\\\n")
   }
 
   def get_request_string(proof_string: String, state_string: String, initial_step : Boolean = false) : String = {
