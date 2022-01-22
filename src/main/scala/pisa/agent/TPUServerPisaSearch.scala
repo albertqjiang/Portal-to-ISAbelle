@@ -426,7 +426,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         toplevel_state_and_proof_level_tuple._2,
                         toplevel_state_and_proof_level_tuple._3,
                         toplevel_state_and_proof_level_tuple._4,
-                        toplevel_state_and_proof_level_tuple._5.clone.map(_.clone)
+                        toplevel_state_and_proof_level_tuple._5.clone()
                       )
                     )
                   }
@@ -485,7 +485,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         parent_toplevel_proof_level, 
                         proof_till_now + " \n " + proof_command.trim, 
                         proof_length_till_now + 1, 
-                        proof_levels_till_now.clone.map(_.clone).addOne(pisaos.getProofLevel(child_toplevel))
+                        proof_levels_till_now.clone().addOne(pisaos.getProofLevel(child_toplevel))
                       )
                     )
                   }
