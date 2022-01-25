@@ -402,7 +402,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
               val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
               println(proof_command)
               // We don't want the agent to cheat
-              if (proof_command.contains("sorry") || proof_command.contains("oops")) {}
+              if (proof_command.contains("sorry") || proof_command.contains("oops") || proof_command.trim.isEmpty) {}
               else {
                 //            println(proof_command)
                 //            println(candidate_commands_and_logprobs(i)._2)
