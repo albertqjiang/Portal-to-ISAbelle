@@ -21,11 +21,11 @@ import de.unruh.isabelle.pure.Implicits._
 class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false, use_state_first: Boolean = false,
                 debug_mode: Boolean = true, search_width : Int = 8, maximum_queue_length : Int = 16,
                  temperature : Double = 0.8, max_tokens : Int = 64, max_trials : Int = 200, timeout : Int = 240000,
-                 dump_path : String = "", t5 : Boolean = false, greedy : Boolean = false) {
+                 dump_path : String = "", t5 : Boolean = false, greedy : Boolean = false, last_k : Int = 0, needed : Boolean = false) {
   implicit val formats : DefaultFormats = DefaultFormats
   implicit val ec: ExecutionContext = ExecutionContext.global
-  val firstOrd : Ordering[(Double, ListBuffer[(ToplevelState, Int, String, Int)])] =
-    Ordering.by { t: (Double, ListBuffer[(ToplevelState, Int, String, Int)]) => t._1 }
+  val firstOrd : Ordering[(Double, ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])])] =
+    Ordering.by { t: (Double, ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])]) => t._1 }
 
   var pisaos : PisaOS = null
   var theorem_name : String = null
@@ -44,7 +44,77 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     )
   }
 
-  def get_request_string(proof_string: String, state_string: String, initial_step : Boolean = false) : String = {
+  def extract_proof_string_from_proof_till_now(proof_till_now: String) : String = {
+    proof_till_now.split("<conj_sep>").last.trim
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replaceAll("'", raw"""\\u0027""")
+            .replace("\n", "\\\\n")
+  }
+
+  def extract_state_string(parent_toplevel_state : ToplevelState) : String = {
+    var raw_state_string = ""
+    var future_function : Future[Unit] = Future.apply {
+        raw_state_string = pisaos.getStateString(parent_toplevel_state)
+    }
+    Await.result(future_function, Duration(5000, "millis"))
+    if (use_conjecture) {
+        raw_state_string.replace(
+        "\n", " \\n ").replaceAll(" +", " ").trim.replace(
+        "\\", "\\\\").replace("\"", "\\\"").replaceAll(
+        "'", raw"""\\u0027""")
+    } else {
+    process_string(raw_state_string)
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\n", "\\\\n")
+        .replaceAll("'", raw"""\\u0027""")
+    }
+  }
+
+  def extract_needed_steps(proof_string: String, proof_levels: List[Int]) : String = {
+    val proof_steps : List[String] = proof_string.split("\\\\\\\\n").toList.map(_.trim)
+    assert (proof_steps.length == proof_levels.length)
+    val indices: List[Int] = extract_needed(proof_steps, proof_steps.length-1, proof_levels)
+    indices.map(proof_steps).mkString(" \\\\n ")
+  }
+
+  def extract_siblings(proof_steps: List[String], current_step_index: Int, proof_levels: List[Int]) : (List[Int], Int) = {
+    var sibling_indices: ListBuffer[Int] = new ListBuffer[Int]
+    val current_proof_level: Int = proof_levels(current_step_index)
+    var search_index: Int = current_step_index - 1
+    while (search_index >= 0) {
+      if (proof_levels(search_index) > current_proof_level) {}
+      else if (proof_levels(search_index) == current_proof_level) {
+        search_index +=: sibling_indices
+      } else if (proof_levels(search_index) < current_proof_level) {
+        return (sibling_indices.toList, search_index)
+      }
+      search_index -= 1
+    }
+    return (sibling_indices.toList, search_index)
+  }
+
+  def extract_needed(proof_steps: List[String], current_step_index: Int, proof_levels: List[Int]) : List[Int] = {
+    val (sibling_indices: List[Int], search_index: Int) = extract_siblings(proof_steps, current_step_index, proof_levels)
+    
+    if (search_index < 0) {
+      sibling_indices ++ List[Int](current_step_index)
+    } else if (search_index > 0) {
+      extract_needed(proof_steps, search_index, proof_levels) ++ List[Int](search_index) ++ sibling_indices
+    } else if (search_index == 0) {
+      List[Int](search_index) ++ List[Int](search_index) ++ sibling_indices
+    } else {
+      List[Int](-1)
+    }
+   }
+
+
+  def get_last_k_from_string(proof_string: String) : String = {
+    proof_string.split("\\\\\\\\n").takeRight(last_k).map(_.trim).mkString(" \\\\n ")
+  }
+
+  def get_request_string(proof_string: String, state_string: String, initial_step : Boolean = false, proof_levels: List[Int] = List[Int]()) : String = {
     if (t5) {
       s"""curl 
           |--header "Content-Type: application/json" 
@@ -52,7 +122,28 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
           |--data '{"context": """".stripMargin + state_string + 
           s"""", "n": $search_width}'
           |http://localhost:5000/complete""".stripMargin
-    } else
+    }
+    else if (last_k > 0) {
+      val last_k_string = get_last_k_from_string(proof_string)
+      s"""curl
+         |--header "Content-Type: application/json"
+         |--request POST
+         |--data '{"context":"<ISA_LAST_$last_k> $last_k_string <ISA_OBS>""".stripMargin + " " + state_string + " " +
+         s"""Cambridge", "temp": $temperature, "gen_tokens": $max_tokens, "n": $search_width, "top_p": 1.0}'
+           |http://localhost:5000/complete
+           |""".stripMargin
+    }
+    else if (needed) {
+      val needed_string: String = extract_needed_steps(proof_string, proof_levels.toList)
+      s"""curl
+         |--header "Content-Type: application/json"
+         |--request POST
+         |--data '{"context":"<ISA_NDS> $needed_string <ISA_OBS>""".stripMargin + " " + state_string + " " +
+         s"""Cambridge", "temp": $temperature, "gen_tokens": $max_tokens, "n": $search_width, "top_p": 1.0}'
+           |http://localhost:5000/complete
+           |""".stripMargin
+    }
+    else {
       s"""curl
          |--header "Content-Type: application/json"
          |--request POST
@@ -60,6 +151,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
          s"""Cambridge", "temp": $temperature, "gen_tokens": $max_tokens, "n": $search_width, "top_p": 1.0}'
            |http://localhost:5000/complete
            |""".stripMargin
+    }
   }
 
   def process_string(input_string: String) : String =
@@ -119,34 +211,6 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 //    }
 //    logprobs_buffer.toList
 //  }
-
-  def extract_proof_string_from_proof_till_now(proof_till_now: String) : String = {
-    proof_till_now.split("<conj_sep>").last.trim
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replaceAll("'", raw"""\\u0027""")
-            .replace("\n", "\\\\n")
-  }
-
-  def extract_state_string(parent_toplevel_state : ToplevelState) : String = {
-    var raw_state_string = ""
-    var future_function : Future[Unit] = Future.apply {
-        raw_state_string = pisaos.getStateString(parent_toplevel_state)
-    }
-    Await.result(future_function, Duration(5000, "millis"))
-    if (use_conjecture) {
-        raw_state_string.replace(
-        "\n", " \\n ").replaceAll(" +", " ").trim.replace(
-        "\\", "\\\\").replace("\"", "\\\"").replaceAll(
-        "'", raw"""\\u0027""")
-    } else {
-    process_string(raw_state_string)
-        .replace("\\", "\\\\")
-        .replace("\"", "\\\"")
-        .replace("\n", "\\\\n")
-        .replaceAll("'", raw"""\\u0027""")
-    }
-  }
 
   def coordinate_and_make_texts_and_logprobs_distinct(texts: List[String], logprobs: List[Double])
       : (List[(String, Double)]) = {
@@ -255,9 +319,9 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     var successful_proof_length : Int = -1
     var successful_proof_script : String = ""
     var accumulative_logprob_toplevel_pq =
-      new mutable.PriorityQueue[(Double, ListBuffer[(ToplevelState, Int, String, Int)])]()(firstOrd)
-    val initial_toplevel_state_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int)]
-    initial_toplevel_state_listbuffer += Tuple4(pisaos.toplevel, pisaos.proof_level(pisaos.toplevel).retrieveNow, theorem_name, 0)
+      new mutable.PriorityQueue[(Double, ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])])]()(firstOrd)
+    val initial_toplevel_state_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])]
+    initial_toplevel_state_listbuffer += Tuple5(pisaos.toplevel, pisaos.proof_level(pisaos.toplevel).retrieveNow, theorem_name, 0, ListBuffer[Int](pisaos.getProofLevel(pisaos.toplevel)))
     accumulative_logprob_toplevel_pq += Tuple2(0, initial_toplevel_state_listbuffer)
 
     var trials = 0
@@ -277,6 +341,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
           val parent_toplevel_proof_level = parent_toplevel_state_proof_level_list.head._2
           val proof_till_now = parent_toplevel_state_proof_level_list.head._3
           val proof_length_till_now = parent_toplevel_state_proof_level_list.head._4
+          val proof_levels_till_now = parent_toplevel_state_proof_level_list.head._5
 
           val initial_step = {
             if (proof_length_till_now == 0) true
@@ -293,8 +358,8 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
           val before_query = System.nanoTime
           var request_string = {
-            if (t5) get_request_string(proof_string.takeRight(500), state_string.takeRight(500), initial_step = initial_step) 
-            else get_request_string(proof_string, state_string, initial_step = initial_step)
+            if (t5) get_request_string(proof_string.takeRight(500), state_string.takeRight(500), initial_step = initial_step, proof_levels=proof_levels_till_now.toList) 
+            else get_request_string(proof_string, state_string, initial_step = initial_step, proof_levels=proof_levels_till_now.toList)
           }
           println(request_string)
           var returned_text = request_string.!!.trim
@@ -302,7 +367,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
           breakable {
             if (returned_text.contains("error")) {
-              request_string = get_request_string(proof_string.takeRight(6000), state_string)
+              request_string = get_request_string(proof_string.takeRight(6000), state_string, proof_levels=proof_levels_till_now.toList)
               returned_text = request_string.!!.trim
               if (returned_text.contains("error")) break
               else {}
@@ -337,7 +402,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
               val proof_command = process_string(candidate_commands_and_logprobs(i)._1)
               println(proof_command)
               // We don't want the agent to cheat
-              if (proof_command.contains("sorry") || proof_command.contains("oops")) {}
+              if (proof_command.contains("sorry") || proof_command.contains("oops") || proof_command.trim.isEmpty) {}
               else {
                 //            println(proof_command)
                 //            println(candidate_commands_and_logprobs(i)._2)
@@ -352,7 +417,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                   // If everything works to this point, copy the
                   // parent (toplevel, proof_level, proof until this step, proof length until now) list to the child one
                   // Change the first element to the child one
-                  val child_toplevel_state_proof_level_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int)]
+                  val child_toplevel_state_proof_level_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])]
                   for (i <- List.range(1, parent_toplevel_state_proof_level_list.length)) {
                     val toplevel_state_and_proof_level_tuple = parent_toplevel_state_proof_level_list(i)
                     child_toplevel_state_proof_level_listbuffer.append(
@@ -360,7 +425,8 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         ToplevelState.instantiate(toplevel_state_and_proof_level_tuple._1.mlValue),
                         toplevel_state_and_proof_level_tuple._2,
                         toplevel_state_and_proof_level_tuple._3,
-                        toplevel_state_and_proof_level_tuple._4
+                        toplevel_state_and_proof_level_tuple._4,
+                        toplevel_state_and_proof_level_tuple._5.clone()
                       )
                     )
                   }
@@ -371,15 +437,18 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         ToplevelState.instantiate(child_toplevel.mlValue),
                         child_proof_level,
                         proof_till_now + " \n " + proof_command.trim,
-                        proof_length_till_now + 1
+                        proof_length_till_now + 1,
+                        proof_levels_till_now.addOne(pisaos.getProofLevel(child_toplevel))
                       )
                     )
+                    val after_sorry : ToplevelState = pisaos.step("sorry", child_toplevel)
                     child_toplevel_state_proof_level_listbuffer.prepend(
                       (
-                        pisaos.step("sorry", child_toplevel),
+                        after_sorry,
                         parent_toplevel_proof_level,
                         proof_till_now + " \n " + proof_command.trim + " sorry",
-                        proof_length_till_now + 1
+                        proof_length_till_now + 1,
+                        proof_levels_till_now.addOne(pisaos.getProofLevel(after_sorry))
                       )
                     )
                   }
@@ -399,11 +468,27 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                       val first_element = child_toplevel_state_proof_level_listbuffer.head
                       child_toplevel_state_proof_level_listbuffer.remove(0)
                       child_toplevel_state_proof_level_listbuffer.prepend(
-                        (first_element._1, first_element._2, proof_till_now + " \n " + proof_command.trim + " <conj_sep> " + first_element._3, proof_length_till_now+1+first_element._4)
+                        (
+                          first_element._1, 
+                          first_element._2, 
+                          proof_till_now + " \n " + proof_command.trim + " <conj_sep> " + first_element._3,
+                          proof_length_till_now+1+first_element._4, 
+                          first_element._5
+                        )
                       )
                     }
                   }
-                  else child_toplevel_state_proof_level_listbuffer.prepend((child_toplevel, parent_toplevel_proof_level, proof_till_now + " \n " + proof_command.trim, proof_length_till_now + 1))
+                  else {
+                    child_toplevel_state_proof_level_listbuffer.prepend(
+                      (
+                        child_toplevel, 
+                        parent_toplevel_proof_level, 
+                        proof_till_now + " \n " + proof_command.trim, 
+                        proof_length_till_now + 1, 
+                        proof_levels_till_now.clone().addOne(pisaos.getProofLevel(child_toplevel))
+                      )
+                    )
+                  }
                   
 
                   if (child_toplevel_state_proof_level_listbuffer.isEmpty) {
@@ -468,14 +553,10 @@ object TPUHPSearch {
     val max_tokens : Int = args(8).toInt
     val max_trials : Int = args(9).toInt
     val timeout : Int = args(10).toInt
-    val t5 : Boolean = {
-      if (args.length == 11) false
-      else args(11).toBoolean
-    }
-    val greedy : Boolean = {
-      if (args.length == 12) false
-      else args(12).toBoolean
-    }
+    val t5 : Boolean = args(11).toBoolean
+    val greedy : Boolean = args(12).toBoolean
+    val last_k : Int = args(13).toInt
+    val needed : Boolean = args(14).toBoolean
 
     // val json = parse(Source.fromFile("20_calibration_names.json").mkString).children
     val json = parse(Source.fromFile(args(0)).mkString).children
@@ -490,7 +571,7 @@ object TPUHPSearch {
       use_state_first = use_state_first, debug_mode = debug_mode,
       search_width = search_width, maximum_queue_length = maximum_queue_length, temperature = temperature,
       max_tokens = max_tokens, max_trials = max_trials, timeout = timeout,
-      dump_path = dump_path, t5=t5, greedy=greedy
+      dump_path = dump_path, t5=t5, greedy=greedy, last_k=last_k, needed=needed
     )
     var result : (Int, String, String, Int, Map[Int, String]) = null
     for (element <- json) {
