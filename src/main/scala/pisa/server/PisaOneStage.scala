@@ -36,6 +36,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       s"We have successfully initialised the Isabelle environment."))
   }
 
+  def deal_with_list_state() : String = pisaos.top_level_state_map.keys.mkString(" | ")
+  def deal_with_initialise() : String = {
+    pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
+    "Toplevel state 'default' is ready"
+  }
   def deal_with_get_state(toplevel_state_name: String) : String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) pisaos.getStateString(pisaos.retrieve_tls(toplevel_state_name))
     else "Didn't find top level state of given name"
@@ -75,7 +80,9 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   def isabelleCommand(isa_command: IsaCommand): ZIO[
     zio.ZEnv, Status, IsaState] = {
     var proof_state : String = {
-      if (isa_command.command.startsWith("<get state>")) {
+      if (isa_command.command.startsWith("<list states>")) deal_with_list_states()
+      else if (isa_command.command.startsWith("<initialise>")) deal_with_initialise()
+      else if (isa_command.command.startsWith("<get state>")) {
         val tls_name : String = isa_command.command.stripPrefix("<get state>").trim
         deal_with_get_state(tls_name)
       }
@@ -96,7 +103,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       else if (isa_command.command.startsWith("<proceed after>")){
         val true_command : String = isa_command.command.stripPrefix("<proceed after>").trim
         deal_with_proceed_after(true_command)
-      } 
+      }
       else if (isa_command.command.trim.startsWith("<clone>")){
         val old_name : String = isa_command.command.trim.split("<clone>")(1).trim
         val new_name : String = isa_command.command.trim.split("<clone>")(2).trim
