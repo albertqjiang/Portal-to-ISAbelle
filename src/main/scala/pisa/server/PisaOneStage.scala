@@ -47,13 +47,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   }
 
   def deal_with_is_finished(toplevel_state_name: String) : String = {
-    if (toplevel_state_name == "default") {
-      if (pisaos.getProofLevel == 0) "true"
-      else "false"
-    } else {
+    if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       if (pisaos.getProofLevel(pisaos.retrieve_tls(toplevel_state_name)) == 0) "true"
       else "false"
-    }
+    } else "Didn't find top level state of given name"
   }
 
   def deal_with_apply_to_tls(toplevel_state_name: String, action: String, new_name: String) : String = {
