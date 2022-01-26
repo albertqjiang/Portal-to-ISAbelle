@@ -73,6 +73,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     pisaos.clone_tls(old_name, new_name)
     "Successfully copied top level state named: " + new_name
   }
+  def deal_with_delete(toplevel_state_name: String): String = {
+    if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
+      pisaos.top_level_state_map - toplevel_state_name
+    } else "Didn't find top level state of given name"
+  }
 
   def isabelleCommand(isa_command: IsaCommand): ZIO[
     zio.ZEnv, Status, IsaState] = {
@@ -105,6 +110,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val old_name : String = isa_command.command.trim.split("<clone>")(1).trim
         val new_name : String = isa_command.command.trim.split("<clone>")(2).trim
         deal_with_clone(old_name, new_name)
+      }
+      else if (isa_command.command.trim.startsWith("<delete>")) {
+        val tls_name : String = isa_command.command.trim.stripPrefix("<delete>").trim
+        deal_with_delete(tls_name)
       }
       else if (isa_command.command == "exit") deal_with_exit(isa_command.command)
       else "Unrecognised operation."
