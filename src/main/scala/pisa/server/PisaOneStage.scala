@@ -36,7 +36,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       s"We have successfully initialised the Isabelle environment."))
   }
 
-  def deal_with_list_state() : String = pisaos.top_level_state_map.keys.mkString(" | ")
+  def deal_with_list_states() : String = pisaos.top_level_state_map.keys.mkString(" | ")
   def deal_with_initialise() : String = {
     pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
     "Toplevel state 'default' is ready"
