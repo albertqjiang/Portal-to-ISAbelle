@@ -155,6 +155,6 @@ def initialise_problem(env, problem_name):
 if __name__ == '__main__':
     env = initialise_env(8000, 
         working_directory="/home/qj213/afp-2021-10-22/thys/FunWithFunctions", 
-        isa_path="/home/qj213/Isabelle2021", 
+        isa_path="/Applications/Isabelle2021.app", 
         theory_file_path="/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy"
     )
