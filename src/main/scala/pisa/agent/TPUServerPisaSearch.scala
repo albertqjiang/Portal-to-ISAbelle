@@ -401,7 +401,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
             //      println("Length of the candidate commands: " + candidate_commands.length.toString)
             //        assert(candidate_commands.distinct.length == candidate_logprobs.distinct.length)
             // Create copies of the toplevel state for the search expansion
-            val parent_proof_level = pisaos.proof_level(parent_toplevel_state)
+            val parent_proof_level = pisaos.proof_level(parent_toplevel_state).retrieveNow
             val child_toplevel_state_list_buffer : ListBuffer[ToplevelState] = new ListBuffer[ToplevelState]
             for (_ <- List.range(0, candidate_commands_and_logprobs.length)) child_toplevel_state_list_buffer += ToplevelState.instantiate(parent_toplevel_state.mlValue)
             val child_toplevel_state_list = child_toplevel_state_list_buffer.toList
