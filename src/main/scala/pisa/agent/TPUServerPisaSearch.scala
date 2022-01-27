@@ -114,7 +114,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
 
   def extract_needed(proof_levels: List[Int], current_step_index: Int): List[Int] = {
     val (sibling_indices: List[Int], search_index: Int) = extract_siblings(proof_levels, current_step_index)
-    if (search_index == -50000) sibling_indices
+    if (search_index == -50000) List[Int](0)
     else if (search_index > 0) extract_needed(proof_levels, search_index) ++ List[Int](search_index) ++ sibling_indices
     else if (search_index == 0) List[Int](search_index) ++ sibling_indices
     // This shouldn't happen
