@@ -64,6 +64,12 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
 
    Note: this does not always work on different operating systems.
 
+6. **Extract the test theorems**
+   The universal test theorems contains 3000 theorems with their file paths and names. The first 600 of them are packaged as "quick" theorems if you have no patience testing all 3000 out.
+   ```shell
+   tar -xzf universal_test_theorems.tar.gz
+   ```
+
 ## Extract PISA dataset
    ### Archive of formal proofs
    Generate commands for extracting proofs.

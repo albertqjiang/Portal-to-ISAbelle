@@ -31,18 +31,7 @@ class IsaFlexEnv:
 
     def observation(self):
         return self.obs_string
-
-    # def is_finished(self, last_obs_string):
-    #     if not last_obs_string:
-    #         return False
-
-    #     # print(last_obs_string, self.obs_string)
-    #     # print("subgoal" in last_obs_string)
-    #     # print("subgoal" not in self.obs_string)
-    #     if "subgoal" in last_obs_string and "subgoal" not in self.obs_string:
-    #         return True
-    #     return False
-
+        
     def is_finished(self, name_of_tls):
         returned_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<is finished> {name_of_tls}")).state.strip()
         if returned_string.startswith("t"):
@@ -81,48 +70,49 @@ class IsaFlexEnv:
         return obs_string, self.reward(done), done, {}
 
     @func_set_timeout(20)
-    def step(self, action):
+    def post(self, action):
+        return self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
         # last_obs_string = self.obs_string
-        try:
-            self.obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
-        except Exception as e:
-            print("***Something went wrong***")
-            print(e)
+        # try:
+        #     self.obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
+        # except Exception as e:
+        #     print("***Something went wrong***")
+        #     print(e)
 
-        # done = self.is_finished(self.obs_string)
-        done = self.is_finished("default")
+        # # done = self.is_finished(self.obs_string)
+        # done = self.is_finished("default")
 
-        return self.obs_string, self.reward(done), done, {}
+        # return self.obs_string, self.reward(done), done, {}
 
-    def human_play(self):
-        done = False
-        while not done:
-            print(self.obs_string)
-            human_proof_line = input("Your tactic is my command: ")
-            if human_proof_line == "exit":
-                break
-            else:
-                obs, _, done, _ = self.step(human_proof_line)
-                print(obs)
-                print("=" * 50)
+    # def human_play(self):
+    #     done = False
+    #     while not done:
+    #         print(self.obs_string)
+    #         human_proof_line = input("Your tactic is my command: ")
+    #         if human_proof_line == "exit":
+    #             break
+    #         else:
+    #             obs, _, done, _ = self.step(human_proof_line)
+    #             print(obs)
+    #             print("=" * 50)
 
-    def clone_top_level_state(self, tls_name):
-        try:
-            message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<clone> {tls_name}")).state
-            print(message)
-            print(f"Cloned state called {tls_name}")
-        except Exception as e:
-            print("**Clone unsuccessful**")
-            print(e)
+    # def clone_top_level_state(self, tls_name):
+    #     try:
+    #         message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<clone> {tls_name}")).state
+    #         print(message)
+    #         print(f"Cloned state called {tls_name}")
+    #     except Exception as e:
+    #         print("**Clone unsuccessful**")
+    #         print(e)
 
-    def proceed_to_line(self, line_stirng, before_after):
-        assert before_after in ["before", "after"]
-        try:
-            message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<proceed {before_after}> {line_stirng}")).state
-            print(message)
-        except Exception as e:
-            print("Failure to proceed before line")
-            print(e)
+    # def proceed_to_line(self, line_stirng, before_after):
+    #     assert before_after in ["before", "after"]
+    #     try:
+    #         message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<proceed {before_after}> {line_stirng}")).state
+    #         print(message)
+    #     except Exception as e:
+    #         print("Failure to proceed before line")
+    #         print(e)
 
 
 def parsed_json_to_env_and_dict(path_to_json, afp_path, port=9000, isa_path="/Applications/Isabelle2020.app/Isabelle"):
@@ -155,6 +145,6 @@ def initialise_problem(env, problem_name):
 if __name__ == '__main__':
     env = initialise_env(8000, 
         working_directory="/home/qj213/afp-2021-10-22/thys/FunWithFunctions", 
-        isa_path="/home/qj213/Isabelle2021", 
+        isa_path="/Applications/Isabelle2021.app", 
         theory_file_path="/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy"
     )
