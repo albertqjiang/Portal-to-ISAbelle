@@ -75,7 +75,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   }
   def deal_with_delete(toplevel_state_name: String): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
-      pisaos.top_level_state_map - toplevel_state_name
+      pisaos.top_level_state_map -= toplevel_state_name
+      s"Successfully deleted state named: ${toplevel_state_name}"
     } else "Didn't find top level state of given name"
   }
 
