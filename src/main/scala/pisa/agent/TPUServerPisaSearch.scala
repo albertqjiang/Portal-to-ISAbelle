@@ -75,11 +75,14 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
   def extract_needed_steps(proof_string: String, proof_levels: List[Int]) : String = {
     val proof_steps : List[String] = proof_string.split("\\\\\\\\n").toList.map(_.trim)
     assert (proof_steps.length == proof_levels.length)
-    val indices: List[Int] = extract_needed(proof_steps, proof_steps.length-1, proof_levels)
+    val indices: List[Int] = extract_needed(proof_levels, proof_levels.length-1)
+    println(indices)
+    assert (indices.distinct.size == indices.size)
+    assert (indices == indices.sorted)
     indices.map(proof_steps).mkString(" \\\\n ")
   }
 
-  def extract_siblings(proof_steps: List[String], current_step_index: Int, proof_levels: List[Int]) : (List[Int], Int) = {
+  def extract_siblings(proof_levels: List[Int], current_step_index: Int) : (List[Int], Int) = {
     var sibling_indices: ListBuffer[Int] = new ListBuffer[Int]
     val current_proof_level: Int = proof_levels(current_step_index)
     var search_index: Int = current_step_index - 1
@@ -92,23 +95,31 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
       }
       search_index -= 1
     }
-    return (sibling_indices.toList, search_index)
+    return (List[Int](), -50000)
   }
 
-  def extract_needed(proof_steps: List[String], current_step_index: Int, proof_levels: List[Int]) : List[Int] = {
-    val (sibling_indices: List[Int], search_index: Int) = extract_siblings(proof_steps, current_step_index, proof_levels)
+  // def extract_needed(proof_steps: List[String], current_step_index: Int, proof_levels: List[Int]) : List[Int] = {
+  //   val (sibling_indices: List[Int], search_index: Int) = extract_siblings(proof_steps, current_step_index, proof_levels)
     
-    if (search_index < 0) {
-      sibling_indices ++ List[Int](current_step_index)
-    } else if (search_index > 0) {
-      extract_needed(proof_steps, search_index, proof_levels) ++ List[Int](search_index) ++ sibling_indices
-    } else if (search_index == 0) {
-      List[Int](search_index) ++ List[Int](search_index) ++ sibling_indices
-    } else {
-      List[Int](-1)
-    }
-   }
+  //   if (search_index < 0) {
+  //     sibling_indices ++ List[Int](current_step_index)
+  //   } else if (search_index > 0) {
+  //     extract_needed(proof_steps, search_index, proof_levels) ++ List[Int](search_index) ++ sibling_indices
+  //   } else if (search_index == 0) {
+  //     List[Int](search_index) ++ List[Int](search_index) ++ sibling_indices
+  //   } else {
+  //     List[Int](-1)
+  //   }
+  //  }
 
+  def extract_needed(proof_levels: List[Int], current_step_index: Int): List[Int] = {
+    val (sibling_indices: List[Int], search_index: Int) = extract_siblings(proof_levels, current_step_index)
+    if (search_index == -50000) sibling_indices
+    else if (search_index > 0) extract_needed(proof_levels, search_index) ++ List[Int](search_index) ++ sibling_indices
+    else if (search_index == 0) List[Int](search_index) ++ sibling_indices
+    // This shouldn't happen
+    else List[Int](9999999)
+  }
 
   def get_last_k_from_string(proof_string: String) : String = {
     proof_string.split("\\\\\\\\n").takeRight(last_k).map(_.trim).mkString(" \\\\n ")
@@ -321,7 +332,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
     var accumulative_logprob_toplevel_pq =
       new mutable.PriorityQueue[(Double, ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])])]()(firstOrd)
     val initial_toplevel_state_listbuffer = new ListBuffer[(ToplevelState, Int, String, Int, ListBuffer[Int])]
-    initial_toplevel_state_listbuffer += Tuple5(pisaos.toplevel, pisaos.proof_level(pisaos.toplevel).retrieveNow, theorem_name, 0, ListBuffer[Int](pisaos.getProofLevel(pisaos.toplevel)))
+    initial_toplevel_state_listbuffer += Tuple5(pisaos.toplevel, pisaos.proof_level(pisaos.toplevel).retrieveNow, theorem_name, 0, ListBuffer[Int](0))
     accumulative_logprob_toplevel_pq += Tuple2(0, initial_toplevel_state_listbuffer)
 
     var trials = 0
@@ -390,6 +401,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
             //      println("Length of the candidate commands: " + candidate_commands.length.toString)
             //        assert(candidate_commands.distinct.length == candidate_logprobs.distinct.length)
             // Create copies of the toplevel state for the search expansion
+            val parent_proof_level = pisaos.proof_level(parent_toplevel_state)
             val child_toplevel_state_list_buffer : ListBuffer[ToplevelState] = new ListBuffer[ToplevelState]
             for (_ <- List.range(0, candidate_commands_and_logprobs.length)) child_toplevel_state_list_buffer += ToplevelState.instantiate(parent_toplevel_state.mlValue)
             val child_toplevel_state_list = child_toplevel_state_list_buffer.toList
@@ -408,6 +420,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                 //            println(candidate_commands_and_logprobs(i)._2)
                 try {
                   val before_compilation = System.nanoTime
+                  
                   val child_toplevel : ToplevelState = pisaos.step(proof_command, child_toplevel_state_list(i), 10000)
                   total_compilation_time = total_compilation_time + (System.nanoTime - before_compilation) / 1e9d
                   val child_logprob : Double = parent_logprob + candidate_commands_and_logprobs(i)._2
@@ -438,7 +451,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         child_proof_level,
                         proof_till_now + " \n " + proof_command.trim,
                         proof_length_till_now + 1,
-                        proof_levels_till_now.addOne(pisaos.getProofLevel(child_toplevel))
+                        proof_levels_till_now.addOne(parent_proof_level)
                       )
                     )
                     val after_sorry : ToplevelState = pisaos.step("sorry", child_toplevel)
@@ -448,7 +461,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         parent_toplevel_proof_level,
                         proof_till_now + " \n " + proof_command.trim + " sorry",
                         proof_length_till_now + 1,
-                        proof_levels_till_now.addOne(pisaos.getProofLevel(after_sorry))
+                        proof_levels_till_now.addOne(child_proof_level)
                       )
                     )
                   }
@@ -469,7 +482,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                       child_toplevel_state_proof_level_listbuffer.remove(0)
                       child_toplevel_state_proof_level_listbuffer.prepend(
                         (
-                          first_element._1, 
+                          first_element._1,
                           first_element._2, 
                           proof_till_now + " \n " + proof_command.trim + " <conj_sep> " + first_element._3,
                           proof_length_till_now+1+first_element._4, 
@@ -485,7 +498,7 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
                         parent_toplevel_proof_level, 
                         proof_till_now + " \n " + proof_command.trim, 
                         proof_length_till_now + 1, 
-                        proof_levels_till_now.clone().addOne(pisaos.getProofLevel(child_toplevel))
+                        proof_levels_till_now.clone().addOne(parent_proof_level)
                       )
                     )
                   }
@@ -513,7 +526,6 @@ class TPUPisaSearch(use_proof: Boolean = false, use_conjecture: Boolean = false,
             if (proved) return Tuple5(1, "Proved!", successful_proof_script, successful_proof_length, index_to_successful_skeletons.toMap)
             if (accumulative_logprob_toplevel_pq.length > maximum_queue_length) 
               accumulative_logprob_toplevel_pq = accumulative_logprob_toplevel_pq.dropRight(accumulative_logprob_toplevel_pq.length - maximum_queue_length)
-              
           }
         }
       }
