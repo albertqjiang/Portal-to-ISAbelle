@@ -6,9 +6,11 @@ script = 'echo "y" | sbt "runMain pisa.agent.PisaHammerTest {}"'
 
 total_cmds = list()
 total_files = 0
-for file_name in glob.glob("/home/ywu/PISA/universal_test_theorems/test_name_*.json", recursive=True):
-    total_cmds.append(script.format(file_name))
-    total_files += 1
+for file_name in glob.glob("/home/qj213/Portal-to-ISAbelle/universal_test_theorems/test_name_*.json", recursive=True):
+    number = int(file_name.split("/")[-1].rstrip(".json").split("_")[-1])
+    if number <= 1000:
+        total_cmds.append(script.format(file_name))
+        total_files += 1
 
 process_number_to_cmds = {i: [] for i in range(number_of_processes)}
 print("A total of {} files are due to be generated".format(total_files))

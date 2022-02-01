@@ -21,7 +21,7 @@ object PisaHammerTest {
     val working_directory = theory_path.split("/").take(thys_index + 2).mkString("/")
     val theorem_name = json_element(1).extract[String].replaceAll("\n", " ").replaceAll(" +", " ").trim
     val pisaos = new PisaOS(
-      path_to_isa_bin = "/home/ywu/Isabelle2020",
+      path_to_isa_bin = "/home/qj213/Isabelle2021",
       path_to_file = theory_path,
       working_directory = working_directory
     )
