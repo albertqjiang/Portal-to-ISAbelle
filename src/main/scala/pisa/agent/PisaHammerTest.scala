@@ -14,7 +14,7 @@ object PisaHammerTest {
   def main(args: Array[String]): Unit = {
     val test_theorem_number: String = args(0).split('/').last.split('.').head.split('_').last
     val dump_path: String = "results/hammer_eval"
-    val json_element = parse(Source.fromFile(change_to_my_repo).mkString).children(0)
+    val json_element = parse(Source.fromFile(args(0)).mkString).children(0)
     val theory_path = json_element(0).extract[String].replaceAll("/home/ywu/afp-2021-02-11", "/home/qj213/afp-2021-10-22")
     val thys_index = theory_path.split("/").indexOf("thys")
     val working_directory = theory_path.split("/").take(thys_index + 2).mkString("/")
