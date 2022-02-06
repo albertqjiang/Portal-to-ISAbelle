@@ -104,7 +104,13 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val tls_name : String = isa_command.command.split("<apply to top level state>")(1).trim
         val action : String = isa_command.command.split("<apply to top level state>")(2).trim
         val new_name : String = isa_command.command.split("<apply to top level state>")(3).trim
-        deal_with_apply_to_tls(tls_name, action, new_name)
+
+        try {
+          deal_with_apply_to_tls(tls_name, action, new_name)
+        } catch {
+          case e: IsabelleException => ""
+        }
+        
       }
       else if (isa_command.command.startsWith("<get_proof_level>")) {
         val tls_name : String = isa_command.command.stripPrefix("<get_proof_level>").trim
