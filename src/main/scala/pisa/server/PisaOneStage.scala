@@ -64,7 +64,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
   def deal_with_proof_level(toplevel_state_name: String) = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
-      val tls : ToplevelState = pisaos.register_tls(toplevel_state_name)
+      val tls : ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
       s"${pisaos.getProofLevel(tls)}"
     } else "Didn't find top level state of given name"
   }
