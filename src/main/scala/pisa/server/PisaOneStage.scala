@@ -62,6 +62,13 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     else "Didn't find top level state of given name"
   }
 
+  def deal_with_proof_level(toplevel_state_name: String) = {
+    if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
+      val tls : ToplevelState = pisaos.register_tls(toplevel_state_name)
+      s"${pisaos.getProofLevel(tls)}"
+    } else "Didn't find top level state of given name"
+  }
+
   def deal_with_proceed_before(true_command: String) : String = pisaos.step_to_transition_text(true_command, after=false)
   def deal_with_proceed_after(true_command: String) : String = pisaos.step_to_transition_text(true_command, after=true)
   def deal_with_exit(command: String) : String = {
@@ -98,6 +105,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val action : String = isa_command.command.split("<apply to top level state>")(2).trim
         val new_name : String = isa_command.command.split("<apply to top level state>")(3).trim
         deal_with_apply_to_tls(tls_name, action, new_name)
+      }
+      else if (isa_command.command.startsWith("<get_proof_level>")) {
+        val tls_name : String = isa_command.command.stripPrefix("<get_proof_level>").trim
+        deal_with_proof_level(tls_name)
       }
       else if (isa_command.command.startsWith("<proceed before>")){
         val true_command : String = isa_command.command.stripPrefix("<proceed before>").trim
