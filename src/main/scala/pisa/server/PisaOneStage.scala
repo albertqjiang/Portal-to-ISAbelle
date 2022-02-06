@@ -11,6 +11,7 @@ import zio.{ZEnv, ZIO}
 import pisa.server.ZioServer.ZServer
 
 import de.unruh.isabelle.pure.ToplevelState
+import de.unruh.isabelle.control.IsabelleException
 
 class OneStageBody extends ZServer[ZEnv, Any] {
   var pisaos : PisaOS = null
