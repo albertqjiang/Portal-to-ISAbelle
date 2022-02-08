@@ -109,7 +109,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         try {
           deal_with_apply_to_tls(tls_name, action, new_name)
         } catch {
-          case e: IsabelleException => ""
+          case e: IsabelleException => "Step error"
         }
         
       }
