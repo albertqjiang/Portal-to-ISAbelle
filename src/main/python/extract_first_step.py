@@ -8,7 +8,7 @@ first_step_dir = "/home/qj213/first_step"
 
 
 for file in os.listdir(proof_and_state_dir):
-    split_name = file.strip().strip(".json").strip()
+    split_name = file.split(".")[0]
     with open(os.path.join(proof_and_state_dir, file)) as fhand, \
         open(os.path.join(first_step_dir, f"{split_name}.src"), "w") as src_out, \
             open(os.path.join(first_step_dir, f"{split_name}.tgt"), "w") as tgt_out:
