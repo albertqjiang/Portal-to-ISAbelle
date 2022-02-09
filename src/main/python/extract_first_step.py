@@ -13,7 +13,7 @@ for file in os.listdir(proof_and_state_dir):
             line_json = json.loads(line.strip())
             source = line_json["source"]
             proof_step_string = source.split("<PS_SEP>")[0].strip()
-            if "\\\\n" not in proof_step_string:
+            if "\\n" not in proof_step_string:
                 # This is the first step
                 fout.write(line.strip() + "\n")
 
