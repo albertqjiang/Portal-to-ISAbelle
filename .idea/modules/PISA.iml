@@ -21,7 +21,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../../target/task-temp-directory" />
       <excludeFolder url="file://$MODULE_DIR$/../../target/bg-jobs" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.9 (evariste) (2)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="sbt: com.google.android:annotations:4.1.1.4:jar" level="project" />
     <orderEntry type="library" name="sbt: com.google.api.grpc:proto-google-common-protos:1.17.0:jar" level="project" />
