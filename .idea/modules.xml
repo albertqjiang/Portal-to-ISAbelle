@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/PISA.iml" filepath="$PROJECT_DIR$/.idea/modules/PISA.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/PISA-build.iml" filepath="$PROJECT_DIR$/.idea/modules/PISA-build.iml" />
       <module fileurl="file://$PROJECT_DIR$/../afp-2021-02-11/.idea/afp-2021-02-11.iml" filepath="$PROJECT_DIR$/../afp-2021-02-11/.idea/afp-2021-02-11.iml" />
+      <module fileurl="file://$USER_HOME$/PycharmProjects/subgoal-search-atp/.idea/subgoal-search-atp.iml" filepath="$USER_HOME$/PycharmProjects/subgoal-search-atp/.idea/subgoal-search-atp.iml" />
     </modules>
   </component>
 </project>

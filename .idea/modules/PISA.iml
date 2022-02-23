@@ -96,5 +96,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="subgoal-search-atp" />
   </component>
 </module>
