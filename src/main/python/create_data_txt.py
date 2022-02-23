@@ -31,7 +31,7 @@ def process(src_path, tgt_path, output_path, mode):
                 output_fhand.write(src_line.strip().replace("State:",
                                                             "<ISA_OBS>") + " Cambridge " + tgt_line.strip() + " <|endoftext|> ")
             elif mode == "proof_only":
-                raise NotImplementedError
+                output_fhand.write(src_line.strip().replace("Proof:", "<ISA_PRF>") + " Cambridge " + tgt_line.strip() + " <|endoftext|> ")
             elif mode == "proof_and_state":
                 output_fhand.write(
                     src_line.strip().replace("<PS_SEP> State:",
