@@ -69,4 +69,4 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str,
                         help="mode of the currently processed data (state_only, proof_only, proof_and_state, custom).")
     args = parser.parse_args()
-    create_data(args.data_dir, args.output_dir, args.name)
+    create_data(args.data_dir, args.output_dir, args.name, args.mode)
