@@ -43,7 +43,7 @@ def process(src_path, tgt_path, output_path, mode):
                 output_fhand.write(src_line.strip() + " Cambridge " + tgt_line.strip() + " <|endoftext|> ")
 
 
-def create_data(data_dir, output_dir, name):
+def create_data(data_dir, output_dir, name, mode):
     train_src_path = os.path.join(data_dir, "train.src")
     train_tgt_path = os.path.join(data_dir, "train.tgt")
     # assert name in ["state_only", "proof_only", "proof_and_state"]
@@ -53,8 +53,8 @@ def create_data(data_dir, output_dir, name):
     val_tgt_path = os.path.join(data_dir, "val.tgt")
     val_output_path = os.path.join(output_dir,
                                    "val", "{}_val.txt".format(name))
-    process(train_src_path, train_tgt_path, train_output_path, mode=name)
-    process(val_src_path, val_tgt_path, val_output_path, mode=name)
+    process(train_src_path, train_tgt_path, train_output_path, mode=mode)
+    process(val_src_path, val_tgt_path, val_output_path, mode=mode)
 
 
 if __name__ == "__main__":
@@ -65,6 +65,8 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", type=str, default="/home/qj213/data",
                         help="Output directory (default: home data directory)")
     parser.add_argument("--name", type=str,
-                        help="Name of the currently processed data (state_only, proof_only, proof_and_state).")
+                        help="Name of the currently processed data.")
+    parser.add_argument("--mode", type=str,
+                        help="mode of the currently processed data (state_only, proof_only, proof_and_state, custom).")
     args = parser.parse_args()
     create_data(args.data_dir, args.output_dir, args.name)
