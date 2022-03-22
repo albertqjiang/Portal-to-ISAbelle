@@ -67,7 +67,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           pisaos.register_tls(name=new_name, tls=new_state)
           s"${pisaos.getStateString(new_state)}"
         } else {
-          throw new IsabelleException
+          throw new IsabelleException("Hammer failed")
         }
 
       } else {
