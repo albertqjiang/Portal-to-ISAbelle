@@ -56,9 +56,25 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
   def deal_with_apply_to_tls(toplevel_state_name: String, action: String, new_name: String) : String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
-      val new_state : ToplevelState = pisaos.step(action, pisaos.retrieve_tls(toplevel_state_name), 10000)
-      pisaos.register_tls(name=new_name, tls=new_state)
-      s"${pisaos.getStateString(new_state)}"
+      val old_state : ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
+      if (action.trim == "sledgehammer") {
+        val hammerable : Boolean = pisaos.check_if_provable_with_Sledgehammer(
+          old_state, 30000
+        )
+
+        if (hammerable) {
+          val new_state : ToplevelState = pisaos.step("sorry", old_state, 10000)
+          pisaos.register_tls(name=new_name, tls=new_state)
+          s"${pisaos.getStateString(new_state)}"
+        } else {
+          throw new IsabelleException
+        }
+
+      } else {
+        val new_state : ToplevelState = pisaos.step(action, old_state, 10000)
+        pisaos.register_tls(name=new_name, tls=new_state)
+        s"${pisaos.getStateString(new_state)}"
+      }
     }
     else "Didn't find top level state of given name"
   }
