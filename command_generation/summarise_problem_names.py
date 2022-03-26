@@ -10,6 +10,12 @@ if __name__ == "__main__":
     parser.add_argument('--dump-path', '-dp', help='Path to dump the dataset.')
     args = parser.parse_args()
 
+    dump_path = os.path.join(args.dump_path, args.dataset_name)
+    if os.path.isdir(dump_path):
+        os.rmdir(dump_path)
+
+    os.mkdir(dump_path)
+
     total = 0
     for entry in os.listdir(args.extraction_path):
         entry_path = os.path.join(args.extraction_path, entry)
@@ -31,7 +37,7 @@ if __name__ == "__main__":
                         ]
                     ],
                     open(
-                        os.path.join(args.dump_path, f"test_name_{total}.json"), "w"
+                        os.path.join(dump_path, f"test_name_{total}.json"), "w"
                     )
                 )
                 total += 1
