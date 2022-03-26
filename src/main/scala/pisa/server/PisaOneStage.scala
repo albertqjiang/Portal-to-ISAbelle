@@ -183,6 +183,24 @@ object PisaOneStage {
   }
 }
 
+object PisaMini {
+  val path_to_isa_bin : String = "/home/qj213/Isabelle2021"
+  val path_to_mini : String = "/home/qj213/miniF2F/isabelle"
+  def main(args: Array[String]): Unit = {
+    val path_to_file : String = s"$path_to_mini/valid/aime_1983_p9.thy"
+    val working_directory : String = s"$path_to_mini/valid"
+    val pisaos = new PisaOS(
+      path_to_isa_bin=path_to_isa_bin,
+      path_to_file=path_to_file,
+      working_directory=working_directory)
+    val theorem_name = """theorem aime_1983_p9: fixes x::real assumes "0<x" "x<pi" shows "12 \<le> ((9 * (x^2 * (sin x)^2)) + 4) / (x * sin x)"""".stripMargin
+    val parsed : String = pisaos.step("PISA extract data")
+    //    val parsed : String = pisaos.step_to_transition_text(theorem_name)
+    println(parsed)
+    //    println(pisaos.step("by(simp add: delta_conv_steps accepts_def)"))
+  }
+}
+
 // object PisaOneStageTestStd {
 //   val path_to_isa_bin : String = "/home/qj213/Isabelle2021"
 //   val path_to_afp : String = "/home/qj213/afp-2021-10-22"
