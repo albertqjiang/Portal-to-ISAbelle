@@ -123,7 +123,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
       |      val thy = Proof_Context.theory_of ctxt
       |      val p_state = Toplevel.proof_of state;
       |      val params = ${Sledgehammer_Commands}.default_params thy
-      |                      [("isar_proofs", "false"),("smt_proofs", "false"),("learn","false")]
+      |                      [("isar_proofs", "false"),("smt_proofs", "true"),("learn","false")]
       |      val override = {add=[],del=[],only=false}
       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
       |                                  NONE 1 override
