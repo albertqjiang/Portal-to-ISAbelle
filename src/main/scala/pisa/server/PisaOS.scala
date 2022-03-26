@@ -37,7 +37,8 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
           "/")
       relative_working_directory.mkString("-")
     } else if (path_to_file.contains("miniF2F")) {
-      working_directory.split("/").last
+//      working_directory.split("/").last
+      "ComplexMain"
     } else {
       "This is not supported at the moment"
     }
