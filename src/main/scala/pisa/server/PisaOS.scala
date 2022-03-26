@@ -36,7 +36,11 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
         working_directory.slice(working_directory.indexOf("/src/")+5, working_directory.length).split(
           "/")
       relative_working_directory.mkString("-")
-    } else {"This is not supported at the moment"}
+    } else if (path_to_file.contains("miniF2F")) {
+      println(working_directory)
+      working_directory
+    }
+    else {"This is not supported at the moment"}
   }
 
   // Figure out the session roots information and import the correct libraries
