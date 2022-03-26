@@ -11,7 +11,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     total = 0
-    for entry in os.path.listdir(args.extraction_path):
+    for entry in os.listdir(args.extraction_path):
         entry_path = os.path.join(args.extraction_path, entry)
         for ground_truth_file in os.listdir(entry_path):
             if "ground_truth" in ground_truth_file:
