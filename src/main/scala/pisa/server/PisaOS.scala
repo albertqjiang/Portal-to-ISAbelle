@@ -37,10 +37,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
           "/")
       relative_working_directory.mkString("-")
     } else if (path_to_file.contains("miniF2F")) {
-      println(working_directory)
-      working_directory
+      working_directory.split("/").last
+    } else {
+      "This is not supported at the moment"
     }
-    else {"This is not supported at the moment"}
   }
 
   // Figure out the session roots information and import the correct libraries
@@ -52,7 +52,11 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
       val session_root_path_string : String = working_directory.slice(0, src_index) +
         working_directory.slice(src_index, working_directory.length).split("/").head
       Seq(Path.of(session_root_path_string))
-    } else {Seq(Path.of("This is not supported at the moment"))}
+    } else if (path_to_file.contains("miniF2F")) {
+      Seq(Path.of(working_directory.split("/").dropRight(1).mkString("/")))
+    }else {
+      Seq(Path.of("This is not supported at the moment"))
+    }
   }
 
   // Prepare setup config and the implicit Isabelle context
