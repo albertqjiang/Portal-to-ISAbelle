@@ -53,7 +53,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
         working_directory.slice(src_index, working_directory.length).split("/").head
       Seq(Path.of(session_root_path_string))
     } else if (path_to_file.contains("miniF2F")) {
-      Seq(Path.of(working_directory))
+      Seq()
     }else {
       Seq(Path.of("This is not supported at the moment"))
     }
