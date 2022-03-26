@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="pisa [file:/Users/qj213/Projects/PISA/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="portal-to-isabelle [file:/Users/qj213/ScalaProjects/Portal-to-ISAbelle/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Python" name="Python">
       <configuration sdkName="Python 3.9" />
@@ -21,7 +21,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../../target/task-temp-directory" />
       <excludeFolder url="file://$MODULE_DIR$/../../target/bg-jobs" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9 (evariste) (2)" jdkType="Python SDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="sbt: com.google.android:annotations:4.1.1.4:jar" level="project" />
     <orderEntry type="library" name="sbt: com.google.api.grpc:proto-google-common-protos:1.17.0:jar" level="project" />
@@ -96,6 +96,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="subgoal-search-atp" />
   </component>
 </module>
