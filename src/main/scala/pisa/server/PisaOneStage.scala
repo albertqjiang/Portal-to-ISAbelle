@@ -37,6 +37,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       s"We have successfully initialised the Isabelle environment."))
   }
 
+  def deal_with_extraction(): String = pisaos.step("PISA extract data")
   def deal_with_list_states() : String = pisaos.top_level_state_map.keys.mkString(" | ")
   def deal_with_initialise() : String = {
     pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
@@ -107,7 +108,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   def isabelleCommand(isa_command: IsaCommand): ZIO[
     zio.ZEnv, Status, IsaState] = {
     var proof_state : String = {
-      if (isa_command.command.startsWith("<list states>")) deal_with_list_states()
+      if (isa_command.command.startsWith("PISA extract data")) deal_with_extraction()
+      else if (isa_command.command.startsWith("<list states>")) deal_with_list_states()
       else if (isa_command.command.startsWith("<initialise>")) deal_with_initialise()
       else if (isa_command.command.startsWith("<get state>")) {
         val tls_name : String = isa_command.command.stripPrefix("<get state>").trim
