@@ -54,13 +54,13 @@ for i, cmd in enumerate(cmds):
 
 for port, port_cmds in cmds_for_port.items():
     for i, cmd in enumerate(port_cmds):
-        with open(f"scripts/extract_with_hammer_bashes/port{port}script{i}.sh") as f:
+        with open(f"scripts/extract_with_hammer_bashes/port{port}script{i}.sh", "w") as f:
             f.write('sbt "runMain pisa.server.PisaOneStageServer{}"&\n'.format(port))
             f.write("PIDmain=$!\n")
             f.write("sleep 12\n")
             f.write(cmd + "&\n")
             f.write("PID=$!\n")
-            wait_cmds.append("wait $PID\n".format(i % n_threads))
+            f.write("wait $PID\n")
             f.write("rm -rf target/bg-jobs/* \n")
             f.write("kill $PIDmain\n")
 
