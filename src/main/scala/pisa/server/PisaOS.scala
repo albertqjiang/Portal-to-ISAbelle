@@ -136,24 +136,23 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
   // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
   // the string to get the actual tactic. For example, one of the string may look like "Try this: by blast (0.5 ms)".
-//  val prove_with_Sledgehammer: MLFunction[ToplevelState, (Boolean,List[String])] = compileFunction[ToplevelState, (Boolean,List[String])] (
-//    s""" fn state =>
-//      |    (
-//      |    let
-//      |      val ctxt = Toplevel.context_of state;
-//      |      val thy = Proof_Context.theory_of ctxt
-//      |      val p_state = Toplevel.proof_of state;
-//      |      val params = ${Sledgehammer_Commands}.default_params thy
-//      |                      [("isar_proofs", "false"),("smt_proofs", "false"),("learn","false")]
-//      |      val override = {add=[],del=[],only=false}
-//      |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
-//      |                                  NONE 1 override
-//      |                                : Proof.state -> bool * (string * string list);
-//      |    in
-//      |      run_sledgehammer p_state |> (fn (x, (_ , y)) => (x,y))
-//      |    end)
-//            |    end)
-//    """.stripMargin)
+  val prove_with_Sledgehammer: MLFunction[ToplevelState, (Boolean,List[String])] = compileFunction[ToplevelState, (Boolean,List[String])] (
+    s""" fn state =>
+      |    (
+      |    let
+      |      val ctxt = Toplevel.context_of state;
+      |      val thy = Proof_Context.theory_of ctxt;
+      |      val p_state = Toplevel.proof_of state;
+      |      val params = ${Sledgehammer_Commands}.default_params thy
+      |                      [("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")]
+      |      val override = {add=[],del=[],only=false}
+      |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
+      |                                  NONE 1 override
+      |                                : Proof.state -> bool * (string * string list);
+      |    in
+      |      run_sledgehammer p_state |> (fn (x, (_ , y)) => (x,y))
+      |    end)
+    """.stripMargin)
 
   def beginTheory(source: Source)(implicit isabelle: Isabelle, ec: ExecutionContext): Theory = {
     val header = getHeader(source)
@@ -284,7 +283,38 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
     stateActionTotal
   }
 
+  def parseStateActionWithHammer(isarString: String) : String = {
+    var stateActionHammerTotal : String = ""
+    val continue = new Breaks
+
+    var parse_toplevel : ToplevelState = toplevel
+    var stateString = getStateString(parse_toplevel)
+    Breaks.breakable {
+      for ((transition, text) <- parse_text(thy1, isarString).force.retrieveNow)
+        continue.breakable {
+          // Continue if empty
+          if (text.trim.isEmpty) continue.break
+          // Continue if outside a proof
+          val proof_level = getProofLevel(parse_toplevel)
+          if (proof_level == 0) continue.break
+
+          // Check if can be solved by hammer
+          val hammer_results = prove_with_hammer(parse_toplevel)
+          stateActionHammerTotal = stateActionHammerTotal + (
+            stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$proof_level"
+              + "<\\HAMMERSEP>" + s"${hammer_results._1}" + "<\\HAMMERSEP>" + s"${hammer_results._2}" + "<\\HAMMERSEP>"
+              + "<\\TRANSEP>"
+          )
+          parse_toplevel = singleTransition(transition, parse_toplevel)
+          stateString = getStateString(parse_toplevel)
+        }
+    }
+    stateActionHammerTotal
+  }
+
   def parse : String = parseStateAction(fileContent)
+  def parse_with_hammer : String = parseStateActionWithHammer(fileContent)
+
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int =2000): ToplevelState = {
     // Normal isabelle business
     var tls_to_return : ToplevelState = null
@@ -309,6 +339,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
     if (isar_string == "PISA extract data")
       return parse
 
+    // Specific method for extracting data with hammer
+    if (isar_string == "PISA extract data with hammer")
+      return parse_with_hammer
+
     // Exit string
     if (isar_string == "exit") {
       isabelle.destroy()
@@ -331,6 +365,13 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
 
   def check_if_provable_with_Sledgehammer(): Boolean = {
     check_if_provable_with_Sledgehammer(toplevel)
+  }
+
+  def prove_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 30000) : (Boolean, List[String]) = {
+    val f_res: Future[(Boolean, List[String])] = Future.apply {
+      prove_with_Sledgehammer(top_level_state).force.retrieveNow
+    }
+    Await.result(f_res, Duration(timeout_in_millis, "millis"))
   }
 
   def step_to_transition_text(isar_string: String, after: Boolean = true): String = {

@@ -178,7 +178,8 @@ object PisaOneStage {
       path_to_file=path_to_file,
       working_directory=working_directory)
     val theorem_name = """lemma accepts_conv_steps: "accepts A w = (\<exists>q. (start A,q) \<in> steps A w \<and> fin A q)"""".stripMargin
-    val parsed : String = pisaos.step("PISA extract data")
+//    val parsed : String = pisaos.step("PISA extract data")
+    val parsed : String = pisaos.step("PISA extract data with hammer")
 //    val parsed : String = pisaos.step_to_transition_text(theorem_name)
     println(parsed)
 //    println(pisaos.step("by(simp add: delta_conv_steps accepts_def)"))
