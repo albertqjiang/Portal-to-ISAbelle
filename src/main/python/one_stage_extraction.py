@@ -94,11 +94,13 @@ if __name__ == "__main__":
     parser.add_argument('--theory-file-path', '-tfp', help='Path to the file to parse')
     parser.add_argument('--saving-directory', '-sd', help='Where the save the parsed json files')
     parser.add_argument('--port', '-p', help='Port to use to communicate', default=9000, type=int)
-    parser.add_argument('--use-sledgehammer', '-us', help='Whether to use sledgehammer', default=False, type=bool,
+    parser.add_argument('--use-sledgehammer', '-us', help='Whether to use sledgehammer',
                         action='store_true')
+    parser.set_defaults(use_sledgehammer=True)
     args = parser.parse_args()
 
     # for file_name in os.listdir(args.working_directory):
     #     if file_name.endswith(".thy"):
     #         full_file_path = os.path.join(args.working_directory, file_name)
-    extract_file(args.isa_path, args.theory_file_path, args.working_directory, args.saving_directory, args.port)
+    extract_file(args.isa_path, args.theory_file_path, args.working_directory,
+                 args.saving_directory, args.port, args.use_sledgehammer)
