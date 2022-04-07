@@ -307,7 +307,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
           val proof_level = getProofLevel(parse_toplevel)
           // Check if can be solved by hammer
           val hammer_results = {
-            if ((proof_level >= 1) && !(stateString contains "No subgoal!")) prove_with_hammer(parse_toplevel)
+            if ((proof_level >= 1) && !(stateString contains "No subgoals!")) prove_with_hammer(parse_toplevel)
             else (false, List[String]())
           }
           stateActionHammerTotal = stateActionHammerTotal + (
