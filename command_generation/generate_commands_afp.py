@@ -7,6 +7,8 @@ if use_hammers == "T" or use_hammers == "t":
     use_hammers = True
 elif use_hammers == "F" or use_hammers == "f":
     use_hammers = False
+else:
+    raise AssertionError
 
 import glob
 import os
@@ -51,29 +53,42 @@ for i, cmd in enumerate(cmds):
     cmds_for_port[port].append(cmd + " -p {} ".format(port))
 
 for port, port_cmds in cmds_for_port.items():
-    with open("afp_extract_script_{}.sh".format(port), "w") as f:
-        f.write('sbt "runMain pisa.server.PisaOneStageServer{}"&\n'.format(port))
-        f.write("PIDmain=$!\n")
-        f.write("sleep 12\n")
-        wait_cmds = []
-        for i, cmd in enumerate(port_cmds):
-            if (i + 1) % n_threads == 0:
-                f.write(cmd + "&\n")
-                f.write("PID{}=$!\n".format(i % n_threads))
-                wait_cmds.append("wait $PID{}\n".format(i % n_threads))
-                for wait in wait_cmds:
-                    f.write(wait)
-                wait_cmds = []
-                # f.write("ps aux | grep scala | awk '{print $2}' | xargs kill\n")
-                # f.write("ps aux | grep java | awk '{print $2}' | xargs kill\n")
-                # f.write("ps aux | grep poly | awk '{print $2}' | xargs kill\n")
-                f.write("kill $PIDmain\n")
-                if (i+1) % 20 == 0:
-                    f.write("rm -rf target/bg-jobs/* \n")
-                f.write('sbt "runMain pisa.server.PisaOneStageServer{}" &\n'.format(port))
-                f.write("PIDmain=$!\n")
-                f.write("sleep 12\n")
-            else:
-                f.write(cmd + "&\n")
-                f.write("PID{}=$!\n".format(i % n_threads))
-                wait_cmds.append("wait $PID{}\n".format(i % n_threads))
+    for i, cmd in enumerate(port_cmds):
+        with open(f"scripts/extract_with_hammer_bashes/port{port}script{i}.sh") as f:
+            f.write('sbt "runMain pisa.server.PisaOneStageServer{}"&\n'.format(port))
+            f.write("PIDmain=$!\n")
+            f.write("sleep 12\n")
+            f.write(cmd + "&\n")
+            f.write("PID=$!\n")
+            wait_cmds.append("wait $PID\n".format(i % n_threads))
+            f.write("rm -rf target/bg-jobs/* \n")
+            f.write("kill $PIDmain\n")
+
+
+    #
+    # with open("afp_extract_script_{}.sh".format(port), "w") as f:
+    #     f.write('sbt "runMain pisa.server.PisaOneStageServer{}"&\n'.format(port))
+    #     f.write("PIDmain=$!\n")
+    #     f.write("sleep 12\n")
+    #     wait_cmds = []
+    #     for i, cmd in enumerate(port_cmds):
+    #         if (i + 1) % n_threads == 0:
+    #             f.write(cmd + "&\n")
+    #             f.write("PID{}=$!\n".format(i % n_threads))
+    #             wait_cmds.append("wait $PID{}\n".format(i % n_threads))
+    #             for wait in wait_cmds:
+    #                 f.write(wait)
+    #             wait_cmds = []
+    #             # f.write("ps aux | grep scala | awk '{print $2}' | xargs kill\n")
+    #             # f.write("ps aux | grep java | awk '{print $2}' | xargs kill\n")
+    #             # f.write("ps aux | grep poly | awk '{print $2}' | xargs kill\n")
+    #             f.write("kill $PIDmain\n")
+    #             if (i+1) % 20 == 0:
+    #                 f.write("rm -rf target/bg-jobs/* \n")
+    #             f.write('sbt "runMain pisa.server.PisaOneStageServer{}" &\n'.format(port))
+    #             f.write("PIDmain=$!\n")
+    #             f.write("sleep 12\n")
+    #         else:
+    #             f.write(cmd + "&\n")
+    #             f.write("PID{}=$!\n".format(i % n_threads))
+    #             wait_cmds.append("wait $PID{}\n".format(i % n_threads))
