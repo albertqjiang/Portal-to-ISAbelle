@@ -12,6 +12,7 @@ import server_pb2_grpc
 
 MAX_MESSAGE_LENGTH = 10485760
 
+
 def analyse_whole_file(whole_file_string):
     transitions = whole_file_string.split("<\TRANSEP>")
     state_action_proof_level_tuples = list()
@@ -39,13 +40,15 @@ def analyse_whole_file(whole_file_string):
         "translations": state_action_proof_level_tuples
     }
 
+
 @func_set_timeout(120)
-def isa_step(stub, theory_file_path):
+def isa_step(stub, theory_file_path, use_sledgehammer=False):
     stub.IsabelleContext(server_pb2.IsaContext(context=theory_file_path))
-    return stub.IsabelleCommand(server_pb2.IsaCommand(command="PISA extract data")).state
+    extraction_command = "PISA extract data with hammer" if use_sledgehammer else "PISA extract data"
+    return stub.IsabelleCommand(server_pb2.IsaCommand(command=extraction_command)).state
 
 
-def extract_file(isa_path, theory_file_path, working_directory, saving_directory, port=9000):
+def extract_file(isa_path, theory_file_path, working_directory, saving_directory, port=9000, use_sledgehammer=False):
     channel = grpc.insecure_channel('localhost:{}'.format(port),
                                     options=[('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
                                     ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH)])
@@ -54,12 +57,11 @@ def extract_file(isa_path, theory_file_path, working_directory, saving_directory
     stub.InitialiseIsabelle(server_pb2.IsaPath(path=isa_path))
     stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=working_directory))
 
-
     if not os.path.isdir(saving_directory):
         os.makedirs(saving_directory)
     close_program = False
     try:
-        whole_file_parsed = isa_step(stub, theory_file_path)
+        whole_file_parsed = isa_step(stub, theory_file_path, use_sledgehammer=use_sledgehammer)
         stub.IsabelleCommand(server_pb2.IsaCommand(command="exit"))
     except (Exception, FunctionTimedOut) as e:
         close_program = True
@@ -83,6 +85,7 @@ def extract_file(isa_path, theory_file_path, working_directory, saving_directory
         stub.IsabelleCommand(server_pb2.IsaCommand(command="exit"))
     channel.close()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extracting an Isabelle theory file.')
     parser.add_argument('--isa-path', help='The path to the Isabelle executable',
@@ -91,6 +94,8 @@ if __name__ == "__main__":
     parser.add_argument('--theory-file-path', '-tfp', help='Path to the file to parse')
     parser.add_argument('--saving-directory', '-sd', help='Where the save the parsed json files')
     parser.add_argument('--port', '-p', help='Port to use to communicate', default=9000, type=int)
+    parser.add_argument('--use-sledgehammer', '-us', help='Whether to use sledgehammer', default=False, type=bool,
+                        action='store_true')
     args = parser.parse_args()
 
     # for file_name in os.listdir(args.working_directory):
