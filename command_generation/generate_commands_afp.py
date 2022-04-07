@@ -2,6 +2,11 @@ ports = str(input("Enter the ports, separated by commas:\n")).strip()
 ports = ports.split(",")
 ports = [int(port.strip()) for port in ports]
 ports = [port for port in ports if port]
+use_hammers = str(input("Use hammers (T/F):\n")).strip()
+if use_hammers == "T" or use_hammers == "t":
+    use_hammers = True
+elif use_hammers == "F" or use_hammers == "f":
+    use_hammers = False
 
 import glob
 import os
@@ -9,6 +14,9 @@ import os
 home_directory = "/home/qj213"
 
 script = f"python3 src/main/python/one_stage_extraction.py  --isa-path {home_directory}/Isabelle2021 -wd {home_directory}" + "/afp-2021-10-22/thys/{} --saving-directory afp_extractions/{} -tfp {}"
+if use_hammers:
+    script = script + " -us"
+
 n_threads = 1
 
 cmds = []
