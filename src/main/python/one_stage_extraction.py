@@ -97,7 +97,7 @@ if __name__ == "__main__":
     parser.add_argument('--port', '-p', help='Port to use to communicate', default=9000, type=int)
     parser.add_argument('--use-sledgehammer', '-us', help='Whether to use sledgehammer',
                         action='store_true')
-    parser.set_defaults(use_sledgehammer=True)
+    parser.set_defaults(use_sledgehammer=False)
     args = parser.parse_args()
 
     # for file_name in os.listdir(args.working_directory):

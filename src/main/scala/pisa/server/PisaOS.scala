@@ -14,6 +14,8 @@ import pisa.utils.TheoryManager.{Ops, Source, Text}
 import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
 import scala.concurrent.duration.Duration
 
+import sys.process._
+
 // Implicits
 import de.unruh.isabelle.mlvalue.Implicits._
 import de.unruh.isabelle.pure.Implicits._
@@ -309,17 +311,25 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
           // hammer_results : (can we try hammer, did hammer work, what is the result if hammer worked)
           val hammer_results : (Boolean, Boolean, String) = {
             if ((proof_level >= 1) && !(stateString contains "No subgoals!") && !(stateString contains "proof (state)")) {
-              try {
-                val raw_hammer_results = prove_with_hammer(parse_toplevel)
-                val hammer_proof = {
-                  if (raw_hammer_results._1) {
-                    raw_hammer_results._2.head
-                  } else " "
+              val hammered_tuple = {
+                try {
+                  val raw_hammer_results = prove_with_hammer(parse_toplevel)
+                  val hammer_proof = {
+                    if (raw_hammer_results._1) {
+                      raw_hammer_results._2.head
+                    } else " "
+                  }
+                  (true, raw_hammer_results._1, hammer_proof)
+                } catch {
+                  case _: TimeoutException => (true, false, " ")
                 }
-                (true, raw_hammer_results._1, hammer_proof)
-              } catch {
-                case _ : TimeoutException => (true, false, " ")
               }
+              "ps -ef | grep z3 | awk '{print $2}' | xargs kill -9".!!
+              "ps -ef | grep veriT | awk '{print $2}' | xargs kill -9".!!
+              "ps -ef | grep cvc4 | awk '{print $2}' | xargs kill -9".!!
+              "ps -ef | grep eprover | awk '{print $2}' | xargs kill -9".!!
+              "ps -ef | grep SPASS | awk '{print $2}' | xargs kill -9".!!
+              hammered_tuple
             }
             else (false, false, " ")
           }
