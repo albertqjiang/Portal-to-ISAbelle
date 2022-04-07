@@ -39,6 +39,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
   def deal_with_extraction(): String = pisaos.step("PISA extract data")
 
+  def deal_with_extraction_with_hammer() : String = pisaos.step("PISA extract data with hammer")
+
   def deal_with_list_states(): String = pisaos.top_level_state_map.keys.mkString(" | ")
 
   def deal_with_initialise(): String = {
@@ -115,7 +117,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   def isabelleCommand(isa_command: IsaCommand): ZIO[
     zio.ZEnv, Status, IsaState] = {
     var proof_state: String = {
-      if (isa_command.command.startsWith("PISA extract data")) deal_with_extraction()
+      if (isa_command.command.trim == "PISA extract data") deal_with_extraction()
+      else if (isa_command.command.trim == "PISA extract data with hammer") deal_with_extraction_with_hammer()
       else if (isa_command.command.startsWith("<list states>")) deal_with_list_states()
       else if (isa_command.command.startsWith("<initialise>")) deal_with_initialise()
       else if (isa_command.command.startsWith("<get state>")) {
