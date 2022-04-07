@@ -307,16 +307,21 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
           val proof_level = getProofLevel(parse_toplevel)
           // Check if can be solved by hammer
           // hammer_results : (can we try hammer, did hammer work, what is the result if hammer worked)
-          val hammer_results : (Boolean, Boolean, List[String]) = {
+          val hammer_results : (Boolean, Boolean, String) = {
             if ((proof_level >= 1) && !(stateString contains "No subgoals!")) {
               try {
                 val raw_hammer_results = prove_with_hammer(parse_toplevel)
-                (true, raw_hammer_results._1, raw_hammer_results._2)
+                val hammer_proof = {
+                  if (raw_hammer_results._1) {
+                    raw_hammer_results._2.head
+                  } else " "
+                }
+                (true, raw_hammer_results._1, hammer_proof)
               } catch {
-                case _ : TimeoutException => (true, false, List[String]())
+                case _ : TimeoutException => (true, false, " ")
               }
             }
-            else (false, false, List[String]())
+            else (false, false, " ")
           }
           stateActionHammerTotal = stateActionHammerTotal + (
             stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$proof_level"
