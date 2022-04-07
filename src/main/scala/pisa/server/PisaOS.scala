@@ -294,12 +294,13 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file : String, var working
         continue.breakable {
           // Continue if empty
           if (text.trim.isEmpty) continue.break
-          // Continue if outside a proof
-          val proof_level = getProofLevel(parse_toplevel)
-          if (proof_level == 0) continue.break
 
+          val proof_level = getProofLevel(parse_toplevel)
           // Check if can be solved by hammer
-          val hammer_results = prove_with_hammer(parse_toplevel)
+          val hammer_results = {
+            if (proof_level >= 1) prove_with_hammer(parse_toplevel)
+            else (false, List[String]())
+          }
           stateActionHammerTotal = stateActionHammerTotal + (
             stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$proof_level"
               + "<\\HAMMERSEP>" + s"${hammer_results._1}" + "<\\HAMMERSEP>" + s"${hammer_results._2}" + "<\\HAMMERSEP>"
