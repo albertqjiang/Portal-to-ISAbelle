@@ -68,7 +68,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           pisaos.register_tls(name=new_name, tls=new_state)
           s"${pisaos.getStateString(new_state)}"
         } else {
-          throw new IsabelleException("Hammer failed")
+          throw IsabelleException("Hammer failed")
         }
 
       } else {
@@ -80,7 +80,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     else "Didn't find top level state of given name"
   }
 
-  def deal_with_proof_level(toplevel_state_name: String) = {
+  def deal_with_proof_level(toplevel_state_name: String): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       val tls : ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
       s"${pisaos.getProofLevel(tls)}"
