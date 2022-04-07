@@ -74,7 +74,8 @@ def extract_file(isa_path, theory_file_path, working_directory, saving_directory
     file_info = {
         "file_name": theory_file_path,
         "working_directory": working_directory,
-        **file_analysis
+        **file_analysis,
+        "raw_parsed_string": whole_file_parsed
     }
     
     json.dump(file_info,
