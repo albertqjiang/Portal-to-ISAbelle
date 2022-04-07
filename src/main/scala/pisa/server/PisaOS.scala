@@ -298,6 +298,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     Breaks.breakable {
       for ((transition, text) <- parse_text(thy1, isarString).force.retrieveNow)
         continue.breakable {
+          println(stateString)
+          println(text)
+
           // Continue if empty
           if (text.trim.isEmpty) continue.break
 
