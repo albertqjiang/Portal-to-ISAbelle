@@ -11,7 +11,7 @@ import de.unruh.isabelle.pure.{Context, Position, Theory, TheoryHeader, Toplevel
 import pisa.utils.TheoryManager
 import pisa.utils.TheoryManager.{Ops, Source, Text}
 
-import scala.concurrent.{ExecutionContext, Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
 import scala.concurrent.duration.Duration
 
 // Implicits
@@ -306,13 +306,22 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
           val proof_level = getProofLevel(parse_toplevel)
           // Check if can be solved by hammer
-          val hammer_results = {
-            if ((proof_level >= 1) && !(stateString contains "No subgoals!")) prove_with_hammer(parse_toplevel)
-            else (false, List[String]())
+          // hammer_results : (can we try hammer, did hammer work, what is the result if hammer worked)
+          val hammer_results : (Boolean, Boolean, List[String]) = {
+            if ((proof_level >= 1) && !(stateString contains "No subgoals!")) {
+              try {
+                val raw_hammer_results = prove_with_hammer(parse_toplevel)
+                (true, raw_hammer_results._1, raw_hammer_results._2)
+              } catch {
+                case _ : TimeoutException => (true, false, List[String]())
+              }
+            }
+            else (false, false, List[String]())
           }
           stateActionHammerTotal = stateActionHammerTotal + (
             stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$proof_level"
-              + "<\\HAMMERSEP>" + s"${hammer_results._1}" + "<\\HAMMERSEP>" + s"${hammer_results._2}" + "<\\HAMMERSEP>"
+              + "<\\HAMMERSEP>" + s"${hammer_results._1}" + "<\\HAMMERSEP>" + s"${hammer_results._2}"
+              + "<\\HAMMERSEP>" + s"${hammer_results._3}" + "<\\HAMMERSEP>"
               + "<\\TRANSEP>"
             )
           parse_toplevel = singleTransition(transition, parse_toplevel)
@@ -378,7 +387,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     check_if_provable_with_Sledgehammer(toplevel)
   }
 
-  def prove_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 6000000): (Boolean, List[String]) = {
+  def prove_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 30000): (Boolean, List[String]) = {
     val f_res: Future[(Boolean, List[String])] = Future.apply {
       prove_with_Sledgehammer(top_level_state).force.retrieveNow
     }
