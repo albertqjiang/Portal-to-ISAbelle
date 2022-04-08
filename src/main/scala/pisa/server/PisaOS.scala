@@ -324,11 +324,12 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
                   case _: TimeoutException => (true, false, " ")
                 }
               }
-              "ps -ef | grep z3 | awk '{print $2}' | xargs kill -9".!!
-              "ps -ef | grep veriT | awk '{print $2}' | xargs kill -9".!!
-              "ps -ef | grep cvc4 | awk '{print $2}' | xargs kill -9".!!
-              "ps -ef | grep eprover | awk '{print $2}' | xargs kill -9".!!
-              "ps -ef | grep SPASS | awk '{print $2}' | xargs kill -9".!!
+
+              ("ps -ef" #| "grep z3" #| "awk '{print $2}'" #| "xargs kill -9").!
+              ("ps -ef" #| "grep veriT" #| "awk '{print $2}'" #| "xargs kill -9").!
+              ("ps -ef" #| "grep cvc4" #| "awk '{print $2}'" #| "xargs kill -9").!
+              ("ps -ef" #| "grep eprover" #| "awk '{print $2}'" #| "xargs kill -9").!
+              ("ps -ef" #| "grep SPASS" #| "awk '{print $2}'" #| "xargs kill -9").!
               hammered_tuple
             }
             else (false, false, " ")
