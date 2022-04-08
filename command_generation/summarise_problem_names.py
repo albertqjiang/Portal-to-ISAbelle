@@ -23,8 +23,7 @@ if __name__ == "__main__":
             entry_path = os.path.join(split_path, entry)
 
             if "ground_truth" in entry_path:
-                ground_truth_path = os.path.join(entry_path, entry_path)
-                ground_truth = json.load(open(ground_truth_path))
+                ground_truth = json.load(open(entry_path))
                 file_name = ground_truth["file_name"]
                 problem_names = ground_truth["problem_names"]
                 assert len(problem_names) == 1
