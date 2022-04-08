@@ -182,13 +182,13 @@ object PisaOneStage {
   val path_to_afp: String = "/home/qj213/afp-2021-10-22"
 
   def main(args: Array[String]): Unit = {
-    val path_to_file: String = s"$path_to_afp/thys/Functional-Automata/NA.thy"
-    val working_directory: String = s"$path_to_afp/thys/Functional-Automata"
+    val path_to_file: String = s"$path_to_afp/thys/Game_Based_Crypto/Guessing_Many_One.thy"
+    val working_directory: String = s"$path_to_afp/thys/Game_Based_Crypto"
     val pisaos = new PisaOS(
       path_to_isa_bin = path_to_isa_bin,
       path_to_file = path_to_file,
       working_directory = working_directory)
-    val theorem_name = """lemma accepts_conv_steps: "accepts A w = (\<exists>q. (start A,q) \<in> steps A w \<and> fin A q)"""".stripMargin
+//    val theorem_name = """lemma accepts_conv_steps: "accepts A w = (\<exists>q. (start A,q) \<in> steps A w \<and> fin A q)"""".stripMargin
     //    val parsed : String = pisaos.step("PISA extract data")
     val parsed: String = pisaos.step("PISA extract data with hammer")
     //    val parsed : String = pisaos.step_to_transition_text(theorem_name)
