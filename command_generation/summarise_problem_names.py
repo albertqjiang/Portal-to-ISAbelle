@@ -21,25 +21,25 @@ if __name__ == "__main__":
         split_path = os.path.join(args.extraction_path, split)
         for entry in os.listdir(split_path):
             entry_path = os.path.join(split_path, entry)
-            for ground_truth_file in os.listdir(entry_path):
-                if "ground_truth" in ground_truth_file:
-                    ground_truth_path = os.path.join(entry_path, ground_truth_file)
-                    ground_truth = json.load(open(ground_truth_path))
-                    file_name = ground_truth["file_name"]
-                    problem_names = ground_truth["problem_names"]
-                    assert len(problem_names) == 1
-                    theorem_name = problem_names[0]
-                    theorem_name = theorem_name.replace("\n", " ")
-                    theorem_name = " ".join(theorem_name.split())
-                    saving_name = file_name.split("/")[-1].strip(".thy")
-                    json.dump(
+
+            if "ground_truth" in entry_path:
+                ground_truth_path = os.path.join(entry_path, entry_path)
+                ground_truth = json.load(open(ground_truth_path))
+                file_name = ground_truth["file_name"]
+                problem_names = ground_truth["problem_names"]
+                assert len(problem_names) == 1
+                theorem_name = problem_names[0]
+                theorem_name = theorem_name.replace("\n", " ")
+                theorem_name = " ".join(theorem_name.split())
+                saving_name = file_name.split("/")[-1].strip(".thy")
+                json.dump(
+                    [
                         [
-                            [
-                                file_name, theorem_name
-                            ]
-                        ],
-                        open(
-                            os.path.join(dump_path, f"test_name_{total}.json"), "w"
-                        )
+                            file_name, theorem_name
+                        ]
+                    ],
+                    open(
+                        os.path.join(dump_path, f"test_name_{total}.json"), "w"
                     )
-                    total += 1
+                )
+                total += 1
