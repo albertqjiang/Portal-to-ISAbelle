@@ -26,7 +26,7 @@ if __name__ == "__main__":
                 ground_truth = json.load(open(entry_path))
                 file_name = ground_truth["file_name"]
                 problem_names = ground_truth["problem_names"]
-                assert len(problem_names) == 1
+                assert(len(problem_names) == 1, len(problem_names))
                 theorem_name = problem_names[0]
                 theorem_name = theorem_name.replace("\n", " ")
                 theorem_name = " ".join(theorem_name.split())
