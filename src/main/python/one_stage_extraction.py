@@ -41,7 +41,7 @@ def analyse_whole_file(whole_file_string):
     }
 
 
-@func_set_timeout(120)
+@func_set_timeout(12000)
 def isa_step(stub, theory_file_path, use_sledgehammer=False):
     stub.IsabelleContext(server_pb2.IsaContext(context=theory_file_path))
     extraction_command = "PISA extract data with hammer" if use_sledgehammer else "PISA extract data"
