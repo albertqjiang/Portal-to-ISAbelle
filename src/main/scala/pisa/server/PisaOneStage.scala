@@ -76,7 +76,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
             val hammer_strings = hammer_results._2
             for (attempt_string <- hammer_strings) {
               if (attempt_string contains "Try this:") {
-                return attempt_string.trim.stripPrefix("Try this:").trim.split('(').head.trim
+                return attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString('(')
               }
             }
             "Error! THIS IS BAD! SLEDGEHAMMER SAYS ITS SUCCESSFUL BUT DOESNT RETURN A CANDIDATE"
@@ -86,6 +86,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           }
         } else action
       }
+      println(actual_step)
 
       val new_state: ToplevelState = pisaos.step(actual_step, old_state, 10000)
       pisaos.register_tls(name = new_name, tls = new_state)
