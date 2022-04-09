@@ -51,14 +51,14 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
   def deal_with_get_state(toplevel_state_name: String): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) pisaos.getStateString(pisaos.retrieve_tls(toplevel_state_name))
-    else "Didn't find top level state of given name"
+    else s"Didn't find top level state of given name: ${toplevel_state_name}"
   }
 
   def deal_with_is_finished(toplevel_state_name: String): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       if (pisaos.getProofLevel(pisaos.retrieve_tls(toplevel_state_name)) == 0) "true"
       else "false"
-    } else "Didn't find top level state of given name"
+    } else s"Didn't find top level state of given name: ${toplevel_state_name}"
   }
 
   def deal_with_apply_to_tls(toplevel_state_name: String, action: String, new_name: String): String = {
@@ -92,14 +92,14 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       pisaos.register_tls(name = new_name, tls = new_state)
       s"${pisaos.getStateString(new_state)}"
     }
-    else "Didn't find top level state of given name"
+    else s"Didn't find top level state of given name: ${toplevel_state_name}"
   }
 
   def deal_with_proof_level(toplevel_state_name: String): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       val tls: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
       s"${pisaos.getProofLevel(tls)}"
-    } else "Didn't find top level state of given name"
+    } else s"Didn't find top level state of given name: ${toplevel_state_name}"
   }
 
   def deal_with_proceed_before(true_command: String): String = pisaos.step_to_transition_text(true_command, after = false)
@@ -121,7 +121,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       pisaos.top_level_state_map -= toplevel_state_name
       s"Successfully deleted state named: ${toplevel_state_name}"
-    } else "Didn't find top level state of given name"
+    } else s"Didn't find top level state of given name: ${toplevel_state_name}"
   }
 
   def isabelleCommand(isa_command: IsaCommand): ZIO[
