@@ -77,7 +77,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
             var found = false
             var real_string = ""
             for (attempt_string <- hammer_strings) {
-              if (!found and (attempt_string contains "Try this:")) {
+              if (!found && (attempt_string contains "Try this:")) {
                 found = true
                 real_string = attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString("(")
               }
