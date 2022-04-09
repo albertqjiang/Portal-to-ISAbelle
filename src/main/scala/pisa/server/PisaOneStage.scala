@@ -9,9 +9,10 @@ package pisa.server
 import io.grpc.Status
 import zio.{ZEnv, ZIO}
 import pisa.server.ZioServer.ZServer
-
 import de.unruh.isabelle.pure.ToplevelState
 import de.unruh.isabelle.control.IsabelleException
+
+import scala.concurrent.TimeoutException
 
 class OneStageBody extends ZServer[ZEnv, Any] {
   var pisaos: PisaOS = null
@@ -65,7 +66,12 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       val old_state: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
       val actual_step = {
         if (action.trim == "sledgehammer") {
-          val hammer_results = pisaos.prove_with_hammer(old_state, timeout_in_millis = 30000)
+          val hammer_results =
+            try {
+            pisaos.prove_with_hammer(old_state)
+          } catch {
+            case _: TimeoutException => (false, List[String]())
+          }
           if (hammer_results._1) {
             val hammer_strings = hammer_results._2
             for (attempt_string <- hammer_strings) {
