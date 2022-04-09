@@ -63,24 +63,27 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   def deal_with_apply_to_tls(toplevel_state_name: String, action: String, new_name: String): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       val old_state: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
-      if (action.trim == "sledgehammer") {
-        val hammerable: Boolean = pisaos.check_if_provable_with_Sledgehammer(
-          old_state, 30000
-        )
+      val actual_step = {
+        if (action.trim == "sledgehammer") {
+          val hammer_results = pisaos.prove_with_hammer(old_state, timeout_in_millis = 30000)
+          if (hammer_results._1) {
+            val hammer_strings = hammer_results._2
+            for (attempt_string <- hammer_strings) {
+              if (attempt_string contains "Try this:") {
+                return attempt_string.trim.stripPrefix("Try this:").trim.split('(').head.trim
+              }
+            }
+            "Error! THIS IS BAD! SLEDGEHAMMER SAYS ITS SUCCESSFUL BUT DOESNT RETURN A CANDIDATE"
 
-        if (hammerable) {
-          val new_state: ToplevelState = pisaos.step("sorry", old_state, 10000)
-          pisaos.register_tls(name = new_name, tls = new_state)
-          s"${pisaos.getStateString(new_state)}"
-        } else {
-          throw IsabelleException("Hammer failed")
-        }
-
-      } else {
-        val new_state: ToplevelState = pisaos.step(action, old_state, 10000)
-        pisaos.register_tls(name = new_name, tls = new_state)
-        s"${pisaos.getStateString(new_state)}"
+          } else {
+            throw IsabelleException("Hammer failed")
+          }
+        } else action
       }
+
+      val new_state: ToplevelState = pisaos.step(actual_step, old_state, 10000)
+      pisaos.register_tls(name = new_name, tls = new_state)
+      s"${pisaos.getStateString(new_state)}"
     }
     else "Didn't find top level state of given name"
   }
