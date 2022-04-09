@@ -74,19 +74,23 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           }
           if (hammer_results._1) {
             val hammer_strings = hammer_results._2
+            var found = false
+            var real_string = ""
             for (attempt_string <- hammer_strings) {
-              if (attempt_string contains "Try this:") {
-                return attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString("(")
+              if (!found and (attempt_string contains "Try this:")) {
+                found = true
+                real_string = attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString("(")
               }
             }
-            "Error! THIS IS BAD! SLEDGEHAMMER SAYS ITS SUCCESSFUL BUT DOESNT RETURN A CANDIDATE"
+
+            if (found) real_string
+            else "Error! THIS IS BAD! SLEDGEHAMMER SAYS ITS SUCCESSFUL BUT DOESNT RETURN A CANDIDATE"
 
           } else {
             throw IsabelleException("Hammer failed")
           }
         } else action
       }
-      println(actual_step)
 
       val new_state: ToplevelState = pisaos.step(actual_step, old_state, 10000)
       pisaos.register_tls(name = new_name, tls = new_state)
