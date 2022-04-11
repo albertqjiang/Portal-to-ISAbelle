@@ -63,9 +63,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
   def deal_with_apply_to_tls(toplevel_state_name: String, action: String, new_name: String): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
+      var actual_timeout = 10000
       val old_state: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
       val actual_step = {
         if (action.trim == "sledgehammer") {
+          actual_timeout = 30000
           val hammer_results =
             try {
             pisaos.prove_with_hammer(old_state)
@@ -92,7 +94,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         } else action
       }
 
-      val new_state: ToplevelState = pisaos.step(actual_step, old_state, 10000)
+      val new_state: ToplevelState = pisaos.step(actual_step, old_state, actual_timeout)
       pisaos.register_tls(name = new_name, tls = new_state)
       s"${pisaos.getStateString(new_state)}"
     }

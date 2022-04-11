@@ -403,7 +403,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     check_if_provable_with_Sledgehammer(toplevel)
   }
 
-  def prove_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 30000): (Boolean, List[String]) = {
+  def prove_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
     val f_res: Future[(Boolean, List[String])] = Future.apply {
       prove_with_Sledgehammer(top_level_state).force.retrieveNow
     }
