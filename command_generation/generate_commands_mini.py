@@ -9,7 +9,7 @@ import os
 home_directory = "/home/qj213"
 
 script = f"python3 src/main/python/one_stage_extraction.py  --isa-path {home_directory}/Isabelle2021 " \
-         f"-wd {home_directory}" + "/miniF2F/isabelle/{} --saving-directory mini_extractions/{} -tfp {}"
+         f"-wd {home_directory}" + "/afp-2021-10-22/thys/Symmetric_Polynomials --saving-directory mini_extractions/{} -tfp {}"
 n_threads = 1
 
 cmds = []
@@ -31,7 +31,7 @@ for project_name in glob.glob("{}/miniF2F/isabelle/**/*.thy".format(home_directo
     if project_single_name not in IGNORED_ENTRIES and \
             project_single_name + "/" + file_single_name not in IGNORED_THEORIES:
         cmds.append(
-            script.format(project_single_name, project_single_name, project_name))
+            script.format(project_single_name, project_name))
         total_files += 1
 print("A total of {} files are due to be generated".format(total_files))
 # num_cmd_per_thread = len(cmds) // n_threads + 1
