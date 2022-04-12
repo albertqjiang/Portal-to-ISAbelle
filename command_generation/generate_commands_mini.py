@@ -20,9 +20,10 @@ IGNORED_ENTRIES = {}
 total_files = 0
 for project_name in glob.glob("{}/miniF2F/isabelle/**/*.thy".format(home_directory), recursive=True):
     project_single_name = project_name.split("/")[5]
-    file_single_name = project_name.split("/")[-1]
-
+    # file_single_name = project_name.split("/")[-1]
+    file_single_name = project_name.replace("/", "_")
     # Ignore already extracted files
+    print("mini_extractions/{}/{}_ground_truth.json".format(project_single_name, file_single_name.split(".thy")[0]))
     if os.path.isfile("mini_extractions/{}/{}_ground_truth.json".format(
             project_single_name, file_single_name.split(".thy")[0])):
         continue
