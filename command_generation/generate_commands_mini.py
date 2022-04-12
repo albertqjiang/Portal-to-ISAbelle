@@ -8,7 +8,8 @@ import os
 
 home_directory = "/home/qj213"
 
-script = f"python3 src/main/python/one_stage_extraction.py  --isa-path {home_directory}/Isabelle2021 -wd {home_directory}" + "/miniF2F/isabelle/{} --saving-directory mini_extractions/{} -tfp {}"
+script = f"python3 src/main/python/one_stage_extraction.py  --isa-path {home_directory}/Isabelle2021 " \
+         f"-wd {home_directory}" + "/miniF2F/isabelle/{} --saving-directory mini_extractions/{} -tfp {}"
 n_threads = 1
 
 cmds = []

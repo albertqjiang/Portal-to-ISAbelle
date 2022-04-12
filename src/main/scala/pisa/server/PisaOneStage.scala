@@ -198,15 +198,17 @@ object PisaOneStage {
   val path_to_afp: String = "/home/qj213/afp-2021-10-22"
 
   def main(args: Array[String]): Unit = {
-    val path_to_file: String = s"$path_to_afp/thys/Game_Based_Crypto/Guessing_Many_One.thy"
-    val working_directory: String = s"$path_to_afp/thys/Game_Based_Crypto"
+//    val path_to_file: String = s"$path_to_afp/thys/Game_Based_Crypto/Guessing_Many_One.thy"
+    val path_to_file : String = "/home/qj213/miniF2F/isabelle/valid/amc12_2000_p15.thy"
+//    val working_directory: String = s"$path_to_afp/thys/Game_Based_Crypto"
+    val working_directory : String = "/home/qj213/miniF2F/isabelle/valid"
     val pisaos = new PisaOS(
       path_to_isa_bin = path_to_isa_bin,
       path_to_file = path_to_file,
       working_directory = working_directory)
 //    val theorem_name = """lemma accepts_conv_steps: "accepts A w = (\<exists>q. (start A,q) \<in> steps A w \<and> fin A q)"""".stripMargin
     //    val parsed : String = pisaos.step("PISA extract data")
-    val parsed: String = pisaos.step("PISA extract data with hammer")
+    val parsed: String = pisaos.step("PISA extract data")
     //    val parsed : String = pisaos.step_to_transition_text(theorem_name)
     println(parsed)
     //    println(pisaos.step("by(simp add: delta_conv_steps accepts_def)"))
