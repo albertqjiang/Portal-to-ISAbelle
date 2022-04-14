@@ -15,7 +15,7 @@ import os
 
 home_directory = "/home/qj213"
 
-script = f"python3 src/main/python/one_stage_extraction.py  --isa-path {home_directory}/Isabelle2021 -wd {home_directory}" + "/afp-2021-10-22/thys/{} --saving-directory afp_extractions/{} -tfp {}"
+script = f"unset http_proxy; unset https_proxy; python3 src/main/python/one_stage_extraction.py  --isa-path {home_directory}/Isabelle2021 -wd {home_directory}" + "/afp-2021-10-22/thys/{} --saving-directory afp_extractions/{} -tfp {}"
 if use_hammers:
     script = script + " -us"
 
@@ -57,7 +57,7 @@ for j, port in enumerate(ports):
     port_cmds = cmds_for_port[port]
     for i, cmd in enumerate(port_cmds):
         with open(f"scripts/extract_with_hammer_bashes/script_{counter}.sh", "w") as f:
-            f.write('sbt "runMain pisa.server.PisaOneStageServer{}"&\n'.format(port))
+            f.write('unset http_proxy; unset https_proxy; sbt "runMain pisa.server.PisaOneStageServer{}"&\n'.format(port))
             f.write("PIDmain=$!\n")
             f.write("sleep 12\n")
             f.write(cmd + "&\n")
