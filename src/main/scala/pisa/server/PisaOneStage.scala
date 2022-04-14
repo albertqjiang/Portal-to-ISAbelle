@@ -13,6 +13,7 @@ import de.unruh.isabelle.pure.ToplevelState
 import de.unruh.isabelle.control.IsabelleException
 
 import scala.concurrent.TimeoutException
+import java.io.PrintWriter
 
 class OneStageBody extends ZServer[ZEnv, Any] {
   var pisaos: PisaOS = null
@@ -261,5 +262,21 @@ object PisaMini {
 //     println(pisaos.proof_level(pisaos.toplevel).retrieveNow)
 //   }
 // }
+
+object PisaExtraction {
+  val path_to_isa_bin: String = "/home/qj213/Isabelle2021"
+  val path_to_afp: String = "/home/qj213/afp-2021-10-22"
+  def main(args: Array[String]) : Unit = {
+    val path_to_file : String = args(0)
+    val working_directory : String = args(1)
+    val dump_path : String = args(2)
+    val pisaos = new PisaOS(
+      path_to_isa_bin = path_to_isa_bin,
+      path_to_file = path_to_file,
+      working_directory = working_directory
+    )
+    new PrintWriter(dump_path) { write(pisaos.parse_with_hammer); close() }
+  }
+}
 
 
