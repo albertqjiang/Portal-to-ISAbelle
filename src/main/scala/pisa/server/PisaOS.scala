@@ -335,10 +335,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
             else (false, false, " ")
           }
           stateActionHammerTotal = stateActionHammerTotal + (
-            stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$proof_level"
-              + "<\\HAMMERSEP>" + s"${hammer_results._1}" + "<\\HAMMERSEP>" + s"${hammer_results._2}"
-              + "<\\HAMMERSEP>" + s"${hammer_results._3}" + "<\\HAMMERSEP>"
-              + "<\\TRANSEP>"
+            stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$proof_level" + "<\\STATESEP>"
+              + s"${hammer_results._1}" + "<\\HAMMERSEP>" + s"${hammer_results._2}"
+              + "<\\HAMMERSEP>" + s"${hammer_results._3}" + "<\\TRANSEP>"
             )
           parse_toplevel = singleTransition(transition, parse_toplevel)
           stateString = getStateString(parse_toplevel)
