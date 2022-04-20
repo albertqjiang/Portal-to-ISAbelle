@@ -12,7 +12,7 @@ object PisaHammerTest {
   implicit val formats: DefaultFormats = DefaultFormats
 
   def get_proved(pisaos: PisaOS) : Boolean = {
-    val hammer_results = pisaos.prove_with_hammer(pisaos.toplevel)
+    val hammer_results = pisaos.prove_with_hammer(pisaos.toplevel, 120000)
     val hammered_string =
       if (hammer_results._1) {
         val hammer_strings = hammer_results._2

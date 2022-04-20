@@ -41,7 +41,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
   def deal_with_extraction(): String = pisaos.step("PISA extract data")
 
-  def deal_with_extraction_with_hammer() : String = pisaos.step("PISA extract data with hammer")
+  def deal_with_extraction_with_hammer(): String = pisaos.step("PISA extract data with hammer")
 
   def deal_with_list_states(): String = pisaos.top_level_state_map.keys.mkString(" | ")
 
@@ -71,10 +71,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           actual_timeout = 30000
           val hammer_results =
             try {
-            pisaos.prove_with_hammer(old_state)
-          } catch {
-            case _: TimeoutException => (false, List[String]())
-          }
+              pisaos.prove_with_hammer(old_state)
+            } catch {
+              case _: TimeoutException => (false, List[String]())
+            }
           if (hammer_results._1) {
             val hammer_strings = hammer_results._2
             var found = false
@@ -199,15 +199,15 @@ object PisaOneStage {
   val path_to_afp: String = "/home/qj213/afp-2021-10-22"
 
   def main(args: Array[String]): Unit = {
-//    val path_to_file: String = s"$path_to_afp/thys/Game_Based_Crypto/Guessing_Many_One.thy"
-    val path_to_file : String = "/home/qj213/miniF2F/isabelle/valid/amc12_2000_p15.thy"
-//    val working_directory: String = s"$path_to_afp/thys/Game_Based_Crypto"
-    val working_directory : String = "/home/qj213/miniF2F/isabelle/valid"
+    //    val path_to_file: String = s"$path_to_afp/thys/Game_Based_Crypto/Guessing_Many_One.thy"
+    val path_to_file: String = "/home/qj213/miniF2F/isabelle/valid/amc12_2000_p15.thy"
+    //    val working_directory: String = s"$path_to_afp/thys/Game_Based_Crypto"
+    val working_directory: String = "/home/qj213/miniF2F/isabelle/valid"
     val pisaos = new PisaOS(
       path_to_isa_bin = path_to_isa_bin,
       path_to_file = path_to_file,
       working_directory = working_directory)
-//    val theorem_name = """lemma accepts_conv_steps: "accepts A w = (\<exists>q. (start A,q) \<in> steps A w \<and> fin A q)"""".stripMargin
+    //    val theorem_name = """lemma accepts_conv_steps: "accepts A w = (\<exists>q. (start A,q) \<in> steps A w \<and> fin A q)"""".stripMargin
     //    val parsed : String = pisaos.step("PISA extract data")
     val parsed: String = pisaos.step("PISA extract data")
     //    val parsed : String = pisaos.step_to_transition_text(theorem_name)
@@ -266,16 +266,19 @@ object PisaMini {
 object PisaExtraction {
   val path_to_isa_bin: String = "/home/qj213/Isabelle2021"
   val path_to_afp: String = "/home/qj213/afp-2021-10-22"
-  def main(args: Array[String]) : Unit = {
-    val path_to_file : String = args(0)
-    val working_directory : String = args(1)
-    val dump_path : String = args(2)
+
+  def main(args: Array[String]): Unit = {
+    val path_to_file: String = args(0)
+    val working_directory: String = args(1)
+    val dump_path: String = args(2)
     val pisaos = new PisaOS(
       path_to_isa_bin = path_to_isa_bin,
       path_to_file = path_to_file,
       working_directory = working_directory
     )
-    new PrintWriter(dump_path) { write(pisaos.parse_with_hammer); close() }
+    new PrintWriter(dump_path) {
+      write(pisaos.parse_with_hammer); close()
+    }
   }
 }
 

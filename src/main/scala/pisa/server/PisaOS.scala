@@ -309,7 +309,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
           val proof_level = getProofLevel(parse_toplevel)
           // Check if can be solved by hammer
           // hammer_results : (can we try hammer, did hammer work, what is the result if hammer worked)
-          val hammer_results : (Boolean, Boolean, String) = {
+          val hammer_results: (Boolean, Boolean, String) = {
             if ((proof_level >= 1) && !(stateString contains "No subgoals!") && !(stateString contains "proof (state)") && !(stateString contains "proof (chain)")) {
               val hammered_tuple = {
                 try {
