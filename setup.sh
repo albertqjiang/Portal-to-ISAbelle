@@ -3,7 +3,9 @@ sudo apt-get update
 sudo apt-get install zip
 # Set up sdk
 curl -s "https://get.sdkman.io" | bash
+source "/home/qj213/.sdkman/bin/sdkman-init.sh"
 source .bashrc
+source .zshrc
 # Install java and sbt
 sdk install java 11.0.11-open
 sdk install sbt
