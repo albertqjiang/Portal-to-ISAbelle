@@ -277,7 +277,8 @@ object PisaExtraction {
       working_directory = working_directory
     )
     new PrintWriter(dump_path) {
-      write(pisaos.parse_with_hammer); close()
+      write(pisaos.parse_with_hammer);
+      close()
     }
   }
 }
