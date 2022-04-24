@@ -236,9 +236,14 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   thy1.await
   var toplevel: ToplevelState = init_toplevel().force.retrieveNow
 
+  def reset_map(): Unit = {
+    top_level_state_map = Map()
+  }
+
   def reset_prob(): Unit = {
     thy1 = beginTheory(theoryStarter)
     toplevel = init_toplevel().force.retrieveNow
+    reset_map()
   }
 
   def getFacts(stateString: String): String = {

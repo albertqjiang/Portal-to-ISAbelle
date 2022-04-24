@@ -11,7 +11,7 @@ import scala.io.Source
 object PisaHammerTest {
   implicit val formats: DefaultFormats = DefaultFormats
 
-  def get_proved(pisaos: PisaOS) : Boolean = {
+  def get_proved(pisaos: PisaOS): Boolean = {
     val hammer_results = pisaos.prove_with_hammer(pisaos.toplevel, 120000)
     val hammered_string =
       if (hammer_results._1) {
@@ -37,10 +37,20 @@ object PisaHammerTest {
   def main(args: Array[String]): Unit = {
     val test_theorem_number: String = args(0).split('/').last.split('.').head.split('_').last
     val dump_path: String = "results/hammer_eval"
-    val json_element = parse(Source.fromFile(args(0)).mkString).children(0)
+    val json_element = parse(
+      {
+        val textSource = Source.fromFile(args(0))
+        val str = textSource.mkString
+        textSource.close()
+        str
+      }
+    ).children.head
     val theory_path = json_element(0).extract[String].replaceAll("/home/ywu/afp-2021-02-11", "/home/qj213/afp-2021-10-22")
     val thys_index = theory_path.split("/").indexOf("thys")
-    val working_directory = theory_path.split("/").take(thys_index + 2).mkString("/")
+    val working_directory = {
+      if (theory_path.contains("miniF2F")) "/home/qj213/afp-2021-10-22/thys/Symmetric_Polynomials"
+      else theory_path.split("/").take(thys_index + 2).mkString("/")
+    }
     val theorem_name = json_element(1).extract[String].replaceAll("\n", " ").replaceAll(" +", " ").trim
     val pisaos = new PisaOS(
       path_to_isa_bin = "/home/qj213/Isabelle2021",
@@ -48,8 +58,9 @@ object PisaHammerTest {
       working_directory = working_directory
     )
     pisaos.step_to_transition_text(theorem_name)
+    if (theorem_name.contains("assumes")) pisaos.step("using assms")
 
-    val proved : Boolean =
+    val proved: Boolean =
       try {
         get_proved(pisaos)
       } catch {

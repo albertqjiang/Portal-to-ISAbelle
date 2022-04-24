@@ -1,12 +1,16 @@
 number_of_processes = input("Enter the number of processes you want to run at the same time:\n").strip()
 number_of_processes = int(number_of_processes)
+mini = input("Are we doing MiniF2F? (Y/N)\n").strip()
+mini = True if mini.strip().startswith("Y") else False
 import glob
 import os
 script = 'echo "y" | sbt "runMain pisa.agent.PisaHammerTest {}"'
 
+theorem_names_path = "/home/qj213/mini_names" if mini else "/home/qj213/Portal-to-ISAbelle/universal_test_theorems"
+
 total_cmds = list()
 total_files = 0
-for file_name in glob.glob("/home/qj213/Portal-to-ISAbelle/universal_test_theorems/test_name_*.json", recursive=True):
+for file_name in glob.glob(f"{theorem_names_path}/test_name_*.json", recursive=True):
     number = int(file_name.split("/")[-1].rstrip(".json").split("_")[-1])
     if number <= 1000:
         total_cmds.append(script.format(file_name))
