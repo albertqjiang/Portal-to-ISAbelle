@@ -52,7 +52,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     pisaos.thy1 = stand_in_thy.force.retrieveNow
     pisaos.toplevel = stand_in_tls.force.retrieveNow
     pisaos.reset_map()
-    pisaos.top_level_state_map += ("default" -> pisaos.toplevel)
+    pisaos.register_tls("default", pisaos.toplevel)
   }
 
   def deal_with_reset_problem(): String = {
