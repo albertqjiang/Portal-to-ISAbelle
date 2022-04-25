@@ -2,9 +2,15 @@ number_of_processes = input("Enter the number of processes you want to run at th
 number_of_processes = int(number_of_processes)
 mini = input("Are we doing MiniF2F? (Y/N)\n").strip()
 mini = True if mini.strip().startswith("Y") else False
+heuristic = input("Are we doing heuristics? (Y/N)\n").strip()
+heuristic = True if heuristic.strip().startswith("Y") else False
 import glob
 import os
-script = 'echo "y" | sbt "runMain pisa.agent.PisaHammerTest {}"'
+
+if heuristic:
+    script = 'echo "y" | sbt "runMain pisa.agent.PisaHammerTest {} true"'
+else:
+    script = 'echo "y" | sbt "runMain pisa.agent.PisaHammerTest {} false"'
 
 theorem_names_path = "/home/qj213/mini_names" if mini else "/home/qj213/Portal-to-ISAbelle/universal_test_theorems"
 
