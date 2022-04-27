@@ -55,8 +55,9 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
 object CheckSyntax {
   def main(args: Array[String]): Unit = {
     val theory_path: String = args(0).trim
+    println(theory_path)
     val syntax_checker: CheckSyntax = new CheckSyntax(
-      path_to_isa_bin="/home/qj213/Isabelle2021",
+      path_to_isa_bin = "/home/qj213/Isabelle2021",
       path_to_file = theory_path,
       working_directory = "/home/qj213/afp-2021-10-22/thys/Symmetric_Polynomials"
     )
