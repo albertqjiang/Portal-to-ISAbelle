@@ -63,6 +63,33 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   val (header: String, individual_theorem_strings: List[String]) = divide_by_theorem(file_string)
   pisaos.step(header)
   val all_parsable_theorems : List[String] = get_all_parsable_theorems(individual_theorem_strings)
+
+
+  // Some constants
+  val header_script: String = """(*
+                        |  Authors: Codex from Lean
+                        |*)
+                        |
+                        |theory miniF2F_correct
+                        |  imports
+                        |  HOL.HOL
+                        |  Complex_Main
+                        |  "HOL-Library.Code_Target_Numeral"
+                        |  "HOL-Library.Sum_of_Squares"
+                        |  "Symmetric_Polynomials.Vieta"
+                        |  "HOL-Computational_Algebra.Computational_Algebra"
+                        |  "HOL-Number_Theory.Number_Theory"
+                        |begin
+                        |""".stripMargin
+  var total_script: String = header_script
+  for (theorem_decl <- all_parsable_theorems) {
+    total_script = total_script + theorem_decl
+  }
+  total_script +=
+    """
+      |end
+      |""".stripMargin
+
 }
 
 object CheckSyntax {
@@ -80,6 +107,9 @@ object CheckSyntax {
         write("\n")
       }
       close()
+    }
+    new PrintWriter("/home/qj213/miniF2F/curriculumminiF2F_correct.thy") {
+      write(syntax_checker.total_script)
     }
   }
 }
