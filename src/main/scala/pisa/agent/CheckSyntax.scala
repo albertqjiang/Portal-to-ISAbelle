@@ -16,6 +16,7 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   def divide_by_theorem(total_string: String): (String, List[String]) = {
     val keyword = "theorem"
     val split_theorems = total_string.split(keyword)
+    split_theorems.foreach(println)
     val header = split_theorems.head
     (header, split_theorems.drop(1).map(x => keyword + x).toList)
   }
@@ -41,7 +42,6 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   }
 
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 10000): ToplevelState = {
-    println(isar_string)
     pisaos.step(isar_string, top_level_state, timeout_in_millis)
   }
 
