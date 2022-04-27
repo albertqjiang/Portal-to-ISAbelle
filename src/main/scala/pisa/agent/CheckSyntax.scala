@@ -41,6 +41,7 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   }
 
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 10000): ToplevelState = {
+    println(isar_string)
     pisaos.step(isar_string, top_level_state, timeout_in_millis)
   }
 
