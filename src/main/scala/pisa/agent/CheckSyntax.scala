@@ -13,9 +13,11 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
 
 class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directory: String) {
-  def divide_by_theorem(total_string: String): List[String] = {
+  def divide_by_theorem(total_string: String): (String, List[String]) = {
     val keyword = "theorem"
-    total_string.split(keyword).map(x => keyword + x).toList
+    val split_theorems = total_string.split(keyword)
+    val header = split_theorems.head
+    (header, split_theorems.drop(1).map(x => keyword + x).toList)
   }
 
   def try_to_parse_theorem(theorem_string: String): Boolean = {
@@ -34,6 +36,10 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
     list_of_theorem_strings.map(x => try_to_parse_theorem(x))
   }
 
+  def get_all_parsable_theorems(list_of_theorem_strings: List[String]): List[String] = {
+    list_of_theorem_strings.filter(x => try_to_parse_theorem(x))
+  }
+
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 10000): ToplevelState = {
     pisaos.step(isar_string, top_level_state, timeout_in_millis)
   }
@@ -49,13 +55,14 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   var parsable_theorem_names: ListBuffer[String] = ListBuffer[String]()
   // String of the entire file
   val file_string: String = Files.readString(Path.of(path_to_file))
-  val individual_theorem_strings: List[String] = divide_by_theorem(file_string)
+  val (header: String, individual_theorem_strings: List[String]) = divide_by_theorem(file_string)
+  pisaos.step(header)
+  val all_parsable_theorems : List[String] = get_all_parsable_theorems(individual_theorem_strings)
 }
 
 object CheckSyntax {
   def main(args: Array[String]): Unit = {
     val theory_path: String = args(0).trim
-    println(theory_path)
     val syntax_checker: CheckSyntax = new CheckSyntax(
       path_to_isa_bin = "/home/qj213/Isabelle2021",
       path_to_file = theory_path,
@@ -63,7 +70,7 @@ object CheckSyntax {
     )
 
     new PrintWriter("syntax_correct_theorem_names") {
-      for (str <- syntax_checker.individual_theorem_strings) {
+      for (str <- syntax_checker.all_parsable_theorems) {
         write(str.replaceAll("\n", " ").replaceAll(" +", " ").trim)
         write("\n")
       }
