@@ -81,15 +81,9 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
                         |  "HOL-Number_Theory.Number_Theory"
                         |begin
                         |""".stripMargin
-  var total_script: String = header_script
-  for (theorem_decl <- all_parsable_theorems) {
-    total_script = total_script + theorem_decl
-  }
-  total_script +=
-    """
-      |end
-      |""".stripMargin
-
+  val ending_script: String = """
+                                |end
+                                |""".stripMargin
 }
 
 object CheckSyntax {
@@ -109,7 +103,11 @@ object CheckSyntax {
       close()
     }
     new PrintWriter("/home/qj213/miniF2F/curriculum/miniF2F_correct.thy") {
-      write(syntax_checker.total_script)
+      write(syntax_checker.header_script)
+      for (theorem_decl <- syntax_checker.all_parsable_theorems) {
+        write(theorem_decl)
+      }
+      write(syntax_checker.ending_script)
     }
   }
 }
