@@ -108,6 +108,7 @@ object CheckSyntax {
         write(theorem_decl)
       }
       write(syntax_checker.ending_script)
+      close()
     }
   }
 }
