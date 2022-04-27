@@ -30,15 +30,16 @@ if __name__ == "__main__":
                 #     print(f"{len(problem_names)}, {file_name}")
                 #     continue
 
-                all_problems = []
                 for theorem_name in problem_names:
                     theorem_name = theorem_name.replace("\n", " ")
                     theorem_name = " ".join(theorem_name.split())
                     saving_name = file_name.split("/")[-1].strip(".thy")
-                    all_problems.append([file_name, theorem_name])
                     total += 1
-                json.dump(all_problems,
-                    open(
-                        os.path.join(dump_path, f"test_name_{total}.json"), "w"
+                    json.dump(
+                        [
+                            [file_name, theorem_name]
+                        ],
+                        open(
+                            os.path.join(dump_path, f"test_name_{total}.json"), "w"
+                        )
                     )
-                )
