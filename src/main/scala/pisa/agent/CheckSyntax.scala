@@ -108,7 +108,7 @@ object CheckSyntax {
       }
       close()
     }
-    new PrintWriter("/home/qj213/miniF2F/curriculumminiF2F_correct.thy") {
+    new PrintWriter("/home/qj213/miniF2F/curriculum/miniF2F_correct.thy") {
       write(syntax_checker.total_script)
     }
   }
