@@ -25,8 +25,11 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
     var trial_state = pisaos.copy_tls.retrieveNow
     try {
       for ((_, text) <- parse_text(thy, theorem_string).force.retrieveNow) {
-        println(text)
-        trial_state = step(text, trial_state)
+        if (text.trim.isEmpty) {}
+        else {
+          println(text)
+          trial_state = step(text, trial_state)
+        }
       }
       true
     } catch {
