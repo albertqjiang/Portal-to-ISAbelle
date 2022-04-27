@@ -8,6 +8,7 @@ import de.unruh.isabelle.pure.Implicits._
 import pisa.server.{PisaOS, Transition}
 
 import _root_.java.nio.file.{Files, Path}
+import java.io.PrintWriter
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
 
@@ -49,4 +50,23 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   // String of the entire file
   val file_string: String = Files.readString(Path.of(path_to_file))
   val individual_theorem_strings: List[String] = divide_by_theorem(file_string)
+}
+
+object CheckSyntax {
+  def main(args: Array[String]): Unit = {
+    val theory_path: String = args(0).trim
+    val syntax_checker: CheckSyntax = new CheckSyntax(
+      path_to_isa_bin="/home/qj213/Isabelle2021",
+      path_to_file = theory_path,
+      working_directory = "/home/qj213/afp-2021-10-22/thys/Symmetric_Polynomials"
+    )
+
+    new PrintWriter("syntax_correct_theorem_names") {
+      for (str <- syntax_checker.individual_theorem_strings) {
+        write(str.replaceAll("\n", " ").replaceAll(" +", " ").trim)
+        write("\n")
+      }
+      close()
+    }
+  }
 }
