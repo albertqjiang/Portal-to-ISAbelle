@@ -306,9 +306,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
           if (text.trim.isEmpty) continue.break
           else if (text.trim == "sledgehammer") {
             val current_state_string = stateString
+            val current_proof_level = getProofLevel
             val (real_step, new_state_string) = singleTransitionWithSledgehammer()
             stateString = new_state_string
-            stateActionTotal = stateActionTotal + (current_state_string + "<\\STATESEP>" + real_step.trim + "<\\STATESEP>" + s"$getProofLevel" + "<\\TRANSEP>")
+            stateActionTotal = stateActionTotal + (current_state_string + "<\\STATESEP>" + real_step.trim + "<\\STATESEP>" + s"$current_proof_level" + "<\\TRANSEP>")
           } else {
             stateActionTotal = stateActionTotal + (stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$getProofLevel" + "<\\TRANSEP>")
             stateString = singleTransition(transition)
