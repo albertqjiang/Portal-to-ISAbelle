@@ -277,6 +277,21 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     getStateString
   }
 
+  def singleTransitionWithSledgehammer(): (String, String) = {
+    // Returns two strings, the first one being the real proof step, the second one being the new state string
+    val raw_hammer_strings = prove_with_hammer(toplevel)._2
+    var found = false
+    var real_string = ""
+    for (attempt_string <- raw_hammer_strings) {
+      if (!found && (attempt_string contains "Try this:")) {
+        found = true
+        real_string = attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString("(")
+      }
+    }
+    toplevel = step(real_string, toplevel, 30000)
+    (real_string, getStateString(toplevel))
+  }
+
   def parseStateAction(isarString: String): String = {
     // Here we directly apply transitions to the theory repeatedly
     // to get the (last_observation, action, observation, reward, done) tuple
@@ -289,8 +304,15 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       for ((transition, text) <- parse_text(thy1, isarString).force.retrieveNow)
         continue.breakable {
           if (text.trim.isEmpty) continue.break
-          stateActionTotal = stateActionTotal + (stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$getProofLevel" + "<\\TRANSEP>")
-          stateString = singleTransition(transition)
+          else if (text.trim == "sledgehammer") {
+            val current_state_string = stateString
+            val (real_step, new_state_string) = singleTransitionWithSledgehammer()
+            stateString = new_state_string
+            stateActionTotal = stateActionTotal + (current_state_string + "<\\STATESEP>" + real_step.trim + "<\\STATESEP>" + s"$getProofLevel" + "<\\TRANSEP>")
+          } else {
+            stateActionTotal = stateActionTotal + (stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$getProofLevel" + "<\\TRANSEP>")
+            stateString = singleTransition(transition)
+          }
         }
     }
     stateActionTotal
@@ -394,18 +416,18 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   }
 
   // Returns true if the current toplevel state is a proof state & can be proved by Sledgehammer before timeout
-  def check_if_provable_with_Sledgehammer(top_level_state: ToplevelState, timeout_in_millis: Int = 240000): Boolean = {
-    println(check_with_Sledgehammer.getClass.toString)
-    println(top_level_state.getClass.toString)
-    val f_res: Future[Boolean] = Future.apply {
-      check_with_Sledgehammer(top_level_state).force.retrieveNow
-    }
-    Await.result(f_res, Duration(timeout_in_millis, "millis"))
-  }
-
-  def check_if_provable_with_Sledgehammer(): Boolean = {
-    check_if_provable_with_Sledgehammer(toplevel)
-  }
+//  def check_if_provable_with_Sledgehammer(top_level_state: ToplevelState, timeout_in_millis: Int = 240000): Boolean = {
+//    println(check_with_Sledgehammer.getClass.toString)
+//    println(top_level_state.getClass.toString)
+//    val f_res: Future[Boolean] = Future.apply {
+//      check_with_Sledgehammer(top_level_state).force.retrieveNow
+//    }
+//    Await.result(f_res, Duration(timeout_in_millis, "millis"))
+//  }
+//
+//  def check_if_provable_with_Sledgehammer(): Boolean = {
+//    check_if_provable_with_Sledgehammer(toplevel)
+//  }
 
   def prove_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
     val f_res: Future[(Boolean, List[String])] = Future.apply {
