@@ -180,8 +180,10 @@ object CheckSyntax {
         close()
       }
 
-      new PrintWriter(dump_path + s"/test_name_$i.json") {
-        write(s"""[["$theory_path", "$theorem_decl"]]""")
+      new PrintWriter(dump_path + s"/test_name_$i") {
+        write(theory_path)
+        write("\n")
+        write(theorem_decl)
         close()
       }
     }
