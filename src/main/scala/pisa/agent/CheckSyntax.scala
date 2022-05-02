@@ -139,6 +139,7 @@ object CheckSyntax {
   def main(args: Array[String]): Unit = {
     val theory_path: String = args(0).trim
     val dump_path: String = args(1).trim
+    val dump_name_path: String = args(2).trim
     val syntax_checker: CheckSyntax = new CheckSyntax(
       path_to_isa_bin = "/home/qj213/Isabelle2021",
       path_to_file = theory_path,
@@ -152,14 +153,48 @@ object CheckSyntax {
       }
       close()
     }
-    new PrintWriter(dump_path) {
-      write(syntax_checker.header_script)
-      for (theorem_decl <- syntax_checker.get_all_parsable_theorems) {
-        write(theorem_decl)
+
+    for ((theorem_full, i) <- syntax_checker.get_all_parsable_theorems.zipWithIndex) {
+      val theorem_name: String = theorem_full.split(":").head.split(" ")(1)
+      val theorem_decl: String = theorem_full.trim.split("\n").dropRight(1).mkString.replaceAll(" +", " ")
+      val theory_path = dump_path + s"/$theorem_name.thy"
+      new PrintWriter(theory_path) {
+        write(s"""(*
+                |  Authors: Codex from Lean
+                |*)
+                |
+                |theory $theorem_name
+                |  imports
+                |  HOL.HOL
+                |  Complex_Main
+                |  "HOL-Library.Code_Target_Numeral"
+                |  "HOL-Library.Sum_of_Squares"
+                |  "Symmetric_Polynomials.Vieta"
+                |  "HOL-Computational_Algebra.Computational_Algebra"
+                |  "HOL-Number_Theory.Number_Theory"
+                |begin
+                |""".stripMargin)
+        write(theorem_full)
+        write("""
+              |end
+              |""".stripMargin)
+        close()
       }
-      write(syntax_checker.ending_script)
-      close()
+
+      new PrintWriter(dump_path + s"/test_name_$i.json") {
+        write(s"""[["$theory_path", "$theorem_decl"]]""")
+      }
     }
+
+
+//    new PrintWriter(dump_path) {
+//      write(syntax_checker.header_script)
+//      for (theorem_decl <- syntax_checker.get_all_parsable_theorems) {
+//        write(theorem_decl)
+//      }
+//      write(syntax_checker.ending_script)
+//      close()
+//    }
   }
 }
 
