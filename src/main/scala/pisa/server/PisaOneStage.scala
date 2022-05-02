@@ -118,7 +118,9 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
       val new_state: ToplevelState = pisaos.step(actual_step, old_state, actual_timeout)
       pisaos.register_tls(name = new_name, tls = new_state)
-      s"${pisaos.getStateString(new_state)}"
+      if (action.trim == "sledgehammer") {
+        s"$actual_step <hammer> ${pisaos.getStateString(new_state)}"
+      } else s"${pisaos.getStateString(new_state)}"
     }
     else s"Didn't find top level state of given name: ${toplevel_state_name}"
   }

@@ -1,6 +1,6 @@
 package pisa.agent
 
-import de.unruh.isabelle.control.Isabelle
+import de.unruh.isabelle.control.{Isabelle, IsabelleException}
 import de.unruh.isabelle.mlvalue.MLFunction2
 import de.unruh.isabelle.pure.{Theory, ToplevelState}
 import de.unruh.isabelle.mlvalue.Implicits._
@@ -37,13 +37,63 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
     }
   }
 
-  def parse_all_theorems(list_of_theorem_strings: List[String]): List[Boolean] = {
-    list_of_theorem_strings.map(x => try_to_parse_theorem(x))
+  def try_to_parse_theorem_with_hammer(theorem_string: String): (Boolean, String) = {
+    var trial_state = pisaos.copy_tls.retrieveNow
+    var stateActionTotal: String = ""
+    var current_state_string: String = pisaos.getStateString(trial_state)
+    var current_proof_level: Int = pisaos.getProofLevel(trial_state)
+    try {
+      for ((_, text) <- parse_text(thy, theorem_string).force.retrieveNow) {
+        if (text.trim.isEmpty) {}
+        else if (text.trim == "sledgehammer") {
+          val hammer_results = pisaos.prove_with_hammer(trial_state, 60000)
+          val hammered_string = {
+            if (hammer_results._1) {
+              val hammer_strings = hammer_results._2
+              var found = false
+              var real_string = ""
+              for (attempt_string <- hammer_strings) {
+                if (!found && (attempt_string contains "Try this:")) {
+                  found = true
+                  real_string = attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString("(")
+                }
+              }
+              if (found) real_string
+              else throw IsabelleException("Hammered said it worked but didn't find proof.")
+            } else {
+              throw IsabelleException("Hammer failed")
+            }
+          }.trim
+          trial_state = step(hammered_string, trial_state, 20000)
+          stateActionTotal = stateActionTotal + (current_state_string + "<\\STATESEP>" + hammered_string.trim + "<\\STATESEP>" + s"$current_proof_level" + "<\\TRANSEP>")
+          current_state_string = pisaos.getStateString(trial_state)
+          current_proof_level = pisaos.getProofLevel(trial_state)
+        } else {
+          trial_state = step(text, trial_state)
+          stateActionTotal = stateActionTotal + (current_state_string + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$current_proof_level" + "<\\TRANSEP>")
+          current_state_string = pisaos.getStateString(trial_state)
+          current_proof_level = pisaos.getProofLevel(trial_state)
+        }
+      }
+      (true, stateActionTotal)
+    } catch {
+      case e: Throwable => (false, "")
+    }
   }
 
   def get_all_parsable_theorems(list_of_theorem_strings: List[String]): List[String] = {
     list_of_theorem_strings.filter(x => try_to_parse_theorem(x))
   }
+
+  def get_all_parsable_theorems : List[String] = get_all_parsable_theorems(individual_theorem_strings)
+
+  def get_all_parsable_hammer_theorems(list_of_theorem_strings: List[String]): String = {
+    val list_of_theorem_strings_parsed: List[(Boolean, String)] = list_of_theorem_strings.map(try_to_parse_theorem_with_hammer)
+    val parsable_strings: List[String] = list_of_theorem_strings_parsed.filter(x => x._1).map(x => x._2)
+    parsable_strings.mkString
+  }
+
+  def get_all_parsable_hammer_theorems: String = get_all_parsable_hammer_theorems(individual_theorem_strings)
 
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 10000): ToplevelState = {
     pisaos.step(isar_string, top_level_state, timeout_in_millis)
@@ -62,7 +112,6 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   val file_string: String = Files.readString(Path.of(path_to_file))
   val (header: String, individual_theorem_strings: List[String]) = divide_by_theorem(file_string)
   pisaos.step(header)
-  val all_parsable_theorems : List[String] = get_all_parsable_theorems(individual_theorem_strings)
 
 
   // Some constants
@@ -97,7 +146,7 @@ object CheckSyntax {
     )
 
     new PrintWriter("syntax_correct_theorem_names") {
-      for (str <- syntax_checker.all_parsable_theorems) {
+      for (str <- syntax_checker.get_all_parsable_theorems) {
         write(str.replaceAll("\n", " ").replaceAll(" +", " ").trim)
         write("\n")
       }
@@ -105,10 +154,26 @@ object CheckSyntax {
     }
     new PrintWriter(dump_path) {
       write(syntax_checker.header_script)
-      for (theorem_decl <- syntax_checker.all_parsable_theorems) {
+      for (theorem_decl <- syntax_checker.get_all_parsable_theorems) {
         write(theorem_decl)
       }
       write(syntax_checker.ending_script)
+      close()
+    }
+  }
+}
+
+object ParseWithHammer {
+  def main(args: Array[String]): Unit = {
+    val theory_path: String = args(0).trim
+    val dump_path: String = args(1).trim
+    val syntax_checker: CheckSyntax = new CheckSyntax(
+      path_to_isa_bin = "/home/qj213/Isabelle2021",
+      path_to_file = theory_path,
+      working_directory = "/home/qj213/afp-2021-10-22/thys/Symmetric_Polynomials"
+    )
+    new PrintWriter(dump_path) {
+      write(syntax_checker.get_all_parsable_hammer_theorems)
       close()
     }
   }
