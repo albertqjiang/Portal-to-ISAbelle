@@ -11,4 +11,4 @@ if __name__ == "__main__":
             with open(os.path.join(args.scala_dump_path, file), "r") as f:
                 lines = f.read().strip()
                 thy_path, theorem_decl = lines.split("\n")
-                json.dump([[thy_path, theorem_decl]], open(os.path.join(args.scala_dump_path, file+".json", "w")))
+                json.dump([[thy_path, theorem_decl]], open(os.path.join(args.scala_dump_path, file+".json"), "w"))
