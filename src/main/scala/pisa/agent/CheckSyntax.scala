@@ -139,7 +139,6 @@ object CheckSyntax {
   def main(args: Array[String]): Unit = {
     val theory_path: String = args(0).trim
     val dump_path: String = args(1).trim
-    val dump_name_path: String = args(2).trim
     val syntax_checker: CheckSyntax = new CheckSyntax(
       path_to_isa_bin = "/home/qj213/Isabelle2021",
       path_to_file = theory_path,
@@ -183,6 +182,7 @@ object CheckSyntax {
 
       new PrintWriter(dump_path + s"/test_name_$i.json") {
         write(s"""[["$theory_path", "$theorem_decl"]]""")
+        close()
       }
     }
 
