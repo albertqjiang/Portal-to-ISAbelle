@@ -11,6 +11,8 @@ import _root_.java.nio.file.{Files, Path}
 import java.io.PrintWriter
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
+import scala.concurrent._
+import scala.concurrent.duration._
 
 class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directory: String) {
   def divide_by_theorem(total_string: String): (String, List[String]) = {
@@ -22,18 +24,28 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   }
 
   def try_to_parse_theorem(theorem_string: String): Boolean = {
-    var trial_state = pisaos.copy_tls.retrieveNow
-    try {
-      for ((_, text) <- parse_text(thy, theorem_string).force.retrieveNow) {
-        if (text.trim.isEmpty) {}
-        else {
-          println(text)
-          trial_state = step(text, trial_state)
+    val result = Future {
+      var trial_state = pisaos.copy_tls.retrieveNow
+      try {
+        for ((_, text) <- parse_text(thy, theorem_string).force.retrieveNow) {
+          if (text.trim.isEmpty) {}
+          else {
+            println(text)
+            trial_state = step(text, trial_state)
+          }
+        }
+        true
+      } catch {
+        case e: Throwable => {
+          println(e); false
         }
       }
-      true
+    }
+
+    try {
+      Await.result(result, 30.seconds)
     } catch {
-      case e: Throwable => {println(e); false}
+      case e: Throwable => false
     }
   }
 
