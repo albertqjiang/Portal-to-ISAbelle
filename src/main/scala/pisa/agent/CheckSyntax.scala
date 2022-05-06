@@ -84,9 +84,9 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   def try_to_drive_contradictions_from_theorem(theorem_string: String): Boolean = {
     val theorem_lines = theorem_string.split("\n")
     val theorem_decl = theorem_lines.head
-    //  Find where the keyword "show" starts in theorem_decl
-    val show_start = theorem_decl.indexOf("show")
-    val modified_theorem_decl = theorem_decl.substring(0, show_start) + """show "False""""
+    //  Find where the keyword "shows" starts in theorem_decl
+    val show_start = theorem_decl.indexOf("shows")
+    val modified_theorem_decl = theorem_decl.substring(0, show_start) + """shows "False""""
     val modified_theorem_string = modified_theorem_decl + "\n" + theorem_lines.drop(1).mkString("\n")
     try_to_parse_theorem(modified_theorem_string)
   }
