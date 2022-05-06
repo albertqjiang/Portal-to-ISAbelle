@@ -30,7 +30,7 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
         if (text.trim.isEmpty) {}
         else {
           println(text)
-          trial_state = pisaos.singleTransition(transition, trial_state)
+          trial_state = pisaos.step(text, trial_state)
         }
       }
       true
