@@ -81,6 +81,16 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
     }
   }
 
+  def try_to_drive_contradictions_from_theorem(theorem_string: String): Boolean = {
+    val theorem_lines = theorem_string.split("\n")
+    val theorem_decl = theorem_lines.head
+    //  Find where the keyword "show" starts in theorem_decl
+    val show_start = theorem_decl.indexOf("show")
+    val modified_theorem_decl = theorem_decl.substring(0, show_start) + """show "False""""
+    val modified_theorem_string = modified_theorem_decl + "\n" + theorem_lines.drop(1).mkString("\n")
+    try_to_parse_theorem(modified_theorem_string)
+  }
+
   def get_all_parsable_theorems(list_of_theorem_strings: List[String]): List[String] = {
     list_of_theorem_strings.filter(x => try_to_parse_theorem(x))
   }
@@ -94,6 +104,12 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   }
 
   def get_all_parsable_hammer_theorems: String = get_all_parsable_hammer_theorems(individual_theorem_strings)
+
+  def get_all_contradictions(list_of_theorem_strings: List[String]): List[String] = {
+    list_of_theorem_strings.filter(x => try_to_drive_contradictions_from_theorem(x))
+  }
+
+  def get_all_contradictions: List[String] = get_all_contradictions(individual_theorem_strings)
 
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 10000): ToplevelState = {
     pisaos.step(isar_string, top_level_state, timeout_in_millis)
@@ -211,6 +227,23 @@ object ParseWithHammer {
     )
     new PrintWriter(dump_path) {
       write(syntax_checker.get_all_parsable_hammer_theorems)
+      close()
+    }
+  }
+}
+
+
+object DriveContradictions {
+  def main(args: Array[String]) : Unit = {
+    val theory_path: String = args(0).trim
+    val dump_path: String = args(1).trim
+    val syntax_checker: CheckSyntax = new CheckSyntax(
+      path_to_isa_bin = "/home/qj213/Isabelle2021",
+      path_to_file = theory_path,
+      working_directory = "/home/qj213/afp-2021-10-22/thys/Symmetric_Polynomials"
+    )
+    new PrintWriter(dump_path) {
+      write(syntax_checker.get_all_contradictions.mkString("\n"))
       close()
     }
   }
