@@ -86,9 +86,12 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
     val theorem_decl = theorem_lines.head
     //  Find where the keyword "shows" starts in theorem_decl
     val show_start = theorem_decl.indexOf("shows")
-    val modified_theorem_decl = theorem_decl.substring(0, show_start) + """shows "False""""
-    val modified_theorem_string = modified_theorem_decl + "\n" + theorem_lines.drop(1).mkString("\n")
-    try_to_parse_theorem(modified_theorem_string)
+    if (show_start == -1) false
+    else {
+      val modified_theorem_decl = theorem_decl.substring(0, show_start) + """shows "False""""
+      val modified_theorem_string = modified_theorem_decl + "\n" + theorem_lines.drop(1).mkString("\n")
+      try_to_parse_theorem(modified_theorem_string)
+    }
   }
 
   def get_all_parsable_theorems(list_of_theorem_strings: List[String]): List[String] = {
