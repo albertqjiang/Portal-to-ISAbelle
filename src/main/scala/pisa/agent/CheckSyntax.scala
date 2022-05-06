@@ -24,28 +24,19 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
   }
 
   def try_to_parse_theorem(theorem_string: String): Boolean = {
-    val result = Future {
-      var trial_state = pisaos.copy_tls.retrieveNow
-      try {
-        for ((_, text) <- parse_text(thy, theorem_string).force.retrieveNow) {
-          if (text.trim.isEmpty) {}
-          else {
-            println(text)
-            trial_state = step(text, trial_state)
-          }
-        }
-        true
-      } catch {
-        case e: Throwable => {
-          println(e); false
+    var trial_state = pisaos.copy_tls.retrieveNow
+    try {
+      for ((transition, text) <- parse_text(thy, theorem_string).force.retrieveNow) {
+        if (text.trim.isEmpty) {}
+        else {
+          println(text)
+          trial_state = pisaos.singleTransition(transition, trial_state)
         }
       }
-    }
-
-    try {
-      Await.result(result, 30.seconds)
+      true
     } catch {
-      case e: Throwable => false
+      case e: Throwable =>
+        println(e); false
     }
   }
 
