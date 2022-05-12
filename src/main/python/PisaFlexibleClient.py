@@ -144,7 +144,8 @@ def initialise_problem(env, problem_name):
 
 if __name__ == '__main__':
     env = initialise_env(8000, 
-        working_directory="/home/qj213/afp-2021-10-22/thys/FunWithFunctions", 
+        working_directory="/Applications/Isabelle2021.app/src/HOL/Examples",
         isa_path="/Applications/Isabelle2021.app", 
-        theory_file_path="/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy"
+        theory_file_path="/Applications/Isabelle2021.app/src/HOL/Examples/Adhoc_Overloading_Examples.thy"
     )
+    print(env.post("<get_ancestors>"))

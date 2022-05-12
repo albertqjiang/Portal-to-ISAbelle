@@ -178,6 +178,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           deal_with_apply_to_tls(tls_name, action, new_name)
         } catch {
           case e: IsabelleException => "Step error"
+          case _: Throwable => "Unknown error"
         }
 
       }
@@ -202,6 +203,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val tls_name: String = isa_command.command.trim.stripPrefix("<delete>").trim
         deal_with_delete(tls_name)
       }
+      else if (isa_command.command.trim == "<get_ancestors>") {
+        val ancestors_names_list: List[String] = pisaos.get_theory_ancestors_names(pisaos.thy1)
+        ancestors_names_list.mkString(",")
+      }
+
       else if (isa_command.command == "exit") deal_with_exit(isa_command.command)
       else "Unrecognised operation."
     }
