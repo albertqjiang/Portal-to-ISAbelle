@@ -1,12 +1,22 @@
 number_of_processes = input("Enter the number of processes you want to run at the same time:\n").strip()
 number_of_processes = int(number_of_processes)
+mini = input("Are we doing MiniF2F? (Y/N)\n").strip()
+mini = True if mini.strip().startswith("Y") else False
+heuristic = input("Are we doing heuristics? (Y/N)\n").strip()
+heuristic = True if heuristic.strip().startswith("Y") else False
 import glob
 import os
-script = 'echo "y" | sbt "runMain pisa.agent.PisaHammerTest {}"'
+
+if heuristic:
+    script = 'echo "y" | sbt "runMain pisa.agent.PisaHammerTest {} true"'
+else:
+    script = 'echo "y" | sbt "runMain pisa.agent.PisaHammerTest {} false"'
+
+theorem_names_path = "/home/qj213/mini_names" if mini else "/home/qj213/Portal-to-ISAbelle/universal_test_theorems"
 
 total_cmds = list()
 total_files = 0
-for file_name in glob.glob("/home/qj213/Portal-to-ISAbelle/universal_test_theorems/test_name_*.json", recursive=True):
+for file_name in glob.glob(f"{theorem_names_path}/test_name_*.json", recursive=True):
     number = int(file_name.split("/")[-1].rstrip(".json").split("_")[-1])
     if number <= 1000:
         total_cmds.append(script.format(file_name))
@@ -23,8 +33,8 @@ for process_number, process_cmds in process_number_to_cmds.items():
             f.write(process_cmd+"\n")
             f.write("PIDmain=$!\n")
             f.write("wait $PIDmain\n")
-            f.write("ps -ef | grep z3 | awk '{print $2}' | xargs kill -9\n")
-            f.write("ps -ef | grep veriT | awk '{print $2}' | xargs kill -9\n")
-            f.write("ps -ef | grep cvc4 | awk '{print $2}' | xargs kill -9\n")
-            f.write("ps -ef | grep eprover | awk '{print $2}' | xargs kill -9\n")
-            f.write("ps -ef | grep SPASS | awk '{print $2}' | xargs kill -9\n")
+            # f.write("ps -ef | grep z3 | awk '{print $2}' | xargs kill -9\n")
+            # f.write("ps -ef | grep veriT | awk '{print $2}' | xargs kill -9\n")
+            # f.write("ps -ef | grep cvc4 | awk '{print $2}' | xargs kill -9\n")
+            # f.write("ps -ef | grep eprover | awk '{print $2}' | xargs kill -9\n")
+            # f.write("ps -ef | grep SPASS | awk '{print $2}' | xargs kill -9\n")

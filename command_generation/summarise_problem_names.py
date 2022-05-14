@@ -26,22 +26,20 @@ if __name__ == "__main__":
                 ground_truth = json.load(open(entry_path))
                 file_name = ground_truth["file_name"]
                 problem_names = ground_truth["problem_names"]
-                if not len(problem_names) == 1:
-                    print(f"{len(problem_names)}, {file_name}")
-                    continue
+                # if not len(problem_names) == 1:
+                #     print(f"{len(problem_names)}, {file_name}")
+                #     continue
 
-                theorem_name = problem_names[0]
-                theorem_name = theorem_name.replace("\n", " ")
-                theorem_name = " ".join(theorem_name.split())
-                saving_name = file_name.split("/")[-1].strip(".thy")
-                json.dump(
-                    [
+                for theorem_name in problem_names:
+                    theorem_name = theorem_name.replace("\n", " ")
+                    theorem_name = " ".join(theorem_name.split())
+                    saving_name = file_name.split("/")[-1].strip(".thy")
+                    total += 1
+                    json.dump(
                         [
-                            file_name, theorem_name
-                        ]
-                    ],
-                    open(
-                        os.path.join(dump_path, f"test_name_{total}.json"), "w"
+                            [file_name, theorem_name]
+                        ],
+                        open(
+                            os.path.join(dump_path, f"test_name_{total}.json"), "w"
+                        )
                     )
-                )
-                total += 1

@@ -9,14 +9,19 @@ package pisa.server
 import io.grpc.Status
 import zio.{ZEnv, ZIO}
 import pisa.server.ZioServer.ZServer
-import de.unruh.isabelle.pure.ToplevelState
+import de.unruh.isabelle.pure.{Theory, ToplevelState}
 import de.unruh.isabelle.control.IsabelleException
+import de.unruh.isabelle.mlvalue.MLValue
+import de.unruh.isabelle.control.Isabelle
+import de.unruh.isabelle.pure.Implicits._
 
-import scala.concurrent.TimeoutException
+import scala.concurrent.{ExecutionContext, TimeoutException}
 import java.io.PrintWriter
 
 class OneStageBody extends ZServer[ZEnv, Any] {
   var pisaos: PisaOS = null
+  var stand_in_thy: MLValue[Theory] = null
+  var stand_in_tls: MLValue[ToplevelState] = null
   var isaPath: String = null
   var isaWorkingDirectory: String = null
 
@@ -35,8 +40,24 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   def isabelleContext(path_to_file: IsaContext): ZIO[zio.ZEnv, Status, IsaMessage] = {
     pisaos = new PisaOS(path_to_isa_bin = isaPath, path_to_file = path_to_file.context,
       working_directory = isaWorkingDirectory)
+    stand_in_thy = pisaos.thy1.mlValue
+    stand_in_tls = pisaos.copy_tls
     ZIO.succeed(IsaMessage(s"You entered the path to the Theory file: ${path_to_file.context} \n" +
       s"We have successfully initialised the Isabelle environment."))
+  }
+
+  def reset_problem(): Unit = {
+    implicit val isabelle: Isabelle = pisaos.isabelle
+    implicit val ec: ExecutionContext = pisaos.ec
+    pisaos.thy1 = stand_in_thy.force.retrieveNow
+    pisaos.toplevel = stand_in_tls.force.retrieveNow
+    pisaos.reset_map()
+    pisaos.register_tls("default", pisaos.toplevel)
+  }
+
+  def deal_with_reset_problem(): String = {
+    reset_problem()
+    "The problem is reset."
   }
 
   def deal_with_extraction(): String = pisaos.step("PISA extract data")
@@ -97,7 +118,9 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
       val new_state: ToplevelState = pisaos.step(actual_step, old_state, actual_timeout)
       pisaos.register_tls(name = new_name, tls = new_state)
-      s"${pisaos.getStateString(new_state)}"
+      if (action.trim == "sledgehammer") {
+        s"$actual_step <hammer> ${pisaos.getStateString(new_state)}"
+      } else s"${pisaos.getStateString(new_state)}"
     }
     else s"Didn't find top level state of given name: ${toplevel_state_name}"
   }
@@ -155,6 +178,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           deal_with_apply_to_tls(tls_name, action, new_name)
         } catch {
           case e: IsabelleException => "Step error"
+          case _: Throwable => "Unknown error"
         }
 
       }
@@ -179,6 +203,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val tls_name: String = isa_command.command.trim.stripPrefix("<delete>").trim
         deal_with_delete(tls_name)
       }
+      else if (isa_command.command.trim == "<get_ancestors>") {
+        val ancestors_names_list: List[String] = pisaos.get_theory_ancestors_names(pisaos.thy1)
+        ancestors_names_list.mkString(",")
+      }
+
       else if (isa_command.command == "exit") deal_with_exit(isa_command.command)
       else "Unrecognised operation."
     }
@@ -277,7 +306,8 @@ object PisaExtraction {
       working_directory = working_directory
     )
     new PrintWriter(dump_path) {
-      write(pisaos.parse_with_hammer); close()
+      write(pisaos.parse_with_hammer);
+      close()
     }
   }
 }
