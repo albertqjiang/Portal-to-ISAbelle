@@ -41,8 +41,6 @@ object PisaStat {
 
     new PrintWriter(s"$dump_path/$test_theorem_number" + "_time.info") {
       write(s"load_library_time: $load_library_time\nproceed_to_line_time: $proceed_to_line_time")
-      write("\n")
-      write(theorem_name)
       close()
     }
   }
