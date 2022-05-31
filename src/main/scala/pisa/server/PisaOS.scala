@@ -116,9 +116,19 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val make_pretty_list_string_list: MLFunction[List[Pretty.T], List[String]] = compileFunction[List[Pretty.T], List[String]](
     "fn (pretty_list) => map Pretty.unformatted_string_of pretty_list"
   )
+  val local_facts_retriever: MLFunction[ToplevelState, List[String]] = compileFunction[ToplevelState, List[String]](
+    "fn tls => map Pretty.unformatted_string_of (Proof_Context.pretty_local_facts false (Toplevel.context_of tls))"
+  )
+  val global_facts_retriever:MLFunction[ToplevelState, List[String]] = compileFunction[ToplevelState, List[String]](
+    """fn tls => map (fn tup => #1 tup) (Global_Theory.all_thms_of (Proof_Context.theory_of (Toplevel.context_of tls)) false)""")
+  def total_facts(tls: ToplevelState): List[String] = {
+    val local_facts = local_facts_retriever(tls).force.retrieveNow
+    val global_facts = global_facts_retriever(tls).force.retrieveNow
+    (local_facts ++ global_facts).distinct
+  }
+
   val header_read: MLFunction2[String, Position, TheoryHeader] =
     compileFunction[String, Position, TheoryHeader]("fn (text,pos) => Thy_Header.read pos text")
-
   // setting up Sledgehammer
   val thy_for_sledgehammer: Theory = Theory("HOL.List")
   val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
