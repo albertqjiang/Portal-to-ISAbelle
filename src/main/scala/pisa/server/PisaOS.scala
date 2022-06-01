@@ -116,15 +116,35 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val make_pretty_list_string_list: MLFunction[List[Pretty.T], List[String]] = compileFunction[List[Pretty.T], List[String]](
     "fn (pretty_list) => map Pretty.unformatted_string_of pretty_list"
   )
-  val local_facts_retriever: MLFunction[ToplevelState, List[String]] = compileFunction[ToplevelState, List[String]](
-    "fn tls => map Pretty.unformatted_string_of (Proof_Context.pretty_local_facts false (Toplevel.context_of tls))"
+
+  val local_facts_and_defs: MLFunction[ToplevelState, List[(String, String)]] =
+    compileFunction[ToplevelState, List[(String, String)]](
+    """fn tls =>
+        |  let val ctxt = Toplevel.context_of tls;
+        |      val facts = Proof_Context.facts_of ctxt;
+        |      val props = map #1 (Facts.props facts);
+        |      val local_facts =
+        |        (if null props then [] else [("<unnamed>", props)]) @
+        |        Facts.dest_static false [Global_Theory.facts_of (Proof_Context.theory_of ctxt)] facts;
+        |  in
+        |    if null local_facts then []
+        |    else (
+        |      map (fn tup => (#1 tup, Pretty.unformatted_string_of (Element.pretty_statement (Toplevel.context_of tls) "test" (#2 tup)))) local_facts
+        |    )
+        |  end;
+        |""".stripMargin
   )
-  val global_facts_retriever:MLFunction[ToplevelState, List[String]] = compileFunction[ToplevelState, List[String]](
-    """fn tls => map (fn tup => #1 tup) (Global_Theory.all_thms_of (Proof_Context.theory_of (Toplevel.context_of tls)) false)""")
-  def total_facts(tls: ToplevelState): List[String] = {
-    val local_facts = local_facts_retriever(tls).force.retrieveNow
-    val global_facts = global_facts_retriever(tls).force.retrieveNow
-    (local_facts ++ global_facts).distinct
+  val global_facts_and_defs: MLFunction[ToplevelState, List[(String, String)]] =
+    compileFunction[ToplevelState, List[(String, String)]](
+      """fn tls =>
+        | map (fn tup => (#1 tup, Pretty.unformatted_string_of (Element.pretty_statement (Toplevel.context_of tls) "test" (#2 tup))))
+        | (Global_Theory.all_thms_of (Proof_Context.theory_of (Toplevel.context_of tls)) false)
+        """.stripMargin
+    )
+  def total_facts(tls: ToplevelState): String = {
+    val local_facts = local_facts_and_defs(tls).force.retrieveNow
+    val global_facts = global_facts_and_defs(tls).force.retrieveNow
+    (local_facts ++ global_facts).distinct.map(x => x._1 + "<DEF>" + x._2).mkString("<SEP>")
   }
 
   val header_read: MLFunction2[String, Position, TheoryHeader] =
