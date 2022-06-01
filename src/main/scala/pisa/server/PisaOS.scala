@@ -141,7 +141,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       |      )
       |      collapsed_local_facts
       |    )
-      |  end;""".stripMargin
+      |  end""".stripMargin
   )
   val global_facts_and_defs: MLFunction[ToplevelState, List[(String, String)]] =
     compileFunction[ToplevelState, List[(String, String)]](
