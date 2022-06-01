@@ -120,19 +120,28 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val local_facts_and_defs: MLFunction[ToplevelState, List[(String, String)]] =
     compileFunction[ToplevelState, List[(String, String)]](
     """fn tls =>
-        |  let val ctxt = Toplevel.context_of tls;
-        |      val facts = Proof_Context.facts_of ctxt;
-        |      val props = map #1 (Facts.props facts);
-        |      val local_facts =
-        |        (if null props then [] else [("<unnamed>", props)]) @
-        |        Facts.dest_static false [Global_Theory.facts_of (Proof_Context.theory_of ctxt)] facts;
-        |  in
-        |    if null local_facts then []
-        |    else (
-        |      map (fn tup => (#1 tup, Pretty.unformatted_string_of (Element.pretty_statement (Toplevel.context_of tls) "test" (#2 tup)))) local_facts
-        |    )
-        |  end;
-        |""".stripMargin
+      |  let val ctxt = Toplevel.context_of tls;
+      |      val facts = Proof_Context.facts_of ctxt;
+      |      val props = map #1 (Facts.props facts);
+      |      val local_facts =
+      |        (if null props then [] else [("<unnamed>", props)]) @
+      |        Facts.dest_static false [Global_Theory.facts_of (Proof_Context.theory_of ctxt)] facts;
+      |      val test = map #2 local_facts;
+      |      val collapsed_local_facts = fold (fn x => fn y => (x @ y)) test [];
+      |  in
+      |    if null collapsed_local_facts then []
+      |    else (
+      |      map
+      |      (
+      |        fn tup => (
+      |          Thm.derivation_name tup,
+      |          Pretty.unformatted_string_of
+      |          (Element.pretty_statement (Toplevel.context_of tls) "test" tup)
+      |        )
+      |      )
+      |      collapsed_local_facts
+      |    )
+      |  end;""".stripMargin
   )
   val global_facts_and_defs: MLFunction[ToplevelState, List[(String, String)]] =
     compileFunction[ToplevelState, List[(String, String)]](
