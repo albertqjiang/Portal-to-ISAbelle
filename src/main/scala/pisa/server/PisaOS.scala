@@ -134,7 +134,8 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       |  in 
       |      map (fn thm => (
       |            Thm.get_name_hint thm,
-      |            Pretty.unformatted_string_of (Thm.pretty_thm ctxt thm)
+      |            Pretty.unformatted_string_of
+      |          (Element.pretty_statement ctxt "" thm)
       |         ))
       |         condensed_thms
       |  end""".stripMargin
