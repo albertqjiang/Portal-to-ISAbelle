@@ -150,10 +150,21 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
         | (Global_Theory.all_thms_of (Proof_Context.theory_of (Toplevel.context_of tls)) false)
         """.stripMargin
     )
-  def total_facts(tls: ToplevelState): String = {
+
+  def local_facts_and_defs_string(tls: ToplevelState): String =
+    local_facts_and_defs(tls).force.retrieveNow.distinct.map(x => x._1 + "<DEF>" + x._2).mkString("<SEP>")
+  def local_facts_and_defs_string(tls_name: String): String = {
+    val tls = retrieve_tls(tls_name)
+    local_facts_and_defs_string(tls)
+  }
+  def total_facts_and_defs_string(tls: ToplevelState): String = {
     val local_facts = local_facts_and_defs(tls).force.retrieveNow
     val global_facts = global_facts_and_defs(tls).force.retrieveNow
     (local_facts ++ global_facts).distinct.map(x => x._1 + "<DEF>" + x._2).mkString("<SEP>")
+  }
+  def total_facts_and_defs_string(tls_name: String): String = {
+    val tls = retrieve_tls(tls_name)
+    total_facts_and_defs_string(tls)
   }
 
   val header_read: MLFunction2[String, Position, TheoryHeader] =
