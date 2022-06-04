@@ -10,5 +10,6 @@ if __name__ == "__main__":
     )
 
     theorem_string = 'have "n \\<le> f(k)" using Suc'
-    env.step_to_top_level_state(theorem_string)
+
+    env.post(f"<proceed after> {theorem_string}")
     env.post("<local facts and defs> default")
