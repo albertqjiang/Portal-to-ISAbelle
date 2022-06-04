@@ -169,6 +169,14 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val tls_name: String = isa_command.command.stripPrefix("<local facts and defs>").trim
         deal_with_local_facts_and_defs(tls_name)
       }
+      else if (isa_command.command.startsWith("<global facts and defs>")) {
+        val tls_name: String = isa_command.command.stripPrefix("<global facts and defs>").trim
+        deal_with_global_facts_and_defs(tls_name)
+      }
+      else if (isa_command.command.startsWith("<total facts and defs>")) {
+        val tls_name: String = isa_command.command.stripPrefix("<total facts and defs>").trim
+        deal_with_total_facts_and_defs(tls_name)
+      }
       else if (isa_command.command.startsWith("<list states>")) deal_with_list_states()
       else if (isa_command.command.startsWith("<initialise>")) deal_with_initialise()
       else if (isa_command.command.startsWith("<get state>")) {

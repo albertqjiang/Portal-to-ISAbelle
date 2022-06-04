@@ -9,7 +9,9 @@ if __name__ == "__main__":
         working_directory=working_directory,
     )
 
-    theorem_string = 'have "n \\<le> f(k)" using Suc'
+    theorem_string = 'by(metis fff order_le_less_trans)'
 
     env.post(f"<proceed after> {theorem_string}")
-    env.post("<local facts and defs> default")
+    env.post("<initialise>")
+    print(env.post("<local facts and defs> default"))
+    
