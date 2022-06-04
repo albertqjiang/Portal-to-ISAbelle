@@ -160,6 +160,18 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     } else s"Didn't find top level state of given name: ${toplevel_state_name}"
   }
 
+  def deal_with_global_facts_and_defs(toplevel_state_name: String): String = {
+    if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
+      pisaos.global_facts_and_defs_string(toplevel_state_name)
+    } else s"Didn't find top level state of given name: ${toplevel_state_name}"
+  }
+
+  def deal_with_total_facts_and_defs(toplevel_state_name: String): String = {
+    if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
+      pisaos.total_facts_and_defs_string(toplevel_state_name)
+    } else s"Didn't find top level state of given name: ${toplevel_state_name}"
+  }
+
   def isabelleCommand(isa_command: IsaCommand): ZIO[
     zio.ZEnv, Status, IsaState] = {
     var proof_state: String = {
