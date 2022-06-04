@@ -10,9 +10,13 @@ from func_timeout import func_set_timeout
 import server_pb2
 import server_pb2_grpc
 
+MAX_MESSAGE_LENGTH = 10485760
+
 
 def create_stub(port=9000):
-    channel = grpc.insecure_channel('localhost:{}'.format(port))
+    channel = grpc.insecure_channel('localhost:{}'.format(port),
+                                    options=[('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
+                                             ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH)])
     return server_pb2_grpc.ServerStub(channel)
 
 
