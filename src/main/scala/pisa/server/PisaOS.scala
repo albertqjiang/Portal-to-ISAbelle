@@ -147,6 +147,54 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
         | (Global_Theory.all_thms_of (Proof_Context.theory_of (Toplevel.context_of tls)) false)
         """.stripMargin
     )
+  val get_dependent_thms: MLFunction2[ToplevelState, String, List[String]] = compileFunction[ToplevelState, String, List[String]](
+    """fn (tls, name) =>
+      | let val thy = Toplevel.theory_of tls;
+      |     val thm = Global_Theory.get_thm thy name;
+      | in
+      |     map (fn x => (#1 (#2 x))) (Thm_Deps.thm_deps thy [test_thm])
+      | end""".stripMargin
+  )
+  def get_dependent_theorems(tls_name: String, theorem_name: String): List[String] = {
+    val toplevel_state = retrieve_tls(tls_name)
+    get_dependent_thms(toplevel_state, theorem_name).force.retrieveNow
+  }
+
+  val get_used_consts: MLFunction2[ToplevelState, String, List[String]] = compileFunction[ToplevelState, String, List[String]](
+    """fn (tls, inner_syntax) =>
+      | let val ctxt = Toplevel.context_of tls;
+      |     fun leaves (left $ right) = (leaves left) @ (leaves right)
+      |     |   leaves t = [t];
+      |     val term = Syntax.parse_term ctxt inner_syntax;
+      |     fun filter_out (Const ("_type_constraint_", _)) = false
+      |     | filter_out (Const _) = true
+      |     | filter_out _ = false;
+      |     val all_leaves = leaves term;
+      |     val filtered_leaves = filter filter_out all_leaves;
+      |     fun remove(_, []) = []
+      |       | remove(x, y::l) =
+      |         if x = y then
+      |           remove(x, l)
+      |         else
+      |           y::remove(x, l);
+      |      fun removeDup [] = []
+      |        | removeDup(x::l) = x::removeDup(remove(x, l));
+      |      fun string_of_term (Const (s, _)) = s
+      |        | string_of_term _ = "";
+      | in
+      |      removeDup (map string_of_term filtered_leaves)
+      | end""".stripMargin
+  )
+  def get_all_definitions(tls_name: String, theorem_string: String): List[String] = {
+    val toplevel_state = retrieve_tls(tls_name)
+    val quotation_split : List[String] = theorem_string.split('"').toList
+    val all_inner_syntax = quotation_split.indices.collect {case i if i%2==1 => quotation_split(i)}.filter(x => x.nonEmpty).map(x => '"' + x.trim + '"').toList
+    val all_defs = all_inner_syntax.map(x => get_used_consts(toplevel_state, x).force.retrieveNow)
+    val deduplicated_all_defs: List[String] = all_defs.flatten
+    deduplicated_all_defs.distinct
+  }
+
+
   def local_facts_and_defs_string(tls: ToplevelState): String =
     local_facts_and_defs(tls).force.retrieveNow.distinct.map(x => x._1 + "<DEF>" + x._2).mkString("<SEP>")
   def local_facts_and_defs_string(tls_name: String): String = {
