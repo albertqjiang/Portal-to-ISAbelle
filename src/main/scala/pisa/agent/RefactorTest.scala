@@ -13,7 +13,9 @@ object RefactorTest {
       working_directory=working_directory
     )
     val step_string = "by (simp add: max_mult_distrib_right divide_inverse)"
-    println(pisaos.step_to_transition_text(step_string))
+    pisaos.step_to_transition_text(step_string)
+    pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
+    println(pisaos.get_dependent_theorems(tls_name = "default", "max_divide_distrib_right"))
 
   }
 }
