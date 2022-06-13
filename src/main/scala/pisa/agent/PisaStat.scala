@@ -4,7 +4,6 @@ import net.liftweb.json.{DefaultFormats, parse}
 import pisa.server.PisaOS
 
 import java.io.PrintWriter
-import java.lang.System
 import scala.io.Source
 
 object PisaStat {
