@@ -150,9 +150,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val get_dependent_thms: MLFunction2[ToplevelState, String, List[String]] = compileFunction[ToplevelState, String, List[String]](
     """fn (tls, name) =>
       | let val thy = Toplevel.theory_of tls;
-      |     val thm = Global_Theory.get_thm thy name;
+      |     val thm = Global_Theory.get_thms thy name;
       | in
-      |     map (fn x => (#1 (#2 x))) (Thm_Deps.thm_deps thy [thm])
+      |     map (fn x => (#1 (#2 x))) (Thm_Deps.thm_deps thy thm)
       | end""".stripMargin
   )
   def get_dependent_theorems(tls_name: String, theorem_name: String): List[String] = {
