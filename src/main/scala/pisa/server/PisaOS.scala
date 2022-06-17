@@ -209,7 +209,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       |   handle _ => (term_to_list (Syntax.parse_term ctxt str));
       |in
       |  flex inner_syntax
-      |end;""".stripMargin
+      |end""".stripMargin
     //    """fn (tls, inner_syntax) =>
 //      | let val ctxt = Toplevel.context_of tls;
 //      |     fun leaves (left $ right) = (leaves left) @ (leaves right)
