@@ -161,15 +161,16 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   }
 
   val get_used_consts: MLFunction2[ToplevelState, String, List[String]] = compileFunction[ToplevelState, String, List[String]](
-    """fn (tls, inner_syntax) =>
-      | let val ctxt = Toplevel.context_of tls;
+    """fn(tls, inner_syntax) =>
+      |let
+      |  val term_to_list = fn te =>
+      |  let
       |     fun leaves (left $ right) = (leaves left) @ (leaves right)
       |     |   leaves t = [t];
-      |     val term = Syntax.parse_term ctxt inner_syntax;
       |     fun filter_out (Const ("_type_constraint_", _)) = false
       |     | filter_out (Const _) = true
       |     | filter_out _ = false;
-      |     val all_leaves = leaves term;
+      |     val all_leaves = leaves te;
       |     val filtered_leaves = filter filter_out all_leaves;
       |     fun remove(_, []) = []
       |       | remove(x, y::l) =
@@ -181,9 +182,57 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       |        | removeDup(x::l) = x::removeDup(remove(x, l));
       |      fun string_of_term (Const (s, _)) = s
       |        | string_of_term _ = "";
-      | in
+      |  in
       |      removeDup (map string_of_term filtered_leaves)
-      | end""".stripMargin
+      |  end;
+      |
+      |  val type_to_list = fn ty =>
+      |  let
+      |    fun type_t (Type ty) = [#1 ty] @ (flat (map type_t (#2 ty)))
+      |    | type_t (TFree _) = []
+      |    | type_t (TVar _) = [];
+      |    fun filter_out_universal_type_symbols symbol =
+      |  case symbol of
+      |    "fun" => false
+      |    | "prop" => false
+      |    | "itself" => false
+      |    | "dummy" => false
+      |    | "proof" => false
+      |    | "Pure.proof" => false
+      |    | _ => true;
+      |  in
+      |    filter filter_out_universal_type_symbols (type_t ty)
+      |  end;
+      |  val ctxt = Toplevel.context_of tls;
+      |  val flex = fn str =>
+      |   (type_to_list (Syntax.parse_typ ctxt str))
+      |   handle _ => (term_to_list (Syntax.parse_term ctxt str));
+      |in
+      |  flex inner_syntax
+      |end;""".stripMargin
+    //    """fn (tls, inner_syntax) =>
+//      | let val ctxt = Toplevel.context_of tls;
+//      |     fun leaves (left $ right) = (leaves left) @ (leaves right)
+//      |     |   leaves t = [t];
+//      |     val term = Syntax.parse_term ctxt inner_syntax;
+//      |     fun filter_out (Const ("_type_constraint_", _)) = false
+//      |     | filter_out (Const _) = true
+//      |     | filter_out _ = false;
+//      |     val all_leaves = leaves term;
+//      |     val filtered_leaves = filter filter_out all_leaves;
+//      |     fun remove(_, []) = []
+//      |       | remove(x, y::l) =
+//      |         if x = y then
+//      |           remove(x, l)
+//      |         else
+//      |           y::remove(x, l);
+//      |      fun removeDup [] = []
+//      |        | removeDup(x::l) = x::removeDup(remove(x, l));
+//      |      fun string_of_term (Const (s, _)) = s
+//      |        | string_of_term _ = "";
+//      | in
+//      |      removeDup (map string_of_term filtered_leaves)
+//      | end""".stripMargin
   )
   def get_all_definitions(tls_name: String, theorem_string: String): List[String] = {
     val toplevel_state = retrieve_tls(tls_name)

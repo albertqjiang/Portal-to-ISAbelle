@@ -17,6 +17,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../../target/global-logging" />
       <excludeFolder url="file://$MODULE_DIR$/../../target/streams" />
       <excludeFolder url="file://$MODULE_DIR$/../../target/task-temp-directory" />
+      <excludeFolder url="file://$MODULE_DIR$/../../target/bg-jobs" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -93,6 +94,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Python 3.9 (evariste) interpreter library" level="application" />
   </component>
 </module>
