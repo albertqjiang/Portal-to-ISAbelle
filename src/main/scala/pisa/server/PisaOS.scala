@@ -237,7 +237,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   def get_all_definitions(tls_name: String, theorem_string: String): List[String] = {
     val toplevel_state = retrieve_tls(tls_name)
     val quotation_split : List[String] = theorem_string.split('"').toList
-    val all_inner_syntax = quotation_split.indices.collect {case i if i%2==1 => quotation_split(i)}.filter(x => x.nonEmpty).map(x => '"' + x.trim + '"').toList
+    val all_inner_syntax = quotation_split.indices.collect {case i if i%2==1 => quotation_split(i)}.filter(x => x.nonEmpty).toList
     val all_defs = all_inner_syntax.map(x => get_used_consts(toplevel_state, x).force.retrieveNow)
     val deduplicated_all_defs: List[String] = all_defs.flatten
     deduplicated_all_defs.distinct
