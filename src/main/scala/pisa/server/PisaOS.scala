@@ -317,6 +317,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   // Find out about the starter string
   private val fileContent: String = Files.readString(Path.of(path_to_file))
+  val fileContentCopy: String = fileContent
 
   private def getStarterString: String = {
     val decoyThy: Theory = Theory("Main")

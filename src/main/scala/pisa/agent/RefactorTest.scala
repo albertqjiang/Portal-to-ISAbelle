@@ -29,7 +29,7 @@ object RefactorTest {
     val starting_time = System.currentTimeMillis()
     val continue = new Breaks
     Breaks.breakable {
-      for ((transition, text) <- pisaos.parse_text(pisaos.thy1, pisaos.fileContent).force.retrieveNow) {
+      for ((transition, text) <- pisaos.parse_text(pisaos.thy1, pisaos.fileContentCopy).force.retrieveNow) {
         if (text.trim.isEmpty) continue.break
         else {
           transition_count += 1
