@@ -179,78 +179,78 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
   def isabelleCommand(isa_command: IsaCommand): ZIO[
     zio.ZEnv, Status, IsaState] = {
-    var proof_state: String = {
-      if (isa_command.command.trim == "PISA extract data") deal_with_extraction()
-      else if (isa_command.command.trim == "PISA extract data with hammer") deal_with_extraction_with_hammer()
-      else if (isa_command.command.trim.startsWith("<get all definitions>")) {
-        val theorem_string: String = isa_command.command.stripPrefix("<get all definitions>").trim
-        deal_with_get_all_defs(theorem_string)
-      }
-      else if (isa_command.command.startsWith("<local facts and defs>")) {
-        val tls_name: String = isa_command.command.stripPrefix("<local facts and defs>").trim
-        deal_with_local_facts_and_defs(tls_name)
-      }
-      else if (isa_command.command.startsWith("<global facts and defs>")) {
-        val tls_name: String = isa_command.command.stripPrefix("<global facts and defs>").trim
-        deal_with_global_facts_and_defs(tls_name)
-      }
-      else if (isa_command.command.startsWith("<total facts and defs>")) {
-        val tls_name: String = isa_command.command.stripPrefix("<total facts and defs>").trim
-        deal_with_total_facts_and_defs(tls_name)
-      }
-      else if (isa_command.command.startsWith("<list states>")) deal_with_list_states()
-      else if (isa_command.command.startsWith("<initialise>")) deal_with_initialise()
-      else if (isa_command.command.startsWith("<get state>")) {
-        val tls_name: String = isa_command.command.stripPrefix("<get state>").trim
-        deal_with_get_state(tls_name)
-      }
-      else if (isa_command.command.startsWith("<is finished>")) {
-        val tls_name: String = isa_command.command.split("<is finished>").last.trim
-        deal_with_is_finished(tls_name)
-      }
-      else if (isa_command.command.startsWith("<apply to top level state>")) {
-        val tls_name: String = isa_command.command.split("<apply to top level state>")(1).trim
-        val action: String = isa_command.command.split("<apply to top level state>")(2).trim
-        val new_name: String = isa_command.command.split("<apply to top level state>")(3).trim
+      val proof_state: String = {
+        if (isa_command.command.trim == "PISA extract data") deal_with_extraction()
+        else if (isa_command.command.trim == "PISA extract data with hammer") deal_with_extraction_with_hammer()
+        else if (isa_command.command.trim.startsWith("<get all definitions>")) {
+          val theorem_string: String = isa_command.command.stripPrefix("<get all definitions>").trim
+          deal_with_get_all_defs(theorem_string)
+        }
+        else if (isa_command.command.startsWith("<local facts and defs>")) {
+          val tls_name: String = isa_command.command.stripPrefix("<local facts and defs>").trim
+          deal_with_local_facts_and_defs(tls_name)
+        }
+        else if (isa_command.command.startsWith("<global facts and defs>")) {
+          val tls_name: String = isa_command.command.stripPrefix("<global facts and defs>").trim
+          deal_with_global_facts_and_defs(tls_name)
+        }
+        else if (isa_command.command.startsWith("<total facts and defs>")) {
+          val tls_name: String = isa_command.command.stripPrefix("<total facts and defs>").trim
+          deal_with_total_facts_and_defs(tls_name)
+        }
+        else if (isa_command.command.startsWith("<list states>")) deal_with_list_states()
+        else if (isa_command.command.startsWith("<initialise>")) deal_with_initialise()
+        else if (isa_command.command.startsWith("<get state>")) {
+          val tls_name: String = isa_command.command.stripPrefix("<get state>").trim
+          deal_with_get_state(tls_name)
+        }
+        else if (isa_command.command.startsWith("<is finished>")) {
+          val tls_name: String = isa_command.command.split("<is finished>").last.trim
+          deal_with_is_finished(tls_name)
+        }
+        else if (isa_command.command.startsWith("<apply to top level state>")) {
+          val tls_name: String = isa_command.command.split("<apply to top level state>")(1).trim
+          val action: String = isa_command.command.split("<apply to top level state>")(2).trim
+          val new_name: String = isa_command.command.split("<apply to top level state>")(3).trim
 
-        try {
-          deal_with_apply_to_tls(tls_name, action, new_name)
-        } catch {
-          case e: IsabelleException => "Step error"
-          case _: Throwable => "Unknown error"
+          try {
+            deal_with_apply_to_tls(tls_name, action, new_name)
+          } catch {
+            case e: IsabelleException => "Step error"
+            case _: Throwable => "Unknown error"
+          }
+
+        }
+        else if (isa_command.command.startsWith("<get_proof_level>")) {
+          val tls_name: String = isa_command.command.stripPrefix("<get_proof_level>").trim
+          deal_with_proof_level(tls_name)
+        }
+        else if (isa_command.command.startsWith("<proceed before>")) {
+          val true_command: String = isa_command.command.stripPrefix("<proceed before>").trim
+          deal_with_proceed_before(true_command)
+        }
+        else if (isa_command.command.startsWith("<proceed after>")) {
+          val true_command: String = isa_command.command.stripPrefix("<proceed after>").trim
+          deal_with_proceed_after(true_command)
+        }
+        else if (isa_command.command.trim.startsWith("<clone>")) {
+          val old_name: String = isa_command.command.trim.split("<clone>")(1).trim
+          val new_name: String = isa_command.command.trim.split("<clone>")(2).trim
+          deal_with_clone(old_name, new_name)
+        }
+        else if (isa_command.command.trim.startsWith("<delete>")) {
+          val tls_name: String = isa_command.command.trim.stripPrefix("<delete>").trim
+          deal_with_delete(tls_name)
+        }
+        else if (isa_command.command.trim == "<get_ancestors>") {
+          val ancestors_names_list: List[String] = pisaos.get_theory_ancestors_names(pisaos.thy1)
+          ancestors_names_list.mkString(",")
         }
 
+        else if (isa_command.command == "exit") deal_with_exit(isa_command.command)
+        else "Unrecognised operation."
       }
-      else if (isa_command.command.startsWith("<get_proof_level>")) {
-        val tls_name: String = isa_command.command.stripPrefix("<get_proof_level>").trim
-        deal_with_proof_level(tls_name)
-      }
-      else if (isa_command.command.startsWith("<proceed before>")) {
-        val true_command: String = isa_command.command.stripPrefix("<proceed before>").trim
-        deal_with_proceed_before(true_command)
-      }
-      else if (isa_command.command.startsWith("<proceed after>")) {
-        val true_command: String = isa_command.command.stripPrefix("<proceed after>").trim
-        deal_with_proceed_after(true_command)
-      }
-      else if (isa_command.command.trim.startsWith("<clone>")) {
-        val old_name: String = isa_command.command.trim.split("<clone>")(1).trim
-        val new_name: String = isa_command.command.trim.split("<clone>")(2).trim
-        deal_with_clone(old_name, new_name)
-      }
-      else if (isa_command.command.trim.startsWith("<delete>")) {
-        val tls_name: String = isa_command.command.trim.stripPrefix("<delete>").trim
-        deal_with_delete(tls_name)
-      }
-      else if (isa_command.command.trim == "<get_ancestors>") {
-        val ancestors_names_list: List[String] = pisaos.get_theory_ancestors_names(pisaos.thy1)
-        ancestors_names_list.mkString(",")
-      }
-
-      else if (isa_command.command == "exit") deal_with_exit(isa_command.command)
-      else "Unrecognised operation."
-    }
-    ZIO.succeed(IsaState(proof_state))
+      ZIO.succeed(IsaState(proof_state))
   }
 
   def isabelleSetSearchWidth(request: IsaSearchWidth): ZIO[zio.ZEnv with Any, Status, IsaMessage] = {

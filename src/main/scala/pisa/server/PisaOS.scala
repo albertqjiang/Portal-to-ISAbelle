@@ -210,29 +210,6 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       |in
       |  flex inner_syntax
       |end""".stripMargin
-    //    """fn (tls, inner_syntax) =>
-//      | let val ctxt = Toplevel.context_of tls;
-//      |     fun leaves (left $ right) = (leaves left) @ (leaves right)
-//      |     |   leaves t = [t];
-//      |     val term = Syntax.parse_term ctxt inner_syntax;
-//      |     fun filter_out (Const ("_type_constraint_", _)) = false
-//      |     | filter_out (Const _) = true
-//      |     | filter_out _ = false;
-//      |     val all_leaves = leaves term;
-//      |     val filtered_leaves = filter filter_out all_leaves;
-//      |     fun remove(_, []) = []
-//      |       | remove(x, y::l) =
-//      |         if x = y then
-//      |           remove(x, l)
-//      |         else
-//      |           y::remove(x, l);
-//      |      fun removeDup [] = []
-//      |        | removeDup(x::l) = x::removeDup(remove(x, l));
-//      |      fun string_of_term (Const (s, _)) = s
-//      |        | string_of_term _ = "";
-//      | in
-//      |      removeDup (map string_of_term filtered_leaves)
-//      | end""".stripMargin
   )
   def get_all_definitions(tls_name: String, theorem_string: String): List[String] = {
     val toplevel_state = retrieve_tls(tls_name)

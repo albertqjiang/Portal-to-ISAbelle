@@ -2,11 +2,11 @@ package pisa.agent
 
 import de.unruh.isabelle.control.Isabelle
 import pisa.server.PisaOS
-
 import de.unruh.isabelle.mlvalue.Implicits._
 import de.unruh.isabelle.pure.Implicits._
 
 import scala.concurrent.ExecutionContext
+import scala.util.control.Breaks
 
 object RefactorTest {
   val path_to_isa_bin: String = "/home/qj213/Isabelle2021"
@@ -25,12 +25,19 @@ object RefactorTest {
     implicit val isabelle: Isabelle = pisaos.isabelle
     implicit val ec: ExecutionContext = pisaos.ec
 
-    val step_string = "by (simp add: max_mult_distrib_right divide_inverse)"
-    pisaos.step_to_transition_text(step_string)
-    pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
-    println(pisaos.get_dependent_theorems(tls_name = "default", "max_divide_distrib_right"))
-    for ((transition, text) <- pisaos.parse_text(pisaos.thy1, inner_syntax_string).force.retrieveNow) {
-      println(text)
+    var transition_count = 0
+    val starting_time = System.currentTimeMillis()
+    val continue = new Breaks
+    Breaks.breakable {
+      for ((transition, text) <- pisaos.parse_text(pisaos.thy1, pisaos.fileContent).force.retrieveNow) {
+        if (text.trim.isEmpty) continue.break
+        else {
+          transition_count += 1
+          pisaos.singleTransition(transition)
+        }
+      }
     }
+    val total_time = System.currentTimeMillis() - starting_time
+    println(s"Time per transition: ${total_time/1000/transition_count}")
   }
 }
