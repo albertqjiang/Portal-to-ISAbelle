@@ -10,12 +10,8 @@ import scala.util.control.Breaks
 
 object RefactorTest {
   val path_to_isa_bin: String = "/home/qj213/Isabelle2021"
-  val path_to_file: String = "/home/qj213/Isabelle2021/src/HOL/Fields.thy"
-  val working_directory: String = "/home/qj213/Isabelle2021/src/HOL"
-  val inner_syntax_string: String = """lemma max_mult_distrib_right:
-                                      |  fixes x::"'a::linordered_idom"
-                                      |  shows "max x y * p = (if 0 \<le> p then max (x*p) (y*p) else min (x*p) (y*p))"
-                                      |  """.stripMargin
+  val path_to_file: String = "/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy"
+  val working_directory: String = "/home/qj213/afp-2021-10-22/thys/FunWithFunctions"
   def main(args: Array[String]): Unit = {
     val pisaos = new PisaOS(
       path_to_isa_bin=path_to_isa_bin,
