@@ -38,6 +38,9 @@ object RefactorTest {
       }
     }
     val total_time = System.currentTimeMillis() - starting_time
-    println(s"Time per transition: ${total_time/1000/transition_count}")
+    println(
+      s"""Total time ${total_time}ms.
+         |Total transitions ${transition_count}.
+         |Time per transition: ${total_time/transition_count}ms.""".stripMargin)
   }
 }
