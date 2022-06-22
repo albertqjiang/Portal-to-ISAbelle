@@ -22,3 +22,14 @@ def match_names_single_file_to_data_play_szymon(
     except Exception as e:
         with open(os.path.join(error_log_dir, f"error_log_{theory_file_path}.txt"), "w") as fout:
             fout.write(e)
+
+
+if __name__ == "__main__":
+    match_names_single_file_to_data_play_szymon(
+        port=8000,
+        working_directory="/home/qj213/Isabelle2021/src/HOL/Examples",
+        isa_path="/home/qj213/Isabelle2021",
+        theory_file_path="/home/qj213/Isabelle2021/src/HOL/Examples/Adhoc_Overloading_Examples.thy",
+        out_dir="/home/qj213/out_stuff",
+        error_log_dir="/home/qj213/out_stuff"
+    )
