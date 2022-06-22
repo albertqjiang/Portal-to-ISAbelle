@@ -14,6 +14,7 @@ import de.unruh.isabelle.control.IsabelleException
 import de.unruh.isabelle.mlvalue.MLValue
 import de.unruh.isabelle.control.Isabelle
 import de.unruh.isabelle.pure.Implicits._
+import de.unruh.isabelle.mlvalue.Implicits._
 
 import scala.concurrent.{ExecutionContext, TimeoutException}
 import java.io.PrintWriter
