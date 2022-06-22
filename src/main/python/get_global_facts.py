@@ -21,15 +21,15 @@ def match_names_single_file_to_data_play_szymon(
         pickle.dump(global_fact_dict, open(os.path.join(out_dir, f"dict_{theory_file_path.replace('/', '_')}"), "wb"))
     except Exception as e:
         with open(os.path.join(error_log_dir, f"error_log_{theory_file_path.replace('/', '_')}.txt"), "w") as fout:
-            fout.write(e)
+            fout.write(str(e))
 
 
 if __name__ == "__main__":
     match_names_single_file_to_data_play_szymon(
         port=8000,
-        working_directory="/home/qj213/Isabelle2021/src/HOL/Examples",
+        working_directory="/home/qj213/afp-2021-10-22/thys/FunWithFunctions",
         isa_path="/home/qj213/Isabelle2021",
-        theory_file_path="/home/qj213/Isabelle2021/src/HOL/Examples/Adhoc_Overloading_Examples.thy",
+        theory_file_path="/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy",
         out_dir="/home/qj213/out_stuff",
         error_log_dir="/home/qj213/out_stuff"
     )
