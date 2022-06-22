@@ -21,14 +21,12 @@ object RefactorTest {
     implicit val isabelle: Isabelle = pisaos.isabelle
     implicit val ec: ExecutionContext = pisaos.ec
 
-    var transition_count = 0
     val continue = new Breaks
     for ((transition, text) <- pisaos.parse_text(pisaos.thy1, pisaos.fileContentCopy).force.retrieveNow) {
       continue.breakable {
         if (text.trim.isEmpty) continue.break
         else if (text.trim=="end") continue.break
         else {
-          transition_count += 1
           pisaos.singleTransition(transition)
         }
       }

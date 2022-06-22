@@ -17,6 +17,7 @@ import de.unruh.isabelle.pure.Implicits._
 
 import scala.concurrent.{ExecutionContext, TimeoutException}
 import java.io.PrintWriter
+import scala.util.control.Breaks
 
 class OneStageBody extends ZServer[ZEnv, Any] {
   var pisaos: PisaOS = null
@@ -177,6 +178,20 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     pisaos.get_all_definitions(tls_name, theorem_string).mkString("\n")
   }
 
+  def deal_with_global_facts_from_file: String = {
+    val continue = new Breaks
+    for ((transition, text) <- pisaos.parse_text(pisaos.thy1, pisaos.fileContentCopy).force.retrieveNow) {
+      continue.breakable {
+        if (text.trim.isEmpty) continue.break
+        else if (text.trim=="end") continue.break
+        else {
+          pisaos.singleTransition(transition)
+        }
+      }
+    }
+    pisaos.total_facts_and_defs_string(pisaos.toplevel)
+  }
+
   def isabelleCommand(isa_command: IsaCommand): ZIO[
     zio.ZEnv, Status, IsaState] = {
       val proof_state: String = {
@@ -198,6 +213,9 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           val tls_name: String = isa_command.command.stripPrefix("<total facts and defs>").trim
           deal_with_total_facts_and_defs(tls_name)
         }
+        else if (isa_command.command.startsWith("<get global facts from file>")) {
+          deal_with_global_facts_from_file
+        }
         else if (isa_command.command.startsWith("<list states>")) deal_with_list_states()
         else if (isa_command.command.startsWith("<initialise>")) deal_with_initialise()
         else if (isa_command.command.startsWith("<get state>")) {
@@ -212,14 +230,12 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           val tls_name: String = isa_command.command.split("<apply to top level state>")(1).trim
           val action: String = isa_command.command.split("<apply to top level state>")(2).trim
           val new_name: String = isa_command.command.split("<apply to top level state>")(3).trim
-
           try {
             deal_with_apply_to_tls(tls_name, action, new_name)
           } catch {
             case e: IsabelleException => "Step error"
             case _: Throwable => "Unknown error"
           }
-
         }
         else if (isa_command.command.startsWith("<get_proof_level>")) {
           val tls_name: String = isa_command.command.stripPrefix("<get_proof_level>").trim
@@ -302,34 +318,6 @@ object PisaMini {
     //    println(pisaos.step("by(simp add: delta_conv_steps accepts_def)"))
   }
 }
-
-// object PisaOneStageTestStd {
-//   val path_to_isa_bin : String = "/home/qj213/Isabelle2021"
-//   val path_to_afp : String = "/home/qj213/afp-2021-10-22"
-//   def main(args: Array[String]): Unit = {
-//     val path_to_file : String = s"$path_to_afp/thys/Functional-Automata/NA.thy"
-//     val working_directory : String = s"$path_to_afp/thys/Functional-Automata"
-//     val pisaos = new PisaOS(
-//       path_to_isa_bin=path_to_isa_bin,
-//       path_to_file=path_to_file,
-//       working_directory=working_directory)
-
-//     implicit val ec: ExecutionContext = ExecutionContext.global
-//     implicit val isabelle = pisaos.isabelle
-//     pisaos.step("theory NA imports Main begin")
-//     println(pisaos.proof_level(pisaos.toplevel).retrieveNow)
-//     pisaos.step("theorem 1: \"1+2=3\"")
-//     println(pisaos.proof_level(pisaos.toplevel).retrieveNow)
-//     pisaos.step("proof -")
-//     println(pisaos.proof_level(pisaos.toplevel).retrieveNow)
-//     pisaos.step("show ?thesis")
-//     println(pisaos.proof_level(pisaos.toplevel).retrieveNow)
-//     pisaos.step("by auto")
-//     println(pisaos.proof_level(pisaos.toplevel).retrieveNow)
-//     pisaos.step("qed")
-//     println(pisaos.proof_level(pisaos.toplevel).retrieveNow)
-//   }
-// }
 
 object PisaExtraction {
   val path_to_isa_bin: String = "/home/qj213/Isabelle2021"
