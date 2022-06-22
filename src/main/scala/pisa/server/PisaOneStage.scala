@@ -179,6 +179,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   }
 
   def deal_with_global_facts_from_file: String = {
+    implicit val isabelle: Isabelle = pisaos.isabelle
+    implicit val ec: ExecutionContext = pisaos.ec
     val continue = new Breaks
     for ((transition, text) <- pisaos.parse_text(pisaos.thy1, pisaos.fileContentCopy).force.retrieveNow) {
       continue.breakable {
