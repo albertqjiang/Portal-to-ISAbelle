@@ -18,9 +18,9 @@ def match_names_single_file_to_data_play_szymon(
         for element in list_of_string_tuples:
             name, definition = element.split("<DEF>")
             global_fact_dict[name.strip()] = definition.strip()
-        pickle.dump(global_fact_dict, open(os.path.join(out_dir, f"dict_{theory_file_path}"), "wb"))
+        pickle.dump(global_fact_dict, open(os.path.join(out_dir, f"dict_{theory_file_path.replace('/', '_')}"), "wb"))
     except Exception as e:
-        with open(os.path.join(error_log_dir, f"error_log_{theory_file_path}.txt"), "w") as fout:
+        with open(os.path.join(error_log_dir, f"error_log_{theory_file_path.replace('/', '_')}.txt"), "w") as fout:
             fout.write(e)
 
 
