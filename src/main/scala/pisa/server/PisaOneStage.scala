@@ -192,7 +192,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         }
       }
     }
-    pisaos.total_facts_and_defs_string(pisaos.toplevel)
+    pisaos.global_facts_and_defs_string(pisaos.toplevel)
   }
 
   def isabelleCommand(isa_command: IsaCommand): ZIO[
