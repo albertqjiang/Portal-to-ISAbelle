@@ -22,21 +22,17 @@ object RefactorTest {
     implicit val ec: ExecutionContext = pisaos.ec
 
     var transition_count = 0
-    val starting_time = System.currentTimeMillis()
     val continue = new Breaks
     for ((transition, text) <- pisaos.parse_text(pisaos.thy1, pisaos.fileContentCopy).force.retrieveNow) {
       continue.breakable {
         if (text.trim.isEmpty) continue.break
+        else if (text.trim=="end") continue.break
         else {
           transition_count += 1
           pisaos.singleTransition(transition)
         }
       }
     }
-    val total_time = System.currentTimeMillis() - starting_time
-    println(
-      s"""Total time ${total_time}ms.
-         |Total transitions ${transition_count}.
-         |Time per transition: ${total_time/transition_count}ms.""".stripMargin)
+    println(pisaos.total_facts_and_defs_string(pisaos.toplevel))
   }
 }
