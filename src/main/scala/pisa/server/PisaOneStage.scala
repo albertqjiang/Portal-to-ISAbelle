@@ -183,10 +183,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     implicit val isabelle: Isabelle = pisaos.isabelle
     implicit val ec: ExecutionContext = pisaos.ec
     val continue = new Breaks
-    for ((transition, text) <- pisaos.parse_text(pisaos.thy1, pisaos.fileContentCopy).force.retrieveNow) {
+    val transition_and_index_list = pisaos.parse_text(pisaos.thy1, pisaos.fileContentCopy.trim).force.retrieveNow.zipWithIndex
+    for (((transition, text), i) <- transition_and_index_list) {
       continue.breakable {
         if (text.trim.isEmpty) continue.break
-        else if (text.trim=="end") continue.break
+        else if (text.trim=="end" && (i==transition_and_index_list.length-1)) continue.break
         else {
           pisaos.singleTransition(transition)
         }
