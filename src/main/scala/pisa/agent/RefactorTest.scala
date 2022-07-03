@@ -45,7 +45,7 @@ object RefactorTest {
         |     |   leaves t = [t];
         |     val all_consts = leaves parsed;
         |  in
-        |     map Syntax.string_of_term ctxt all_consts
+        |     map (Syntax.string_of_term ctxt) all_consts
         |  end""".stripMargin
     )
     println(get_used_consts_strs(pisaos.toplevel, "1+1=2").force.retrieveNow)
