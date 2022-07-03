@@ -196,11 +196,22 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     pisaos.global_facts_and_defs_string(pisaos.toplevel)
   }
 
+  def deal_with_parse_text(text: String): String = {
+    implicit val isabelle: Isabelle = pisaos.isabelle
+    implicit val ec: ExecutionContext = pisaos.ec
+    val parsed = pisaos.parse_text(pisaos.thy1, text.trim).force.retrieveNow
+    parsed.map(x => x._2).filter(_.nonEmpty).mkString("<SEP>")
+  }
+
   def isabelleCommand(isa_command: IsaCommand): ZIO[
     zio.ZEnv, Status, IsaState] = {
       val proof_state: String = {
         if (isa_command.command.trim == "PISA extract data") deal_with_extraction()
         else if (isa_command.command.trim == "PISA extract data with hammer") deal_with_extraction_with_hammer()
+        else if (isa_command.command.trim.startsWith("<parse text>")) {
+          val text = isa_command.command.trim.stripPrefix("<parse text>")
+          deal_with_parse_text(text)
+        }
         else if (isa_command.command.trim.startsWith("<get all definitions>")) {
           val theorem_string: String = isa_command.command.stripPrefix("<get all definitions>").trim
           deal_with_get_all_defs(theorem_string)
