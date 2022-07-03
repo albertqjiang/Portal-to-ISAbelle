@@ -3,7 +3,10 @@ package pisa.agent
 import de.unruh.isabelle.control.Isabelle
 import pisa.server.PisaOS
 import de.unruh.isabelle.mlvalue.Implicits._
+import de.unruh.isabelle.mlvalue.{MLFunction, MLFunction2}
+import de.unruh.isabelle.mlvalue.MLValue.compileFunction
 import de.unruh.isabelle.pure.Implicits._
+import de.unruh.isabelle.pure.ToplevelState
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.Breaks
@@ -32,6 +35,14 @@ object RefactorTest {
         }
       }
     }
-    println(pisaos.total_facts_and_defs_string(pisaos.toplevel))
+
+    val get_def: MLFunction2[ToplevelState, String, String] =
+      compileFunction[ToplevelState, String, String](
+      """fn (tls, def_occur) => let
+          |  val context = Toplevel.context_of tls;
+          |  val term = Syntax.parse_term context def_occur;
+          | in Syntax.string_of_term context term end""".stripMargin
+      )
+    println(get_def(pisaos.toplevel, "1").force.retrieveNow)
   }
 }
