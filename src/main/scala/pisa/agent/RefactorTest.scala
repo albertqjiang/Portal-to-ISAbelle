@@ -36,13 +36,18 @@ object RefactorTest {
       }
     }
 
-    val get_def: MLFunction2[ToplevelState, String, String] =
-      compileFunction[ToplevelState, String, String](
-      """fn (tls, def_occur) => let
-          |  val context = Toplevel.context_of tls;
-          |  val term = Syntax.parse_term context def_occur;
-          | in Syntax.string_of_term context term end""".stripMargin
-      )
-    println(get_def(pisaos.toplevel, "1").force.retrieveNow)
+    val get_used_consts_strs: MLFunction2[ToplevelState, String, List[String]] = compileFunction[ToplevelState, String, List[String]](
+      """fn(tls, inner_syntax) =>
+        |  let
+        |     val ctxt = Toplevel.context_of tls;
+        |     val parsed = Syntax.parse_term ctxt inner_syntax;
+        |     fun leaves (left $ right) = (leaves left) @ (leaves right)
+        |     |   leaves t = [t];
+        |     val all_consts = leaves parsed;
+        |  in
+        |     map Syntax.string_of_term ctxt all_consts
+        |  end""".stripMargin
+    )
+    println(get_used_consts_strs(pisaos.toplevel, "1+1=2").force.retrieveNow)
   }
 }
