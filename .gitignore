@@ -4,3 +4,5 @@ target/*
 .bloop/*
 .metals/*
 .vscode/*
+afp_extractions/
+std_extractions/

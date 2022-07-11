@@ -567,6 +567,28 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     Await.result(f_res, Duration(timeout_in_millis, "millis"))
   }
 
+  val transitions_and_texts = parse_text(thy1, fileContent).force.retrieveNow
+  var frontier_proceeding_index = 0
+
+  def accumulative_step_to_before_transition_starting(isar_string: String): String = {
+    val sanitised_isar_string = isar_string.trim.replaceAll("\n", " ").replaceAll(" +", " ")
+    val (transition, text) = transitions_and_texts(frontier_proceeding_index)
+    val sanitised_text = text.trim.replaceAll("\n", " ").replaceAll(" +", " ")
+    if (sanitised_text.trim.isEmpty) {
+      frontier_proceeding_index += 1
+      accumulative_step_to_before_transition_starting(sanitised_isar_string)
+    } else if (sanitised_text.trim == sanitised_isar_string) {
+      val top_level_proceeding_state = retrieve_tls("default")
+      getStateString(top_level_proceeding_state)
+    } else {
+      frontier_proceeding_index += 1
+      val top_level_proceeding_state = retrieve_tls("default")
+      val resulting_state: ToplevelState = singleTransition(transition, top_level_proceeding_state)
+      register_tls("default", resulting_state)
+      accumulative_step_to_before_transition_starting(sanitised_isar_string)
+    }
+  }
+
   def step_to_transition_text(isar_string: String, after: Boolean = true): String = {
     var stateString: String = ""
     val continue = new Breaks

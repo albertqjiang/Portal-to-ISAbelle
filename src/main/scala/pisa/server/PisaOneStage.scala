@@ -200,7 +200,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     implicit val isabelle: Isabelle = pisaos.isabelle
     implicit val ec: ExecutionContext = pisaos.ec
     val parsed = pisaos.parse_text(pisaos.thy1, text.trim).force.retrieveNow
-    parsed.map(x => x._2).filter(_.nonEmpty).mkString("<SEP>")
+    parsed.map(x => x._2).filter(_.trim.nonEmpty).mkString("<SEP>")
+  }
+
+  def deal_with_accummulative_step_before(text: String) = {
+    pisaos.accumulative_step_to_before_transition_starting(text)
   }
 
   def isabelleCommand(isa_command: IsaCommand): ZIO[
@@ -208,6 +212,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       val proof_state: String = {
         if (isa_command.command.trim == "PISA extract data") deal_with_extraction()
         else if (isa_command.command.trim == "PISA extract data with hammer") deal_with_extraction_with_hammer()
+        else if (isa_command.command.startsWith("<accumulative step before>")) {
+          val text = isa_command.command.stripPrefix("<accumulative step before>")
+          deal_with_accummulative_step_before(text)
+        }
         else if (isa_command.command.trim.startsWith("<parse text>")) {
           val text = isa_command.command.trim.stripPrefix("<parse text>")
           deal_with_parse_text(text)
