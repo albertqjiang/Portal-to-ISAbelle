@@ -398,7 +398,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   }
 
   def getStateString(top_level_state: ToplevelState): String =
-    toplevel_string_of_state(top_level_state).retrieveNow
+    toplevel_string_of_state(top_level_state).force.retrieveNow
 
   def getStateString: String = getStateString(toplevel)
 
@@ -524,7 +524,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 2000): ToplevelState = {
     // Normal isabelle business
-    var tls_to_return: ToplevelState = null
+    var tls_to_return: ToplevelState = clone_tls_scala(top_level_state)
     var stateString: String = ""
     val continue = new Breaks
 
@@ -533,11 +533,14 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
         for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
           continue.breakable {
             if (text.trim.isEmpty) continue.break
-            tls_to_return = singleTransition(transition, top_level_state)
+            // println("Small step: " + text)
+            tls_to_return = singleTransition(transition, tls_to_return)
+            // println("Applied transition successfully")
           }
       }
     }
     Await.result(f_st, Duration(timeout_in_millis, "millis"))
+    // println("Did step successfully")
     tls_to_return
   }
 
@@ -615,6 +618,8 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   def clone_tls(tls_name: String): Unit = top_level_state_map += (tls_name -> copy_tls)
 
   def clone_tls(old_name: String, new_name: String): Unit = top_level_state_map += (new_name -> top_level_state_map(old_name))
+
+  def clone_tls_scala(tls_scala: ToplevelState): ToplevelState = ToplevelState.instantiate(tls_scala.mlValue)
 
   def register_tls(name: String, tls: ToplevelState): Unit = top_level_state_map += (name -> tls.mlValue)
 
