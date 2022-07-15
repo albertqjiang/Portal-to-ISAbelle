@@ -91,6 +91,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       val old_state: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
       val actual_step = {
         if (action.trim == "sledgehammer") {
+          // println("Starting up the hammer")
           actual_timeout = 30000
           val hammer_results =
             try {
@@ -98,6 +99,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
             } catch {
               case _: TimeoutException => (false, List[String]())
             }
+          // println(hammer_results)
           if (hammer_results._1) {
             val hammer_strings = hammer_results._2
             var found = false
@@ -117,8 +119,12 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           }
         } else action
       }
+      // println("Actual step: " + actual_step)
 
       val new_state: ToplevelState = pisaos.step(actual_step, old_state, actual_timeout)
+      // println("Application successful")
+      // println("New state: " + pisaos.getStateString(new_state))
+      
       pisaos.register_tls(name = new_name, tls = new_state)
       if (action.trim == "sledgehammer") {
         s"$actual_step <hammer> ${pisaos.getStateString(new_state)}"

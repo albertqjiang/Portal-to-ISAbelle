@@ -59,7 +59,7 @@ class IsaFlexEnv:
             print(e)
         return self.obs_string
 
-    @func_set_timeout(20)
+    @func_set_timeout(40)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
         try:
@@ -73,7 +73,7 @@ class IsaFlexEnv:
         # done = True if ("subgoal" in last_obs_string and "subgoal" not in obs_string) else False
         return obs_string, self.reward(done), done, {}
 
-    @func_set_timeout(20)
+    @func_set_timeout(40)
     def post(self, action):
         return self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
         # last_obs_string = self.obs_string
