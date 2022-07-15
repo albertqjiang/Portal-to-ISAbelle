@@ -176,14 +176,21 @@ def process_files_with_proof_statements(file_names, saving_directory, processing
         "val": list(),
         "test": list()
     }
-    for file_path in tqdm(file_names):
+    for file_path in tqdm(file_names, desc="Processing files"):
         file = json.load(open(file_path))
         original_file_name = file['file_name']
         problem_names = set(file['problem_names'])
         transitions_split = split_transitions(problem_names, file['translations'])
 
+        split = None
+        
+
         for problem_name in set(file['problem_names']):
-            split = get_split(problem_name)
+            if "Isabelle2021/src/HOL" in original_file_name:
+                split = "train" 
+            else:
+                split = get_split(problem_name)
+
             problem_names_split[split].append((original_file_name, problem_name))
 
             json_split = "valid" if split == "val" else split
@@ -207,7 +214,7 @@ def process_files_with_proof_statements(file_names, saving_directory, processing
                 )
                 proof_script_till_now.append(sanitised_y)
     
-    for json_split in datapoints.keys():
+    for json_split in tqdm(datapoints.keys(), desc="Saving files"):
         # Write json
         with open(os.path.join(saving_directory, f"{json_split}.jsonl"), "w") as fout:
             for datapoint in datapoints[json_split]:
@@ -224,13 +231,22 @@ def process_files_with_proof_statements(file_names, saving_directory, processing
                 
     json.dump(problem_names_split, open(os.path.join(saving_directory, "problem_names_split.json"), "w"))
 
+    for split, lines in problem_names_split.items():
+        split = "valid" if split == "val" else split
+        
+        with open(os.path.join(saving_directory, f"split.std_and_afp.{split}"), "w") as fout:
+            for theory_path, theorem_name in lines:
+                theorem_name = " ".join(theorem_name.strip().split())
+                fout.write(f"{theory_path} <PATH_AND_THEOREM_SEP> {theorem_name}")
+                fout.write("\n")
+
 
 if __name__ == "__main__":
     import argparse
     import glob
     import os
     parser = argparse.ArgumentParser(description='Extracting translation pairs.')
-    parser.add_argument('--extraction-file-directory', '-efd', help='Where the parsed json files are')
+    parser.add_argument('--extraction-file-directory', '-efd', nargs='+', help='Where the parsed json files are')
     parser.add_argument('--saving-directory', '-sd', help='Where to save the translation pairs')
     parser.add_argument('--processing-method-config', '-pmc', type=str,
                         help='Where to find the processing method config')
@@ -253,6 +269,9 @@ if __name__ == "__main__":
         shutil.rmtree(saving_directory)
     os.makedirs(saving_directory)
 
-    file_names = list(glob.glob("{}/*/*_ground_truth.json".format(
-        args.extraction_file_directory)))
+    file_names = []
+    for extraction_file_directory in args.extraction_file_directory:
+        file_names += list(glob.glob("{}/*/*_ground_truth.json".format(extraction_file_directory)))
+    
+    print(f"Processing {len(file_names)} files in total")
     process_files_with_proof_statements(file_names, saving_directory, ppc)
