@@ -98,7 +98,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
             } catch {
               case _: TimeoutException => {
                 try {
-                  piasos.prove_with_hammer(old_state, timeout_in_millis=5000)
+                  pisaos.prove_with_hammer(old_state, timeout_in_millis=5000)
                 }
                 catch {
                   case _: TimeoutException => (false, List[String]())

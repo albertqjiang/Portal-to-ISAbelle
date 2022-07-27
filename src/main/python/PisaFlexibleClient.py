@@ -50,9 +50,9 @@ class IsaFlexEnv:
     def reset(self):
         self.stub = create_stub(port=self.port)
         try:
-            print(self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path)))
-            print(self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory)))
-            print(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string)))
+            print(str(self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path))).strip())
+            print(str(self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory))).strip())
+            print(str(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string))).strip())
         except Exception as e:
             print("Failure at initialising Isabelle process. "
                   "Make sure the path your provide is where the Isabelle executable is.")
@@ -109,14 +109,16 @@ class IsaFlexEnv:
     #         print("**Clone unsuccessful**")
     #         print(e)
 
-    # def proceed_to_line(self, line_stirng, before_after):
-    #     assert before_after in ["before", "after"]
-    #     try:
-    #         message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<proceed {before_after}> {line_stirng}")).state
-    #         print(message)
-    #     except Exception as e:
-    #         print("Failure to proceed before line")
-    #         print(e)
+    def proceed_to_line(self, line_stirng, before_after):
+        assert before_after in ["before", "after"]
+        try:
+            command = f"<proceed {before_after}> {line_stirng}"
+            print(command)
+            message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=command)).state
+            print(message)
+        except Exception as e:
+            print("Failure to proceed before line")
+            print(e)
 
 
 def parsed_json_to_env_and_dict(path_to_json, afp_path, port=9000, isa_path="/Applications/Isabelle2020.app/Isabelle"):
