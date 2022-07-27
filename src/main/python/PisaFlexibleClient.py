@@ -10,9 +10,13 @@ from func_timeout import func_set_timeout
 import server_pb2
 import server_pb2_grpc
 
+MAX_MESSAGE_LENGTH = 10485760
+
 
 def create_stub(port=9000):
-    channel = grpc.insecure_channel('localhost:{}'.format(port))
+    channel = grpc.insecure_channel('localhost:{}'.format(port),
+                                    options=[('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
+                                             ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH)])
     return server_pb2_grpc.ServerStub(channel)
 
 
@@ -55,7 +59,7 @@ class IsaFlexEnv:
             print(e)
         return self.obs_string
 
-    @func_set_timeout(20)
+    @func_set_timeout(40)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
         try:
@@ -69,7 +73,7 @@ class IsaFlexEnv:
         # done = True if ("subgoal" in last_obs_string and "subgoal" not in obs_string) else False
         return obs_string, self.reward(done), done, {}
 
-    @func_set_timeout(20)
+    @func_set_timeout(40)
     def post(self, action):
         return self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
         # last_obs_string = self.obs_string

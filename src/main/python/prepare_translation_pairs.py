@@ -165,44 +165,80 @@ def random_split_file_names(file_names, val_test_files=100):
 
 
 def process_files_with_proof_statements(file_names, saving_directory, processing_method_config=None):
+    # Store everything in jsonl format, and in text src and tgt format
+    datapoints = {
+        "train": list(),
+        "valid": list(),
+        "test": list()
+    }
     problem_names_split = {
         "train": list(),
         "val": list(),
         "test": list()
     }
-    for file_path in tqdm(file_names):
+    for file_path in tqdm(file_names, desc="Processing files"):
         file = json.load(open(file_path))
         original_file_name = file['file_name']
         problem_names = set(file['problem_names'])
         transitions_split = split_transitions(problem_names, file['translations'])
 
-        sources = {
-            "train": list(),
-            "val": list(),
-            "test": list()
-        }
-        targets = {
-            "train": list(),
-            "val": list(),
-            "test": list()
-        }
-        for problem_name in set(file['problem_names']):
-            split = get_split(problem_name)
-            problem_names_split[split].append((original_file_name, problem_name))
-            translation_pairs = process_translations_for_a_problem(transitions_split[problem_name],
-                                                                   processing_method_config=processing_method_config)
-            for x, y in translation_pairs:
-                sources[split].append(trim_string(x))
-                targets[split].append(trim_string(y))
+        split = None
+        
 
-        for key in sources:
-            with open(os.path.join(saving_directory, "{}.src".format(key)), "a") as fout:
-                for x in sources[key]:
-                    fout.write(x + "\n")
-            with open(os.path.join(saving_directory, "{}.tgt".format(key)), "a") as fout:
-                for y in targets[key]:
-                    fout.write(y + "\n")
+        for problem_name in set(file['problem_names']):
+            if "Isabelle2021/src/HOL" in original_file_name:
+                split = "train" 
+            else:
+                split = get_split(problem_name)
+
+            problem_names_split[split].append((original_file_name, problem_name))
+
+            json_split = "valid" if split == "val" else split
+            translation_pairs = process_translations_for_a_problem(
+                transitions_split[problem_name],
+                processing_method_config=processing_method_config
+            )
+
+            proof_script_till_now = [problem_name]
+            for proof_state, proof_step in translation_pairs:
+                sanitised_x = trim_string(proof_state)
+                sanitised_y = trim_string(proof_step)
+                datapoints[json_split].append(
+                    {
+                        "file_name": file['file_name'],
+                        'problem_name': problem_name,
+                        "x": sanitised_x,
+                        "y": sanitised_y,
+                        "proof_script_until_now": "<SEP>".join(proof_script_till_now)
+                    }
+                )
+                proof_script_till_now.append(sanitised_y)
+    
+    for json_split in tqdm(datapoints.keys(), desc="Saving files"):
+        # Write json
+        with open(os.path.join(saving_directory, f"{json_split}.jsonl"), "w") as fout:
+            for datapoint in datapoints[json_split]:
+                fout.write(json.dumps(datapoint))
+                fout.write("\n")
+
+        # Write src and tgt
+        split = "val" if json_split == "valid" else json_split
+        with open(os.path.join(saving_directory, f"{split}.src"), "w") as f_src, \
+                open(os.path.join(saving_directory, f"{split}.tgt"), "w") as f_tgt:
+            for datapoint in datapoints[json_split]:
+                f_src.write(datapoint["x"]+"\n")
+                f_tgt.write(datapoint["y"]+"\n")
+                
     json.dump(problem_names_split, open(os.path.join(saving_directory, "problem_names_split.json"), "w"))
+
+    for split, lines in problem_names_split.items():
+        split = "valid" if split == "val" else split
+        
+        with open(os.path.join(saving_directory, f"split.std_and_afp.{split}"), "w") as fout:
+            for theory_path, theorem_name in lines:
+                theorem_name = " ".join(theorem_name.strip().split())
+                fout.write(f"{theory_path} <PATH_AND_THEOREM_SEP> {theorem_name}")
+                fout.write("\n")
 
 
 if __name__ == "__main__":
@@ -210,7 +246,7 @@ if __name__ == "__main__":
     import glob
     import os
     parser = argparse.ArgumentParser(description='Extracting translation pairs.')
-    parser.add_argument('--extraction-file-directory', '-efd', help='Where the parsed json files are')
+    parser.add_argument('--extraction-file-directory', '-efd', nargs='+', help='Where the parsed json files are')
     parser.add_argument('--saving-directory', '-sd', help='Where to save the translation pairs')
     parser.add_argument('--processing-method-config', '-pmc', type=str,
                         help='Where to find the processing method config')
@@ -233,6 +269,9 @@ if __name__ == "__main__":
         shutil.rmtree(saving_directory)
     os.makedirs(saving_directory)
 
-    file_names = list(glob.glob("{}/*/*_ground_truth.json".format(
-        args.extraction_file_directory)))
+    file_names = []
+    for extraction_file_directory in args.extraction_file_directory:
+        file_names += list(glob.glob("{}/*/*_ground_truth.json".format(extraction_file_directory)))
+    
+    print(f"Processing {len(file_names)} files in total")
     process_files_with_proof_statements(file_names, saving_directory, ppc)
