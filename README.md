@@ -124,7 +124,7 @@ If you use this directory, or our code, please cite the paper we had in AITP 202
 ```bibtex
 @article{jiang2021lisa,
   title={LISA: Language models of ISAbelle proofs},
-  author={Jiang, Albert Qiaochu and Li, Wenda and Han, Jesse Michael and Wu, Yuhuai},
+  author={Jiang, Albert Q. and Li, Wenda and Han, Jesse Michael and Wu, Yuhuai},
   year={2021},
   journal={6th Conference on Artificial Intelligence and Theorem Proving},
 }

@@ -89,5 +89,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Python 3.9 (evariste) interpreter library" level="application" />
   </component>
 </module>
