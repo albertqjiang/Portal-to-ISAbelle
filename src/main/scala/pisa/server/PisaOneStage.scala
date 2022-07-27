@@ -92,12 +92,19 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       val actual_step = {
         if (action.trim == "sledgehammer") {
           // println("Starting up the hammer")
-          actual_timeout = 30000
           val hammer_results =
             try {
               pisaos.prove_with_hammer(old_state)
             } catch {
-              case _: TimeoutException => (false, List[String]())
+              case _: TimeoutException => {
+                try {
+                  piasos.prove_with_hammer(old_state, timeout_in_millis=5000)
+                }
+                catch {
+                  case _: TimeoutException => (false, List[String]())
+                }
+                
+              }
             }
           // println(hammer_results)
           if (hammer_results._1) {
