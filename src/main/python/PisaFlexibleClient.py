@@ -50,9 +50,14 @@ class IsaFlexEnv:
     def reset(self):
         self.stub = create_stub(port=self.port)
         try:
-            print(str(self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path))).strip())
-            print(str(self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory))).strip())
-            print(str(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string))).strip())
+            if log:
+                print(str(self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path))))
+                print(str(self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory))))
+                print(str(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string))))
+            else:
+                self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path))
+                self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory))
+                self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string))
         except Exception as e:
             print("Failure at initialising Isabelle process. "
                   "Make sure the path your provide is where the Isabelle executable is.")

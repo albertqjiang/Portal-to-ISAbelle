@@ -29,14 +29,12 @@ class OneStageBody extends ZServer[ZEnv, Any] {
 
   def initialiseIsabelle(isa_path: IsaPath): ZIO[zio.ZEnv, Status, IsaMessage] = {
     isaPath = isa_path.path
-    ZIO.succeed(IsaMessage(s"You entered the path to the Isabelle executable: ${isa_path.path} \n" +
-      s"We have successfully received it."))
+    ZIO.succeed(1)
   }
 
   def isabelleWorkingDirectory(isa_working_directory: IsaPath): zio.ZIO[zio.ZEnv, Status, IsaMessage] = {
     isaWorkingDirectory = isa_working_directory.path
-    ZIO.succeed(IsaMessage(s"You entered the path to the Isabelle working directory: ${isaWorkingDirectory} " +
-      s"We have successfully received it."))
+    ZIO.succeed(1) 
   }
 
   def isabelleContext(path_to_file: IsaContext): ZIO[zio.ZEnv, Status, IsaMessage] = {
@@ -44,8 +42,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       working_directory = isaWorkingDirectory)
     stand_in_thy = pisaos.thy1.mlValue
     stand_in_tls = pisaos.copy_tls
-    ZIO.succeed(IsaMessage(s"You entered the path to the Theory file: ${path_to_file.context} \n" +
-      s"We have successfully initialised the Isabelle environment."))
+    ZIO.succeed(1)
   }
 
   def reset_problem(): Unit = {
