@@ -47,7 +47,7 @@ class IsaFlexEnv:
     def reward(done):
         return 1. if done else 0.
 
-    def reset(self):
+    def reset(self, log=True):
         self.stub = create_stub(port=self.port)
         try:
             if log:
