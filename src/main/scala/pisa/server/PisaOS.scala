@@ -268,7 +268,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
        |      val params = ${Sledgehammer_Commands}.default_params thy
        |                      [("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")]
        |      val override = {add=[],del=[],only=false}
-       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
+       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal
        |                                  NONE 1 override
        |                                : Proof.state -> bool * (string * string list);
        |    in
@@ -278,7 +278,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
   // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
-  // the string to get the actual tactic. For example, one of the string may look like "Try this: by blast (0.5 ms)".
+  // the string to get the actual tactic. For example, one of the string may look like "\"cvc4\": Try this: by blast (0.5 ms)".
   val prove_with_Sledgehammer: MLFunction[ToplevelState, (Boolean, List[String])] = compileFunction[ToplevelState, (Boolean, List[String])](
     s""" fn state =>
        |    (
@@ -289,11 +289,13 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
        |      val params = ${Sledgehammer_Commands}.default_params thy
        |                      [("provers", "cvc4 e spass vampire z3"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")]
        |      val override = {add=[],del=[],only=false}
-       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
-       |                                  NONE 1 override
+       |      val res_list = Synchronized.var "res_list" [];
+       |      val writeln_results = SOME (fn s => Synchronized.change res_list (fn ll => cons s ll));
+       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal
+       |                                  writeln_results 1 override
        |                                : Proof.state -> bool * (string * string list);
        |    in
-       |      run_sledgehammer p_state |> (fn (x, (_ , y)) => (x,y))
+       |      (fst (run_sledgehammer p_state), Synchronized.value res_list)
        |    end)
     """.stripMargin)
 
