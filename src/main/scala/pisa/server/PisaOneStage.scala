@@ -114,7 +114,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         // If found a sledgehammer step, execute it differently
         var raw_hammer_strings = List[String]()
         try {
-          val total_result = pisaos.exp_with_hammer(pisaos.toplevel, timeout_in_millis=30000)
+          val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=30000)
           val success = total_result._1
           
           if (success) {
@@ -123,7 +123,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         } catch {
           case _: TimeoutException => {
             try {
-              val total_result = pisaos.exp_with_hammer(pisaos.toplevel, timeout_in_millis=5000)
+              val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=5000)
               val success = total_result._1
               if (success) {
                 actual_step = process_hammer_strings(total_result._2._2)
