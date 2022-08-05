@@ -85,46 +85,60 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     } else s"Didn't find top level state of given name: ${toplevel_state_name}"
   }
 
+  val TRY_STRING: String = "Try this:"
+  val FOUND_PROOF_STRING: String = "found a proof:"
+  val ERROR_MSG: String = "error"
+  val GAP_STEP: String = "sledgehammer"
+
+  def process_hammer_strings(hammer_string_list: List[String]): String = {
+    var found = false
+    for (attempt_string <- hammer_string_list) {
+      if (!found && (attempt_string contains TRY_STRING)) {
+        found = true
+        return attempt_string.stripPrefix(TRY_STRING).trim.split('(').dropRight(1).mkString("(")
+      } else if (!found && (attempt_string contains FOUND_PROOF_STRING)) {
+        found = true
+        return attempt_string.split(FOUND_PROOF_STRING).drop(1).mkString("").trim.split('(').dropRight(1).mkString("(")
+      }
+    }
+    ""
+  }
+
   def deal_with_apply_to_tls(toplevel_state_name: String, action: String, new_name: String): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       var actual_timeout = 10000
       val old_state: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
-      val actual_step = {
-        if (action.trim == "sledgehammer") {
-          // println("Starting up the hammer")
-          val hammer_results =
-            try {
-              pisaos.prove_with_hammer(old_state)
-            } catch {
-              case _: TimeoutException => {
-                try {
-                  pisaos.prove_with_hammer(old_state, timeout_in_millis=5000)
-                }
-                catch {
-                  case _: TimeoutException => (false, List[String]())
-                }
-                
-              }
-            }
-          // println(hammer_results)
-          if (hammer_results._1) {
-            val hammer_strings = hammer_results._2
-            var found = false
-            var real_string = ""
-            for (attempt_string <- hammer_strings) {
-              if (!found && (attempt_string contains "Try this:")) {
-                found = true
-                real_string = attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString("(")
-              }
-            }
+      var actual_step: String = "Gibberish"
 
-            if (found) real_string
-            else "Error! THIS IS BAD! SLEDGEHAMMER SAYS ITS SUCCESSFUL BUT DOESNT RETURN A CANDIDATE"
-
-          } else {
-            throw IsabelleException("Hammer failed")
+      if (action == GAP_STEP) {
+        // If found a sledgehammer step, execute it differently
+        var raw_hammer_strings = List[String]()
+        try {
+          val total_result = pisaos.exp_with_hammer(pisaos.toplevel, timeout_in_millis=30000)
+          val success = total_result._1
+          
+          if (success) {
+            actual_step = process_hammer_strings(total_result._2._2)
           }
-        } else action
+        } catch {
+          case _: TimeoutException => {
+            try {
+              val total_result = pisaos.exp_with_hammer(pisaos.toplevel, timeout_in_millis=5000)
+              val success = total_result._1
+              if (success) {
+                actual_step = process_hammer_strings(total_result._2._2)
+              }
+            } catch {
+              case e: TimeoutException => {
+                return s"$ERROR_MSG: ${e.getMessage}"
+              }
+            }
+          }
+        }
+        // println(actual_step)
+        assert(actual_step.trim.nonEmpty)
+      } else {
+        actual_step = action
       }
       // println("Actual step: " + actual_step)
 

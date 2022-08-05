@@ -15,6 +15,21 @@ object CloseGaps {
   val ERROR_MSG: String = "error"
   val GAP_STEP: String = "sledgehammer"
   val TRY_STRING: String = "Try this:"
+  val FOUND_PROOF_STRING: String = "found a proof:"
+
+  def process_hammer_strings(hammer_string_list: List[String]): String = {
+    var found = false
+    for (attempt_string <- hammer_string_list) {
+      if (!found && (attempt_string contains TRY_STRING)) {
+        found = true
+        return attempt_string.stripPrefix(TRY_STRING).trim.split('(').dropRight(1).mkString("(")
+      } else if (!found && (attempt_string contains FOUND_PROOF_STRING)) {
+        found = true
+        return attempt_string.split(FOUND_PROOF_STRING).drop(1).mkString("").trim.split('(').dropRight(1).mkString("(")
+      }
+    }
+    ""
+  }
 
   def get_and_execute_step(os: PisaOS, step: String): String = {
     var actual_step: String = "Gibberish"
@@ -22,11 +37,20 @@ object CloseGaps {
       // If found a sledgehammer step, execute it differently
       var raw_hammer_strings = List[String]()
       try {
-        raw_hammer_strings = os.prove_with_hammer(os.toplevel)._2
+        val total_result = os.exp_with_hammer(os.toplevel, timeout_in_millis=100000)
+        val success = total_result._1
+        
+        if (success) {
+          actual_step = process_hammer_strings(total_result._2._2)
+        }
       } catch {
         case _: TimeoutException => {
           try {
-            raw_hammer_strings = os.prove_with_hammer(os.toplevel, timeout_in_millis=5000)._2
+            val total_result = os.exp_with_hammer(os.toplevel, timeout_in_millis=100000)
+            val success = total_result._1
+            if (success) {
+              actual_step = process_hammer_strings(total_result._2._2)
+            }
           } catch {
             case e: TimeoutException => {
               return s"$ERROR_MSG: ${e.getMessage}"
@@ -34,14 +58,8 @@ object CloseGaps {
           }
         }
       }
-      
-      var found = false
-      for (attempt_string <- raw_hammer_strings) {
-        if (!found && (attempt_string contains TRY_STRING)) {
-          found = true
-          actual_step = attempt_string.stripPrefix(TRY_STRING).trim.split('(').dropRight(1).mkString("(")
-        }
-      }
+      // println(actual_step)
+      assert(actual_step.trim.nonEmpty)
     } else {
       actual_step = step
     }
