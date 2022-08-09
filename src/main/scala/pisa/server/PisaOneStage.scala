@@ -118,21 +118,30 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           val success = total_result._1
           
           if (success) {
+            println("Hammer string list: " + total_result._2._2.mkString(" ||| "))
             actual_step = process_hammer_strings(total_result._2._2)
+            println("actual_step: " + actual_step)
           }
         } catch {
           case _: TimeoutException => {
+            println("Sledgehammer timeout 1")
             try {
               val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=5000)
               val success = total_result._1
               if (success) {
+                println("Hammer string list: " + total_result._2._2.mkString(" ||| "))
                 actual_step = process_hammer_strings(total_result._2._2)
+                println("actual_step: " + actual_step)
               }
             } catch {
               case e: TimeoutException => {
+                println("Sledgehammer timeout 2")
                 return s"$ERROR_MSG: ${e.getMessage}"
               }
             }
+          }
+          case e: Exception => {
+            println("Exception while trying to run sledgehammer: " + e.getMessage)
           }
         }
         // println(actual_step)

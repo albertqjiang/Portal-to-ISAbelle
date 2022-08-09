@@ -47,24 +47,19 @@ class IsaFlexEnv:
     def reward(done):
         return 1. if done else 0.
 
-    def reset(self, log=True):
+    def reset(self):
         self.stub = create_stub(port=self.port)
         try:
-            if log:
-                print(str(self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path))))
-                print(str(self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory))))
-                print(str(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string))))
-            else:
-                self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path))
-                self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory))
-                self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string))
+            print(str(self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path))).strip())
+            print(str(self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory))).strip())
+            print(str(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string))).strip())
         except Exception as e:
             print("Failure at initialising Isabelle process. "
                   "Make sure the path your provide is where the Isabelle executable is.")
             print(e)
         return self.obs_string
 
-    @func_set_timeout(1)
+    @func_set_timeout(36)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
         obs_string = "Step error"
