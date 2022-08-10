@@ -95,7 +95,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     for (attempt_string <- hammer_string_list) {
       if (!found && (attempt_string contains TRY_STRING)) {
         found = true
-        return attempt_string.stripPrefix(TRY_STRING).trim.split('(').dropRight(1).mkString("(")
+        val parsed = attempt_string.split(TRY_STRING).drop(1).mkString("").trim
+        if (parsed contains " ms)") {
+          return parsed.split('(').dropRight(1).mkString("(").trim
+        }
+        return parsed
       } else if (!found && (attempt_string contains FOUND_PROOF_STRING)) {
         found = true
         return attempt_string.split(FOUND_PROOF_STRING).drop(1).mkString("").trim.split('(').dropRight(1).mkString("(")
@@ -114,25 +118,34 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         // If found a sledgehammer step, execute it differently
         var raw_hammer_strings = List[String]()
         try {
-          val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=30000)
+          val total_result = pisaos.prove_with_hammer(old_state, timeout_in_millis=30000)
           val success = total_result._1
           
           if (success) {
-            actual_step = process_hammer_strings(total_result._2._2)
+            println("Hammer string list: " + total_result._2.mkString(" ||| "))
+            actual_step = process_hammer_strings(total_result._2)
+            println("actual_step: " + actual_step)
           }
         } catch {
           case _: TimeoutException => {
+            println("Sledgehammer timeout 1")
             try {
-              val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=5000)
+              val total_result = pisaos.prove_with_hammer(old_state, timeout_in_millis=5000)
               val success = total_result._1
               if (success) {
-                actual_step = process_hammer_strings(total_result._2._2)
+                println("Hammer string list: " + total_result._2.mkString(" ||| "))
+                actual_step = process_hammer_strings(total_result._2)
+                println("actual_step: " + actual_step)
               }
             } catch {
               case e: TimeoutException => {
+                println("Sledgehammer timeout 2")
                 return s"$ERROR_MSG: ${e.getMessage}"
               }
             }
+          }
+          case e: Exception => {
+            println("Exception while trying to run sledgehammer: " + e.getMessage)
           }
         }
         // println(actual_step)
@@ -283,8 +296,16 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           try {
             deal_with_apply_to_tls(tls_name, action, new_name)
           } catch {
-            case e: IsabelleException => "Step error"
-            case _: Throwable => "Unknown error"
+            case e: IsabelleException => {
+              println("Action: " + action)
+              println("IsabelleException: " + e.getMessage + "\n")
+              "Step error: " + e.getMessage
+            }
+            case e: Throwable => {
+              println("Action: " + action)
+              println("Unknown error: " + e.getMessage + "\n")
+              "Unknown error: " + e.getMessage
+            }
           }
         }
         else if (isa_command.command.startsWith("<get_proof_level>")) {
