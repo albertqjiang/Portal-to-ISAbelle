@@ -41,7 +41,7 @@ object CloseGaps {
         val success = total_result._1
         
         if (success) {
-          actual_step = process_hammer_strings(total_result._2._2)
+          actual_step = process_hammer_strings(total_result._2)
         }
       } catch {
         case _: TimeoutException => {
@@ -49,7 +49,7 @@ object CloseGaps {
             val total_result = os.exp_with_hammer(os.toplevel, timeout_in_millis=100000)
             val success = total_result._1
             if (success) {
-              actual_step = process_hammer_strings(total_result._2._2)
+              actual_step = process_hammer_strings(total_result._2)
             }
           } catch {
             case e: TimeoutException => {

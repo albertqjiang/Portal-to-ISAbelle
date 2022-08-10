@@ -89,6 +89,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   val FOUND_PROOF_STRING: String = "found a proof:"
   val ERROR_MSG: String = "error"
   val GAP_STEP: String = "sledgehammer"
+  val TIME_STRING1: String = " ms)"
+  val TIME_STRING2: String = " s)"
 
   def process_hammer_strings(hammer_string_list: List[String]): String = {
     var found = false
@@ -96,13 +98,17 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       if (!found && (attempt_string contains TRY_STRING)) {
         found = true
         val parsed = attempt_string.split(TRY_STRING).drop(1).mkString("").trim
-        if (parsed contains " ms)") {
+        if ((parsed contains TIME_STRING1) || (parsed contains TIME_STRING2)) {
           return parsed.split('(').dropRight(1).mkString("(").trim
         }
         return parsed
       } else if (!found && (attempt_string contains FOUND_PROOF_STRING)) {
         found = true
-        return attempt_string.split(FOUND_PROOF_STRING).drop(1).mkString("").trim.split('(').dropRight(1).mkString("(")
+        val parsed = attempt_string.split(FOUND_PROOF_STRING).drop(1).mkString("").trim
+        if ((parsed contains TIME_STRING1) || (parsed contains TIME_STRING2)) {
+          return parsed.split('(').dropRight(1).mkString("(").trim
+        }
+        return parsed
       }
     }
     ""
@@ -118,7 +124,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         // If found a sledgehammer step, execute it differently
         var raw_hammer_strings = List[String]()
         try {
-          val total_result = pisaos.prove_with_hammer(old_state, timeout_in_millis=30000)
+          val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=30000)
           val success = total_result._1
           
           if (success) {
@@ -130,7 +136,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           case _: TimeoutException => {
             println("Sledgehammer timeout 1")
             try {
-              val total_result = pisaos.prove_with_hammer(old_state, timeout_in_millis=5000)
+              val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=5000)
               val success = total_result._1
               if (success) {
                 println("Hammer string list: " + total_result._2.mkString(" ||| "))
