@@ -282,19 +282,21 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val prove_with_Sledgehammer: MLFunction[ToplevelState, (Boolean, List[String])] = compileFunction[ToplevelState, (Boolean, List[String])](
     s""" fn state =>
        |    (
-       |    let
-       |      val ctxt = Toplevel.context_of state;
-       |      val thy = Proof_Context.theory_of ctxt;
-       |      val p_state = Toplevel.proof_of state;
-       |      val params = ${Sledgehammer_Commands}.default_params thy
-       |                      [("provers", "cvc4 e spass vampire z3"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")]
-       |      val override = {add=[],del=[],only=false}
-       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
-       |                                  NONE 1 override
-       |                                : Proof.state -> bool * (string * string list);
-       |    in
-       |      run_sledgehammer p_state |> (fn (x, (_ , y)) => (x,y))
-       |    end)
+|         let
+|            val ctxt = Toplevel.context_of state;
+|            val thy = Proof_Context.theory_of ctxt
+|            val p_state = Toplevel.proof_of state;
+|            val params = ${Sledgehammer_Commands}.default_params thy [("isar_proofs", "false"),("smt_proofs", "true"),("learn","false")]
+|            val override = {add=[],del=[],only=false}
+|            val res_list = Synchronized.var "res_list" [];
+|            val writeln_results = SOME (fn s => Synchronized.change res_list (fn ll => cons s ll));
+|            val run_sledgehammer = 
+|                  ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal
+|                                        writeln_results 1 override
+|                                      : Proof.state -> bool * (string * string list);
+|          in
+|            (fst (run_sledgehammer p_state), Synchronized.value res_list) (*|> snd |> snd |> hd *)
+|          end)
     """.stripMargin)
 
   def get_theory_ancestors_names(theory: Theory): List[String] = ancestorsNamesOfTheory(theory).force.retrieveNow
@@ -563,7 +565,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     getStateString
   }
 
-  def prove_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
+  def prove_with_hammer(top_level_state: ToplevelState=toplevel, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
     val f_res: Future[(Boolean, List[String])] = Future.apply {
       prove_with_Sledgehammer(top_level_state).force.retrieveNow
     }

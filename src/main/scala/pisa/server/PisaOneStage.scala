@@ -375,4 +375,67 @@ object PisaExtraction {
   }
 }
 
+object PisaOneStage_Example1 {
+   val path_to_isa_bin : String = "/home/wl302/LISA/Isabelle2021"
+   val path_to_afp : String = "/home/wl302/LISA/afp-2021-10-22"
+   def main(args: Array[String]): Unit = {
+     val path_to_file : String = s"$path_to_afp/thys/Sturm_Tarski/PolyMisc.thy"
+     val working_directory : String = s"$path_to_afp/thys/Sturm_Tarski"
+     val pisaos = new PisaOS(
+       path_to_isa_bin=path_to_isa_bin,
+       path_to_file=path_to_file,
+       working_directory=working_directory)
 
+     println(pisaos.step("theory NA imports Complex_Main begin"))
+     println(pisaos.step("theorem \"(3::real) = 6 / x ==> x=2\""))
+     val (r1,r2) = pisaos.prove_with_hammer()
+     println(r1,r2)
+   }
+ }
+
+ object PisaOneStage_Example2 {
+   val path_to_isa_bin : String = "/home/wl302/LISA/Isabelle2021"
+   val path_to_afp : String = "/home/wl302/LISA/afp-2021-10-22"
+   def main(args: Array[String]): Unit = {
+     val path_to_file : String = s"$path_to_afp/thys/Sturm_Tarski/PolyMisc.thy"
+     val working_directory : String = s"$path_to_afp/thys/Sturm_Tarski"
+     val pisaos = new PisaOS(
+       path_to_isa_bin=path_to_isa_bin,
+       path_to_file=path_to_file,
+       working_directory=working_directory)
+
+     println(pisaos.step("theory NA imports Complex_Main begin"))
+
+      println(pisaos.step("theorem mathd_algebra_455: fixes x :: real assumes h0 : \"2 * (2 * (2 * (2 * x))) = 48\" shows \"x=3\""))
+      println(pisaos.step("proof - "))
+      println(pisaos.step("have \"2 * (2 * (2 * x)) = 24\""))
+
+
+    val (r1,r2) = pisaos.prove_with_hammer()
+     println(r1,r2)
+   }
+ }
+
+ object PisaOneStage_Example3 {
+   val path_to_isa_bin : String = "/home/wl302/LISA/Isabelle2021"
+   val path_to_afp : String = "/home/wl302/LISA/afp-2021-10-22"
+   def main(args: Array[String]): Unit = {
+     val path_to_file : String = s"$path_to_afp/thys/Sturm_Tarski/PolyMisc.thy"
+     val working_directory : String = s"$path_to_afp/thys/Sturm_Tarski"
+     val pisaos = new PisaOS(
+       path_to_isa_bin=path_to_isa_bin,
+       path_to_file=path_to_file,
+       working_directory=working_directory)
+
+     println(pisaos.step("theory NA imports Complex_Main begin"))
+
+      println(pisaos.step("theorem thm_nt2: fixes n :: nat assumes h0 : \"n mod 11 = 5\" shows \"(5 * n) mod 11 = 3\""))
+      println(pisaos.step("proof -"))
+      println(pisaos.step("have \"(5 * n) mod 11 = (5 * 5) mod 11\""))
+      println(pisaos.step("using h0"))
+
+      val (r1,r2) = pisaos.prove_with_hammer()
+      println(r1,r2)
+
+   }
+ }
