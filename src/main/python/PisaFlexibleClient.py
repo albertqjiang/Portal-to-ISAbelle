@@ -31,6 +31,7 @@ class IsaFlexEnv:
 
         self.stub = None
         self.obs_string = None
+        self.successful_starting = False
         self.reset()
 
     def observation(self):
@@ -53,13 +54,14 @@ class IsaFlexEnv:
             self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path))
             self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory))
             self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string))
+            self.successful_starting = True
         except Exception as e:
             print("Failure at initialising Isabelle process. "
                   "Make sure the path your provide is where the Isabelle executable is.")
             print(e)
         return self.obs_string
 
-    @func_set_timeout(36)
+    @func_set_timeout(36, allowOverride=True)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
         obs_string = "Step error"
