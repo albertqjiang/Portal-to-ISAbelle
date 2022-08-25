@@ -439,3 +439,33 @@ object PisaOneStage_Example1 {
 
    }
  }
+
+ object PisaOneStage_Example4 {
+   val path_to_isa_bin : String = "/home/wl302/LISA/Isabelle2021"
+   val path_to_afp : String = "/home/wl302/LISA/afp-2021-10-22"
+   def main(args: Array[String]): Unit = {
+     val path_to_file : String = s"$path_to_afp/thys/FunWithFunctions/FunWithFunctions.thy"
+     val working_directory : String = s"$path_to_afp/thys/FunWithFunctions"
+     val pisaos = new PisaOS(
+       path_to_isa_bin=path_to_isa_bin,
+       path_to_file=path_to_file,
+       working_directory=working_directory)
+
+      println(pisaos.step("theory NA imports Complex_Main begin"))
+
+      // identity1 ==> identity_temp, success
+      // println(pisaos.step("theorem identity1: fixes f :: \"nat \\<Rightarrow> nat\" assumes fff: \"\\<And>n. f(f(n)) < f(Suc(n))\" shows \"f(n) = n\""))
+      // println(pisaos.step("sorry"))
+      // println(pisaos.step("theorem identity_temp: fixes f :: \"nat \\<Rightarrow> nat\" assumes fff: \"\\<And>n. f(f(n)) < f(Suc(n))\" shows \"f(n) + 123 = n + 123\""))
+      // val (r1,r2) = pisaos.prove_with_hammer()
+      // println(r1,r2)
+
+      // identity_temp ==> identity1, fail without learning
+      println(pisaos.step("theorem identity_temp: fixes f :: \"nat \\<Rightarrow> nat\" assumes fff: \"\\<And>n. f(f(n)) < f(Suc(n))\" shows \"f(n) + 123 = n + 123\""))
+      println(pisaos.step("sorry"))
+      println(pisaos.step("theorem identity1: fixes f :: \"nat \\<Rightarrow> nat\" assumes fff: \"\\<And>n. f(f(n)) < f(Suc(n))\" shows \"f(n) = n\""))
+      val (r1,r2) = pisaos.prove_with_hammer()
+      println(r1,r2)
+
+   }
+ }
