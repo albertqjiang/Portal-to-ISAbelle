@@ -15,8 +15,16 @@ libraryDependencies ++= Seq(
   "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
   "io.grpc" % "grpc-netty" % grpcVersion
 )
-
-libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/Users/qj213/Projects/PISA/lib/scala-isabelle_2.13.jar"// development snapshot
+// libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/large_experiments/theorem/aqj/third_party_software/Portal-to-ISAbelle/lib/scala-isabelle_2.13.jar"// development snapshot
+libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:./lib/scala-isabelle_2.13.jar"// development snapshot
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.3"
+
+assemblyMergeStrategy in assembly := {
+    case x if x.contains("io.netty.versions.properties") => MergeStrategy.discard
+    case x if x.contains("de/unruh") => MergeStrategy.first
+    case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+}

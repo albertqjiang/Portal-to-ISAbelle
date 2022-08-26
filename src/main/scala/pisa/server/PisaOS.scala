@@ -253,49 +253,6 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   val header_read: MLFunction2[String, Position, TheoryHeader] =
     compileFunction[String, Position, TheoryHeader]("fn (text,pos) => Thy_Header.read pos text")
-  // setting up Sledgehammer
-  val thy_for_sledgehammer: Theory = Theory("HOL.List")
-  val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
-  val Sledgehammer: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer")
-  val Sledgehammer_Prover: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover")
-  val check_with_Sledgehammer: MLFunction[ToplevelState, Boolean] = compileFunction[ToplevelState, Boolean](
-    s""" fn state =>
-       |    (
-       |    let
-       |      val ctxt = Toplevel.context_of state;
-       |      val thy = Proof_Context.theory_of ctxt
-       |      val p_state = Toplevel.proof_of state;
-       |      val params = ${Sledgehammer_Commands}.default_params thy
-       |                      [("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")]
-       |      val override = {add=[],del=[],only=false}
-       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
-       |                                  NONE 1 override
-       |                                : Proof.state -> bool * (string * string list);
-       |    in
-       |      run_sledgehammer p_state |> fst
-       |    end)
-    """.stripMargin)
-
-  // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
-  // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
-  // the string to get the actual tactic. For example, one of the string may look like "Try this: by blast (0.5 ms)".
-  val prove_with_Sledgehammer: MLFunction[ToplevelState, (Boolean, List[String])] = compileFunction[ToplevelState, (Boolean, List[String])](
-    s""" fn state =>
-       |    (
-       |    let
-       |      val ctxt = Toplevel.context_of state;
-       |      val thy = Proof_Context.theory_of ctxt;
-       |      val p_state = Toplevel.proof_of state;
-       |      val params = ${Sledgehammer_Commands}.default_params thy
-       |                      [("provers", "cvc4 e spass vampire z3"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")]
-       |      val override = {add=[],del=[],only=false}
-       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
-       |                                  NONE 1 override
-       |                                : Proof.state -> bool * (string * string list);
-       |    in
-       |      run_sledgehammer p_state |> (fn (x, (_ , y)) => (x,y))
-       |    end)
-    """.stripMargin)
 
   def get_theory_ancestors_names(theory: Theory): List[String] = ancestorsNamesOfTheory(theory).force.retrieveNow
 
@@ -374,6 +331,68 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val theoryStarter: TheoryManager.Text = TheoryManager.Text(starter_string, setup.workingDirectory.resolve(""))
   var thy1: Theory = beginTheory(theoryStarter)
   thy1.await
+
+  // setting up Sledgehammer
+  // val thy_for_sledgehammer: Theory = Theory("HOL.List")
+  val thy_for_sledgehammer = thy1
+  val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
+  val Sledgehammer: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer")
+  val Sledgehammer_Prover: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover")
+  // val check_with_Sledgehammer: MLFunction[ToplevelState, Boolean] = compileFunction[ToplevelState, Boolean](
+  //   s""" fn state =>
+  //      |    (
+  //      |    let
+  //      |      val ctxt = Toplevel.context_of state;
+  //      |      val thy = Proof_Context.theory_of ctxt
+  //      |      val p_state = Toplevel.proof_of state;
+  //      |      val params = ${Sledgehammer_Commands}.default_params thy
+  //      |                      [("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")]
+  //      |      val override = {add=[],del=[],only=false}
+  //      |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
+  //      |                                  NONE 1 override
+  //      |                                : Proof.state -> bool * (string * string list);
+  //      |    in
+  //      |      run_sledgehammer p_state |> fst
+  //      |    end)
+  //   """.stripMargin)
+
+  // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
+  // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
+  // the string to get the actual tactic. For example, one of the string may look like "Try this: by blast (0.5 ms)".
+  val prove_with_Sledgehammer: MLFunction[ToplevelState, (Boolean, List[String])] = compileFunction[ToplevelState, (Boolean, List[String])](
+    s""" fn state =>
+       |    (
+       |    let
+       |      val ctxt = Toplevel.context_of state;
+       |      val thy = Proof_Context.theory_of ctxt;
+       |      val p_state = Toplevel.proof_of state;
+       |      val params = ${Sledgehammer_Commands}.default_params thy
+       |                      [("provers", "cvc4 e spass vampire z3"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","true"),("timeout","30"),("preplay_timeout","2")]
+       |      val override = {add=[],del=[],only=false}
+       |      val res_list = Synchronized.var "res_list" [];
+       |      val writeln_results = SOME (fn s => Synchronized.change res_list (fn ll => cons s ll));
+       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
+       |                                  writeln_results 1 override
+       |                                : Proof.state -> bool * (string * string list);
+       |    in
+       |      (fst (run_sledgehammer p_state), Synchronized.value res_list)
+       |    end)
+    """.stripMargin)
+
+  val exp_with_Sledgehammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
+    s""" fn (state, thy) =>
+       |    (
+       |    let
+       |      val p_state = Toplevel.proof_of state;
+       |      val ctxt = Proof.context_of p_state;
+       |      val params = ${Sledgehammer_Commands}.default_params thy
+       |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","0"),("minimize","false"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")];
+       |      val override = {add=[],del=[],only=false}
+       |    in
+       |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
+       |    end)
+    """.stripMargin)
+
   var toplevel: ToplevelState = init_toplevel().force.retrieveNow
 
   def reset_map(): Unit = {
@@ -566,6 +585,14 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   def prove_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
     val f_res: Future[(Boolean, List[String])] = Future.apply {
       prove_with_Sledgehammer(top_level_state).force.retrieveNow
+    }
+    Await.result(f_res, Duration(timeout_in_millis, "millis"))
+  }
+
+  def exp_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
+    val f_res: Future[(Boolean, List[String])] = Future.apply {
+      val first_result = exp_with_Sledgehammer(top_level_state, thy1).force.retrieveNow
+      (first_result._1, first_result._2._2)
     }
     Await.result(f_res, Duration(timeout_in_millis, "millis"))
   }

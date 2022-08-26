@@ -31,6 +31,7 @@ class IsaFlexEnv:
 
         self.stub = None
         self.obs_string = None
+        self.successful_starting = False
         self.reset()
 
     def observation(self):
@@ -50,18 +51,21 @@ class IsaFlexEnv:
     def reset(self):
         self.stub = create_stub(port=self.port)
         try:
-            print(str(self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path))).strip())
-            print(str(self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory))).strip())
-            print(str(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string))).strip())
+            print(self.stub.InitialiseIsabelle(server_pb2.IsaPath(path=self.isa_path)).message)
+            print(self.stub.IsabelleWorkingDirectory(server_pb2.IsaPath(path=self.working_directory)).message)
+            print(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string)).message)
+            self.successful_starting = True
         except Exception as e:
             print("Failure at initialising Isabelle process. "
                   "Make sure the path your provide is where the Isabelle executable is.")
             print(e)
         return self.obs_string
 
-    @func_set_timeout(40)
+    @func_set_timeout(36, allowOverride=True)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
+        obs_string = "Step error"
+        done = False
         try:
             obs_string = self.stub.IsabelleCommand(
                 server_pb2.IsaCommand(command=f"<apply to top level state> {tls_name} <apply to top level state> {action} <apply to top level state> {new_name}")).state
@@ -73,7 +77,13 @@ class IsaFlexEnv:
         # done = True if ("subgoal" in last_obs_string and "subgoal" not in obs_string) else False
         return obs_string, self.reward(done), done, {}
 
-    @func_set_timeout(40)
+    def proceed_after(self, line_string):
+        return self.post(f"<proceed after> {line_string}", forceTimeout=10000)
+
+    def clone_to_new_name(self, new_name):
+        return self.post(f"<clone> default <clone> {new_name}", forceTimeout=10)
+
+    @func_set_timeout(60, allowOverride=True)
     def post(self, action):
         return self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
         # last_obs_string = self.obs_string
