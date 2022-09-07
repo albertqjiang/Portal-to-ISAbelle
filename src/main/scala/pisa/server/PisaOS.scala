@@ -31,6 +31,7 @@ object Pretty extends AdHocConverter("Pretty.T")
 object ProofContext extends AdHocConverter("Proof_Context.T")
 
 class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_directory: String, var use_Sledgehammer: Boolean = false) {
+  println("Checkpoint 1")
   val currentTheoryName: String = path_to_file.split("/").last.replace(".thy", "")
   val currentProjectName: String = {
     if (path_to_file.contains("afp")) {
@@ -49,7 +50,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       "This is not supported at the moment"
     }
   }
-
+  println("Checkpoint 2")
   // Figure out the session roots information and import the correct libraries
   val sessionRoots: Seq[Path] = {
     if (path_to_file.contains("afp")) {
@@ -65,7 +66,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       Seq(Path.of("This is not supported at the moment"))
     }
   }
-
+  println("Checkpoint 3")
   // Prepare setup config and the implicit Isabelle context
   val setup: Isabelle.Setup = Isabelle.Setup(
     isabelleHome = Path.of(path_to_isa_bin),
@@ -77,7 +78,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   )
   implicit val isabelle: Isabelle = new Isabelle(setup)
   implicit val ec: ExecutionContext = ExecutionContext.global
-
+  println("Checkpoint 4")
   // Complie useful ML functions
   val script_thy: MLFunction2[String, Theory, Theory] = compileFunction[String, Theory, Theory]("fn (str,thy) => Thy_Info.script_thy Position.none str thy")
   val init_toplevel: MLFunction0[ToplevelState] = compileFunction0[ToplevelState]("Toplevel.init_toplevel")
@@ -250,24 +251,32 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     val tls = retrieve_tls(tls_name)
     total_facts_and_defs_string(tls)
   }
-
+  println("Checkpoint 4")
   val header_read: MLFunction2[String, Position, TheoryHeader] =
     compileFunction[String, Position, TheoryHeader]("fn (text,pos) => Thy_Header.read pos text")
 
   def get_theory_ancestors_names(theory: Theory): List[String] = ancestorsNamesOfTheory(theory).force.retrieveNow
 
   def beginTheory(source: Source)(implicit isabelle: Isabelle, ec: ExecutionContext): Theory = {
+    println("Checkpoint 9_1")
     val header = getHeader(source)
+    println("Checkpoint 9_2")
     val masterDir = source.path
+    println("Checkpoint 9_3")
     val registers: ListBuffer[String] = new ListBuffer[String]()
+    println("Checkpoint 9_4")
     for (theory_name <- header.imports) {
       if (importMap.contains(theory_name)) {
         registers += s"${currentProjectName}.${importMap(theory_name)}"
       } else registers += theory_name
     }
+    println("Checkpoint 9_5")
+    println(masterDir)
+    println(header)
+    println(registers.toList)
     Ops.begin_theory(masterDir, header, registers.toList.map(Theory.apply)).retrieveNow
   }
-
+  println("Checkpoint 5")
   def getHeader(source: Source)(implicit isabelle: Isabelle, ec: ExecutionContext): TheoryHeader = source match {
     case Text(text, path, position) => Ops.header_read(text, position).retrieveNow
   }
@@ -275,7 +284,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   // Find out about the starter string
   private val fileContent: String = Files.readString(Path.of(path_to_file))
   val fileContentCopy: String = fileContent
-
+  println("Checkpoint 6")
   private def getStarterString: String = {
     val decoyThy: Theory = Theory("Main")
     for ((transition, text) <- parse_text(decoyThy, fileContent).force.retrieveNow) {
@@ -285,7 +294,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
     "This is wrong!!!"
   }
-
+  println("Checkpoint 7")
   val starter_string: String = getStarterString.trim.replaceAll("\n", " ").trim
 
   // Find out what to import from the current directory
@@ -308,7 +317,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   def sanitiseInDirectoryName(fileName: String): String = {
     fileName.replace("\"", "").split("/").last.split(".thy").head
   }
-
+  println("Checkpoint 8")
   // Figure out what theories to import
   val available_files: List[File] = getListOfTheoryFiles(new File(working_directory))
   var available_imports_buffer: ListBuffer[String] = new ListBuffer[String]
@@ -326,12 +335,14 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       importMap += (theory_name.replace("\"", "") -> sanitisedName)
     }
   }
-
+  
   var top_level_state_map: Map[String, MLValue[ToplevelState]] = Map()
   val theoryStarter: TheoryManager.Text = TheoryManager.Text(starter_string, setup.workingDirectory.resolve(""))
+  println("Checkpoint 9")
   var thy1: Theory = beginTheory(theoryStarter)
   thy1.await
-
+  println("Checkpoint 10")
+  
   // setting up Sledgehammer
   // val thy_for_sledgehammer: Theory = Theory("HOL.List")
   val thy_for_sledgehammer = thy1
@@ -359,6 +370,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
   // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
   // the string to get the actual tactic. For example, one of the string may look like "Try this: by blast (0.5 ms)".
+  println("Checkpoint 11")
   val prove_with_Sledgehammer: MLFunction[ToplevelState, (Boolean, List[String])] = compileFunction[ToplevelState, (Boolean, List[String])](
     s""" fn state =>
        |    (
@@ -394,7 +406,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     """.stripMargin)
 
   var toplevel: ToplevelState = init_toplevel().force.retrieveNow
-
+  println("Checkpoint 12")
   def reset_map(): Unit = {
     top_level_state_map = Map()
   }
@@ -596,10 +608,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
     Await.result(f_res, Duration(timeout_in_millis, "millis"))
   }
-
+  println("Checkpoint 13")
   val transitions_and_texts = parse_text(thy1, fileContent).force.retrieveNow
   var frontier_proceeding_index = 0
-
+  println("Checkpoint 14")
   def accumulative_step_to_before_transition_starting(isar_string: String): String = {
     val sanitised_isar_string = isar_string.trim.replaceAll("\n", " ").replaceAll(" +", " ")
     val (transition, text) = transitions_and_texts(frontier_proceeding_index)
