@@ -1,8 +1,6 @@
 # PISA (Portal to ISAbelle)
 PISA supports automated proof search with the interactive theorem prover [Isabelle](https://isabelle.in.tum.de).
 
-See [this](https://terminalizer.com/view/cb6ea5dd5395) for how to write proofs with a Python script with PISA.
-
 PISA can also be used to extract proof corpus. We extracted the datasets in our AITP 2021 paper [LISA: Language models of ISAbelle proofs](http://aitp-conference.org/2021/abstract/paper_17.pdf) with it.
 
 
@@ -30,6 +28,12 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
     ```shell
     git clone https://github.com/albertqjiang/Portal-to-ISAbelle.git
     cd Portal-to-ISAbelle
+    ```
+    Go into the file build.sbt and change the $PWD on line 19 with the actual path of the current working directory, such that we have the absolute path of the scala-isabelle jar file. For example, the line should look like:
+    libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/home/aqj/Portal-to-ISAbelle/lib/scala-isabelle_2.13.jar".
+
+    Then compile the project:
+    ```shell
     sbt compile
     ```
    
@@ -68,6 +72,13 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    The universal test theorems contains 3000 theorems with their file paths and names. The first 600 of them are packaged as "quick" theorems if you have no patience testing all 3000 out.
    ```shell
    tar -xzf universal_test_theorems.tar.gz
+   ```
+
+## Evaluation setup (if you want to have N (N>50) PISA servers running on your machine)
+1. **Create some PISA jars**
+   For a single process, sbt is good enough. But for multiple processes, to have native JAVA processes running is a better idea. We first use sbt-assembly to create a fat jar (a jar where all the java code is compiled into and can be run independently).
+   ```shell
+   sbt assembly
    ```
 
 ## Extract PISA dataset
@@ -110,17 +121,13 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    ```shell
    python3 src/main/python/prepare_episodic_transitions.py -efd afp_extractions -sd data/proof_and_state --proof --state
    ```
-   Note that extraction involving proofs will take pretty long and will result in large files. State-only files amount to 8.1G.
-
-# To be released
-   - REPL-like environment to talk to Isabelle running sessions via gRPC
-   - Setup to evaluate automated agents
+   Note that extraction involving proofs will take pretty long and will result in large files. State-only files amount to 8.1G. With proof steps it's even much larger.
 
 # Acknowledgement
 This library is heavily based on [scala-isabelle](https://github.com/dominique-unruh/scala-isabelle), the work of Dominique Unruh. We are very grateful to Dominique for his kind help and guidance.
 
 # Citation
-If you use this directory, or our code, please cite the paper we had in AITP 2021.
+If you use this directory, or our code, please cite the paper we published at AITP 2021.
 ```bibtex
 @article{jiang2021lisa,
   title={LISA: Language models of ISAbelle proofs},
@@ -130,7 +137,7 @@ If you use this directory, or our code, please cite the paper we had in AITP 202
 }
 ```
 
-# Untested legacy stuff
+<!-- # Untested legacy stuff
 **The following content was built on the 2020 version of Isabelle with afp-2021-02-11. They have not been tested with Isabelle2021 and might contain bugs.**
 ## Running proof search
 After the heap images have been built, experiments of proof searching can be run.
@@ -205,7 +212,7 @@ You should check that in the process, heaps are built for each afp project in th
 (The exact path might differ if you have different OS or polyml verions but should be easy to find) -->
 
 
-### Model evaluation
+<!-- ### Model evaluation
 See src/main/python/load_problem_by_file_and_name.py for an example of using an oracle theorem prover 
 to evaluate on some problems. 
 
@@ -230,4 +237,4 @@ model.predict takes in a string of proof state, and return the next proof transi
 The evaluate_problem method executes prediction for a maximum of 100 steps by default.
 
 Problem evaluation currently only allows agents based on proof states only.
-Agents based on previous proof segments and hybrid-input agents will be supported in the near future.
+Agents based on previous proof segments and hybrid-input agents will be supported in the near future. -->
