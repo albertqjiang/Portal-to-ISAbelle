@@ -124,7 +124,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         // If found a sledgehammer step, execute it differently
         var raw_hammer_strings = List[String]()
         try {
-          val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=30000)
+          val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=120000)
           val success = total_result._1
           
           if (success) {

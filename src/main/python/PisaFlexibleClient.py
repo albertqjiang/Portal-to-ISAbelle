@@ -61,7 +61,7 @@ class IsaFlexEnv:
             print(e)
         return self.obs_string
 
-    @func_set_timeout(36, allowOverride=True)
+    @func_set_timeout(1800, allowOverride=True)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
         obs_string = "Step error"
@@ -83,7 +83,7 @@ class IsaFlexEnv:
     def clone_to_new_name(self, new_name):
         return self.post(f"<clone> default <clone> {new_name}", forceTimeout=10)
 
-    @func_set_timeout(60, allowOverride=True)
+    @func_set_timeout(1800, allowOverride=True)
     def post(self, action):
         return self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
         # last_obs_string = self.obs_string
