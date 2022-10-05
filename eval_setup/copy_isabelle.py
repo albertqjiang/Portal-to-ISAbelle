@@ -23,12 +23,12 @@ if __name__ == "__main__":
         main_isa_path = os.path.join(index_path, "main_isa")
         if not os.path.exists(main_isa_path):
             os.makedirs(main_isa_path)
-        shutil.copytree(args.isabelle, os.path.join(main_isa_path, isabelle_identifier))
+        shutil.copytree(args.isabelle, os.path.join(main_isa_path, isabelle_identifier), symlinks=True)
 
         user_isa_path = os.path.join(index_path, "user_isa")
         if os.path.exists(user_isa_path):
             raise AssertionError
-        shutil.copytree(args.isabelle_user, user_isa_path)
+        shutil.copytree(args.isabelle_user, user_isa_path, symlinks=True)
 
         # Edit the settings file such that the user home points to the right directory
         original_isabelle_home_user_string = "$USER_HOME/.isabelle"
