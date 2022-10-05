@@ -76,9 +76,26 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
 
 ## Evaluation setup (if you want to have N (N>50) PISA servers running on your machine)
 1. **Create some PISA jars**
+
    For a single process, sbt is good enough. But for multiple processes, to have native JAVA processes running is a better idea. We first use sbt-assembly to create a fat jar (a jar where all the java code is compiled into and can be run independently).
    ```shell
    sbt assembly
+   ```
+
+   The assembly process should take less than 5 minutes. The compiled jar file is in the target/scala-2.13/ directory as PISA-assembly-0.1.jar. You can then copy the PISA jar for N times if you want the jars to be truly independent and separated by calling the following script:
+   ```shell
+   python eval_setup/copy_pisa_jars.py --pisa-jar-path target/scala-2.13/PISA-assembly-0.1.jar --number-of-jars $N --output-path $OUTPUT_PATH
+   ```
+
+2. **Create some Isabelle copies**
+
+   This step is to create multiple copies of the Isabelle software as well as the built heap images to avoid IO errors which can occur when many processes are run at the same time. We use $ISABELLE to denote where your Isabelle software lives and $ISABELLE_USER to denote where your built heap images live, which is usually at $USER/.isabelle
+
+   Note that one copy of the Isabelle software plus all the heaps needed for the Archive of Formal Proofs amount to **35GB** of disk space. So create copies with care. Alternatively, you can start by trimming the heaps so only the ones you need are kept.
+
+   Use the following script to create the copies:
+   ```shell
+   python eval_setup/copy_isabelle.py --isabelle $ISABELLE --isabelle-user $ISABELLE_USER --number-of-copies $N --output-path $OUTPUT_PATH
    ```
 
 ## Extract PISA dataset
