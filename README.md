@@ -106,7 +106,7 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    ```shell
    python command_generation/generate_commands_afp.py
    ```
-   and follow the instructions. At the first step it asks you which ports you want to use. We current support 8000, 9000, 10000, 11000, 12000. You can also add your favourites by editing src/scala/server/PisaOneStageServers.scala. This dictates how many processes for extraction you wish to run at the same time.
+   and follow the instructions. At the first step it asks you which ports you want to use. We current support ports 8000-8200, 9000, 10000, 11000, 12000. You can also add your favourites by editing src/scala/server/PisaOneStageServers.scala. This dictates how many processes for extraction you wish to run at the same time.
 
    It should say "A total of X files are due to be generated" with X > 5000.
    And you should see files called afp_extract_script_${port_number}.sh in the directory.
