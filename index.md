@@ -12,7 +12,7 @@ with it.
 
 - [Installation](install)
 - [Extraction](extract)
-- [Untested legacy stuff](legacy)
+- [Documentation of the PISA protocol](protocol)
 
 # To be released
 - REPL-like environment to talk to Isabelle running sessions via gRPC
