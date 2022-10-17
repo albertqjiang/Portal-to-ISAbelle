@@ -15,10 +15,10 @@ object RefactorTest {
   val path_to_file: String = "/private/home/aqj/Isabelle2021/src/HOL/Examples/Drinker.thy"
   val theorem_string = """theory Drinker imports Main begin
   |  theorem 1: 
-  |    fixes f:: "nat \<Rightarrow> nat"
-  |      and g:: "nat \<Rightarrow> nat"
+  |    fixes f:: "int \<Rightarrow> int"
+  |      and g:: "int \<Rightarrow> int"
   |    assumes "\<forall> x. f x = 3 * x - 8"
-  |      and "\<forall> x. g (f x) = 2 * x powr 2 + 5 * x - 3"
+  |      and "\<forall> x. g (f x) = 2 * x ^ 2 + 5 * x - 3"
   |    shows "g (-5) = 4"
   |  proof -
   |    have "f 1 = -5" 

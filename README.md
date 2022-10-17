@@ -63,7 +63,7 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    This takes ~24 hours on 8 CPUs. We can extract ~93% of all afp theory files.
 
    We built the heap images of Isabelle2021 with afp-2021-10-22 for linux machines (ubuntu). You can download it at:
-   https://storage.googleapis.com/n2formal-public-data/isabelle_heaps.tar.gz
+   https://archive.org/download/isabelle_heaps.tar/isabelle_heaps.tar.gz
    and decompress it as ~/.isabelle.
 
    Note: this does not always work on different operating systems.
@@ -122,7 +122,7 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    bash afp_extract_script_${port_number_n}.sh &
    ```
 
-   With a single process, the extraction takes ~5 days. This will extract files to the directory afp_extractions. We have also extracted this dataset, available for download at https://storage.googleapis.com/n2formal-public-data/afp_extractions.tar.gz.
+   With a single process, the extraction takes ~5 days. This will extract files to the directory afp_extractions. We have also extracted this dataset, available for download at https://archive.org/download/afp_extractions.tar/afp_extractions.tar.gz.
 
    To extract state-only source-to-target pairs, run the following command:
    ```shell
