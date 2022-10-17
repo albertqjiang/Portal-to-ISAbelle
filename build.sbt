@@ -20,6 +20,22 @@ libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.3"
+// https://mvnrepository.com/artifact/org.log4s/log4s
+libraryDependencies += "org.log4s" %% "log4s" % "1.10.0"
+// https://mvnrepository.com/artifact/org.slf4j/slf4j-simple
+libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.32"
+// https://mvnrepository.com/artifact/commons-io/commons-io
+libraryDependencies += "commons-io" % "commons-io" % "2.11.0"
+// https://mvnrepository.com/artifact/org.scalaz/scalaz-core
+libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.3.5"
+// https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.12.0"
+// https://mvnrepository.com/artifact/org.apache.commons/commons-text
+libraryDependencies += "org.apache.commons" % "commons-text" % "1.9"
+// https://mvnrepository.com/artifact/com.google.guava/guava
+libraryDependencies += "com.google.guava" % "guava" % "31.0.1-jre"
+libraryDependencies += "org.jetbrains" % "annotations" % "23.0.0"
+libraryDependencies += "com.ibm.icu" % "icu4j" % "70.1"
 
 assemblyMergeStrategy in assembly := {
     case x if x.contains("io.netty.versions.properties") => MergeStrategy.discard

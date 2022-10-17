@@ -1,8 +1,6 @@
 # PISA (Portal to ISAbelle)
 PISA supports automated proof search with the interactive theorem prover [Isabelle](https://isabelle.in.tum.de).
 
-See [this](https://terminalizer.com/view/cb6ea5dd5395) for how to write proofs with a Python script with PISA.
-
 PISA can also be used to extract proof corpus. We extracted the datasets in our AITP 2021 paper [LISA: Language models of ISAbelle proofs](http://aitp-conference.org/2021/abstract/paper_17.pdf) with it.
 
 
@@ -30,6 +28,12 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
     ```shell
     git clone https://github.com/albertqjiang/Portal-to-ISAbelle.git
     cd Portal-to-ISAbelle
+    ```
+    Go into the file build.sbt and change the $PWD on line 19 with the actual path of the current working directory, such that we have the absolute path of the scala-isabelle jar file. For example, the line should look like:
+    libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/home/aqj/Portal-to-ISAbelle/lib/scala-isabelle_2.13.jar".
+
+    Then compile the project:
+    ```shell
     sbt compile
     ```
    
@@ -59,7 +63,7 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    This takes ~24 hours on 8 CPUs. We can extract ~93% of all afp theory files.
 
    We built the heap images of Isabelle2021 with afp-2021-10-22 for linux machines (ubuntu). You can download it at:
-   https://storage.googleapis.com/n2formal-public-data/isabelle_heaps.tar.gz
+   https://archive.org/download/isabelle_heaps.tar/isabelle_heaps.tar.gz
    and decompress it as ~/.isabelle.
 
    Note: this does not always work on different operating systems.
@@ -70,6 +74,30 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    tar -xzf universal_test_theorems.tar.gz
    ```
 
+## Evaluation setup (if you want to have N (N>50) PISA servers running on your machine)
+1. **Create some PISA jars**
+
+   For a single process, sbt is good enough. But for multiple processes, to have native JAVA processes running is a better idea. We first use sbt-assembly to create a fat jar (a jar where all the java code is compiled into and can be run independently).
+   ```shell
+   sbt assembly
+   ```
+
+   The assembly process should take less than 5 minutes. The compiled jar file is in the target/scala-2.13/ directory as PISA-assembly-0.1.jar. You can then copy the PISA jar for N times if you want the jars to be truly independent and separated by calling the following script:
+   ```shell
+   python eval_setup/copy_pisa_jars.py --pisa-jar-path target/scala-2.13/PISA-assembly-0.1.jar --number-of-jars $N --output-path $OUTPUT_PATH
+   ```
+
+2. **Create some Isabelle copies**
+
+   This step is to create multiple copies of the Isabelle software as well as the built heap images to avoid IO errors which can occur when many processes are run at the same time. We use $ISABELLE to denote where your Isabelle software lives and $ISABELLE_USER to denote where your built heap images live, which is usually at $USER/.isabelle
+
+   Note that one copy of the Isabelle software plus all the heaps needed for the Archive of Formal Proofs amount to **35GB** of disk space. So create copies with care. Alternatively, you can start by trimming the heaps so only the ones you need are kept.
+
+   Use the following script to create the copies:
+   ```shell
+   python eval_setup/copy_isabelle.py --isabelle $ISABELLE --isabelle-user $ISABELLE_USER --number-of-copies $N --output-path $OUTPUT_PATH
+   ```
+
 ## Extract PISA dataset
    ### Archive of formal proofs
    Generate commands for extracting proofs.
@@ -78,7 +106,7 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    ```shell
    python command_generation/generate_commands_afp.py
    ```
-   and follow the instructions. At the first step it asks you which ports you want to use. We current support 8000, 9000, 10000, 11000, 12000. You can also add your favourites by editing src/scala/server/PisaOneStageServers.scala. This dictates how many processes for extraction you wish to run at the same time.
+   and follow the instructions. At the first step it asks you which ports you want to use. We current support ports 8000-8200, 9000, 10000, 11000, 12000. You can also add your favourites by editing src/scala/server/PisaOneStageServers.scala. This dictates how many processes for extraction you wish to run at the same time.
 
    It should say "A total of X files are due to be generated" with X > 5000.
    And you should see files called afp_extract_script_${port_number}.sh in the directory.
@@ -94,7 +122,7 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    bash afp_extract_script_${port_number_n}.sh &
    ```
 
-   With a single process, the extraction takes ~5 days. This will extract files to the directory afp_extractions. We have also extracted this dataset, available for download at https://storage.googleapis.com/n2formal-public-data/afp_extractions.tar.gz.
+   With a single process, the extraction takes ~5 days. This will extract files to the directory afp_extractions. We have also extracted this dataset, available for download at https://archive.org/download/afp_extractions.tar/afp_extractions.tar.gz.
 
    To extract state-only source-to-target pairs, run the following command:
    ```shell
@@ -110,17 +138,13 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
    ```shell
    python3 src/main/python/prepare_episodic_transitions.py -efd afp_extractions -sd data/proof_and_state --proof --state
    ```
-   Note that extraction involving proofs will take pretty long and will result in large files. State-only files amount to 8.1G.
-
-# To be released
-   - REPL-like environment to talk to Isabelle running sessions via gRPC
-   - Setup to evaluate automated agents
+   Note that extraction involving proofs will take pretty long and will result in large files. State-only files amount to 8.1G. With proof steps it's even much larger.
 
 # Acknowledgement
 This library is heavily based on [scala-isabelle](https://github.com/dominique-unruh/scala-isabelle), the work of Dominique Unruh. We are very grateful to Dominique for his kind help and guidance.
 
 # Citation
-If you use this directory, or our code, please cite the paper we had in AITP 2021.
+If you use this directory, or our code, please cite the paper we published at AITP 2021.
 ```bibtex
 @article{jiang2021lisa,
   title={LISA: Language models of ISAbelle proofs},
@@ -130,7 +154,7 @@ If you use this directory, or our code, please cite the paper we had in AITP 202
 }
 ```
 
-# Untested legacy stuff
+<!-- # Untested legacy stuff
 **The following content was built on the 2020 version of Isabelle with afp-2021-02-11. They have not been tested with Isabelle2021 and might contain bugs.**
 ## Running proof search
 After the heap images have been built, experiments of proof searching can be run.
@@ -205,7 +229,7 @@ You should check that in the process, heaps are built for each afp project in th
 (The exact path might differ if you have different OS or polyml verions but should be easy to find) -->
 
 
-### Model evaluation
+<!-- ### Model evaluation
 See src/main/python/load_problem_by_file_and_name.py for an example of using an oracle theorem prover 
 to evaluate on some problems. 
 
@@ -230,4 +254,4 @@ model.predict takes in a string of proof state, and return the next proof transi
 The evaluate_problem method executes prediction for a maximum of 100 steps by default.
 
 Problem evaluation currently only allows agents based on proof states only.
-Agents based on previous proof segments and hybrid-input agents will be supported in the near future.
+Agents based on previous proof segments and hybrid-input agents will be supported in the near future. -->
