@@ -1,15 +1,19 @@
 package pisa.agent
 
+
 import de.unruh.isabelle.control.Isabelle
-import pisa.server.PisaOS
 import de.unruh.isabelle.mlvalue.Implicits._
 import de.unruh.isabelle.pure.Implicits._
+import de.unruh.isabelle.pure.ToplevelState
+import pisa.server.PisaOS
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.Breaks
+import java.io._
+import java.util.Base64
+import java.nio.charset.StandardCharsets.UTF_8
 
 object RefactorTest {
-
   val path_to_isa_bin: String = "/private/home/aqj/Isabelle2021"
   val working_directory: String = "/private/home/aqj/Isabelle2021/src/HOL/Examples"
   val path_to_file: String = "/private/home/aqj/Isabelle2021/src/HOL/Examples/Drinker.thy"
@@ -28,6 +32,7 @@ object RefactorTest {
   |    then show ?thesis 
   |      by (simp add: assms(2))
   |  qed""".stripMargin
+
   def main(args: Array[String]): Unit = {
     val pisaos = new PisaOS(
       path_to_isa_bin=path_to_isa_bin,
@@ -48,6 +53,20 @@ object RefactorTest {
         }
       }
     }
-    println(pisaos.total_facts_and_defs_string(pisaos.toplevel))
+    
+    val stream: ByteArrayOutputStream = new ByteArrayOutputStream()
+    val oos = new ObjectOutputStream(stream)
+    oos.writeObject(pisaos.toplevel)
+    oos.close
+    val serialised_state = new String(
+      Base64.getEncoder().encode(stream.toByteArray),
+      UTF_8
+    )
+    val bytes = Base64.getDecoder().decode(serialised_state.getBytes(UTF_8))
+    val ois = new ObjectInputStream(new ByteArrayInputStream(bytes))
+    val deserialised_state = ois.readObject
+    ois.close
+    
+    println(pisaos.getStateString(deserialised_state.asInstanceOf[ToplevelState]))
   }
 }
