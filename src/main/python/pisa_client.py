@@ -83,6 +83,12 @@ class PisaEnv:
         else:
             return False
 
+    def reward(self, done):
+        if done:
+            return 1
+        else:
+            return 0
+
     @func_set_timeout(1800, allowOverride=True)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
@@ -143,9 +149,12 @@ def parsed_json_to_env_and_dict(path_to_json, afp_path, port=9000, isa_path="/Ap
 
 
 if __name__ == '__main__':
-    env = initialise_env(8000, 
-        working_directory="/Applications/Isabelle2021.app/src/HOL/Examples",
-        isa_path="/Applications/Isabelle2021.app", 
-        theory_file_path="/Applications/Isabelle2021.app/src/HOL/Examples/Adhoc_Overloading_Examples.thy"
+    env = initialise_env(
+        8001, 
+        "/home/qj213/Isabelle2021", 
+        "/home/qj213/afp-2021-10-22/thys/Triangle/Triangle.thy", 
+        "/home/qj213/afp-2021-10-22/thys/Triangle"
     )
-    print(env.post("<get_ancestors>"))
+    env.proceed_after("qed")
+    env.post("<initialise>")
+    env.step_to_top_level_state('theorem "1+2=3"', "default", "test1")
