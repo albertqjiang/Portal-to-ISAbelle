@@ -574,11 +574,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     var stateString: String = ""
     val continue = new Breaks
 
-    val new_theory = Await.result(Theory.TheoryConverter.retrieve(thy1.mlValue), Duration(timeout_in_millis, "millis"))
-
     val f_st: Future[Unit] = Future.apply {
       Breaks.breakable {
-        for ((transition, text) <- parse_text(new_theory, isar_string).force.retrieveNow)
+        for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
           continue.breakable {
             if (text.trim.isEmpty) continue.break
             // println("Small step: " + text)
