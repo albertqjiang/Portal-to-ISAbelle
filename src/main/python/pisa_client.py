@@ -76,14 +76,20 @@ class PisaEnv:
             print(e)
         return obs_string
 
+    def is_finished(self, name_of_tls):
+        returned_string = self.post(f"<is finished> {name_of_tls}").strip()
+        if returned_string.startswith("t"):
+            return True
+        else:
+            return False
+
     @func_set_timeout(1800, allowOverride=True)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
         obs_string = "Step error"
         done = False
         try:
-            obs_string = self.stub.IsabelleCommand(
-                server_pb2.IsaCommand(command=f"<apply to top level state> {tls_name} <apply to top level state> {action} <apply to top level state> {new_name}")).state
+            obs_string = self.post(f"<apply to top level state> {tls_name} <apply to top level state> {action} <apply to top level state> {new_name}")
         except Exception as e:
             print("***Something went wrong***")
             print(e)
@@ -94,6 +100,9 @@ class PisaEnv:
 
     def proceed_after(self, line_string):
         return self.post(f"<proceed after> {line_string}", forceTimeout=10000)
+
+    def initialise(self):
+        return self.post("<initialise>", forceTimeout=10)
 
     def clone_to_new_name(self, new_name):
         return self.post(f"<clone> default <clone> {new_name}", forceTimeout=10)
