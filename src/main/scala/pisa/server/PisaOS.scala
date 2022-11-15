@@ -349,24 +349,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
   val Sledgehammer: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer")
   val Sledgehammer_Prover: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover")
-  // val check_with_Sledgehammer: MLFunction[ToplevelState, Boolean] = compileFunction[ToplevelState, Boolean](
-  //   s""" fn state =>
-  //      |    (
-  //      |    let
-  //      |      val ctxt = Toplevel.context_of state;
-  //      |      val thy = Proof_Context.theory_of ctxt
-  //      |      val p_state = Toplevel.proof_of state;
-  //      |      val params = ${Sledgehammer_Commands}.default_params thy
-  //      |                      [("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")]
-  //      |      val override = {add=[],del=[],only=false}
-  //      |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
-  //      |                                  NONE 1 override
-  //      |                                : Proof.state -> bool * (string * string list);
-  //      |    in
-  //      |      run_sledgehammer p_state |> fst
-  //      |    end)
-  //   """.stripMargin)
-
+  
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
   // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
   // the string to get the actual tactic. For example, one of the string may look like "Try this: by blast (0.5 ms)".
@@ -398,14 +381,14 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
        |      val p_state = Toplevel.proof_of state;
        |      val ctxt = Proof.context_of p_state;
        |      val params = ${Sledgehammer_Commands}.default_params thy
-       |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","0"),("minimize","false"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")];
+       |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","0"),("minimize","false"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","false")];
        |      val override = {add=[],del=[],only=false}
        |    in
        |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
        |    end)
     """.stripMargin)
 
-  val miniHammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = 
+  val metis_with_Sledgehammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = 
     compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
       s""" fn (state, thy) =>
          |    (
@@ -413,7 +396,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |      val p_state = Toplevel.proof_of state;
          |      val ctxt = Proof.context_of p_state;
          |      val params = ${Sledgehammer_Commands}.default_params thy
-         |            [("provers", "z3 cvc4 spass vampire e"),("minimize","false"),("isar_proofs", "false"),("learn","false")];
+         |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
          |      val override = {add=[],del=[],only=false}
          |    in
          |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
@@ -625,6 +608,15 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
     Await.result(f_res, Duration(timeout_in_millis, "millis"))
   }
+
+  def metis_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
+    val f_res: Future[(Boolean, List[String])] = Future.apply {
+      val first_result = metis_with_Sledgehammer(top_level_state, thy1).force.retrieveNow
+      (first_result._1, first_result._2._2)
+    }
+    Await.result(f_res, Duration(timeout_in_millis, "millis"))
+  }
+
   println("Checkpoint 13")
   val transitions_and_texts = parse_text(thy1, fileContent).force.retrieveNow
   var frontier_proceeding_index = 0

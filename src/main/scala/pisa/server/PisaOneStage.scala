@@ -88,7 +88,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   val TRY_STRING: String = "Try this:"
   val FOUND_PROOF_STRING: String = "found a proof:"
   val ERROR_MSG: String = "error"
-  val GAP_STEP: String = "sledgehammer"
+  val SMT_HAMMER: String = "sledgehammer"
+  val METIS_HAMMER: String = "metishammer"
   val TIME_STRING1: String = " ms)"
   val TIME_STRING2: String = " s)"
 
@@ -114,48 +115,62 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     ""
   }
 
+  def hammer_actual_step(old_state: ToplevelState, new_name: String, 
+    hammer_method:(ToplevelState, Int) => (Boolean, List[String])): String = {
+    // If found a sledgehammer step, execute it differently
+    var raw_hammer_strings = List[String]()
+    val actual_step: String = try {
+      val total_result = hammer_method(old_state, 120000)
+      val success = total_result._1
+      if (success) {
+        println("Hammer string list: " + total_result._2.mkString(" ||| "))
+        val tentative_step = process_hammer_strings(total_result._2)
+        println("actual_step: " + tentative_step)
+        tentative_step
+      } else {
+        ERROR_MSG
+      }
+    } catch {
+      case _: TimeoutException => {
+        println("Sledgehammer timeout 1")
+        try {
+          val total_result = hammer_method(old_state, 5000)
+          val success = total_result._1
+          if (success) {
+            println("Hammer string list: " + total_result._2.mkString(" ||| "))
+            val tentative_step = process_hammer_strings(total_result._2)
+            println("actual_step: " + tentative_step)
+            tentative_step
+          } else {
+            ERROR_MSG
+          }
+        } catch {
+          case e: TimeoutException => {
+            println("Sledgehammer timeout 2")
+            return s"$ERROR_MSG: ${e.getMessage}"
+          }
+        }
+      }
+      case e: Exception => {
+        println("Exception while trying to run sledgehammer: " + e.getMessage)
+        e.getMessage
+      }
+    }
+    // println(actual_step)
+    assert(actual_step.trim.nonEmpty)
+    actual_step
+  }
+
   def deal_with_apply_to_tls(toplevel_state_name: String, action: String, new_name: String): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       var actual_timeout = 10000
       val old_state: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
       var actual_step: String = "Gibberish"
 
-      if (action == GAP_STEP) {
-        // If found a sledgehammer step, execute it differently
-        var raw_hammer_strings = List[String]()
-        try {
-          val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=120000)
-          val success = total_result._1
-          
-          if (success) {
-            println("Hammer string list: " + total_result._2.mkString(" ||| "))
-            actual_step = process_hammer_strings(total_result._2)
-            println("actual_step: " + actual_step)
-          }
-        } catch {
-          case _: TimeoutException => {
-            println("Sledgehammer timeout 1")
-            try {
-              val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=5000)
-              val success = total_result._1
-              if (success) {
-                println("Hammer string list: " + total_result._2.mkString(" ||| "))
-                actual_step = process_hammer_strings(total_result._2)
-                println("actual_step: " + actual_step)
-              }
-            } catch {
-              case e: TimeoutException => {
-                println("Sledgehammer timeout 2")
-                return s"$ERROR_MSG: ${e.getMessage}"
-              }
-            }
-          }
-          case e: Exception => {
-            println("Exception while trying to run sledgehammer: " + e.getMessage)
-          }
-        }
-        // println(actual_step)
-        assert(actual_step.trim.nonEmpty)
+      if (action == SMT_HAMMER) {
+        actual_step = hammer_actual_step(old_state, new_name, pisaos.exp_with_hammer)
+      } else if (action == METIS_HAMMER) {
+        actual_step = hammer_actual_step(old_state, new_name, pisaos.metis_with_hammer)
       } else {
         actual_step = action
       }
