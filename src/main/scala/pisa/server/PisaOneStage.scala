@@ -181,7 +181,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       // println("New state: " + pisaos.getStateString(new_state))
       
       pisaos.register_tls(name = new_name, tls = new_state)
-      if (action.trim == "sledgehammer") {
+      if (action.trim == "sledgehammer" || action.trim == "metishammer") {
         s"$actual_step <hammer> ${pisaos.getStateString(new_state)}"
       } else s"${pisaos.getStateString(new_state)}"
     }
