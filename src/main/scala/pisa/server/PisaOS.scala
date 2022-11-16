@@ -576,7 +576,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
 
     val timeout_future = Future {
-      Thread.sleep(timeout_in_millis); Future.failed(new TimeoutException("Future timed out!"))
+      Thread.sleep(timeout_in_millis); Future.failed(new Throwable("Future timed out!"))
     }
     val result = Future.firstCompletedOf(Seq(f_st, timeout_future))
     result.onComplete {
@@ -584,7 +584,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
         cancel()
         Thread.sleep(500)
         assert(f_st.isCompleted)
-        throw new TimeoutException(s"Future timed out after [$timeout_in_millis milliseconds]")
+        throw new Throwable(s"Future timed out after [$timeout_in_millis milliseconds]")
       }
       case _ => {}
     }
