@@ -14,6 +14,7 @@ import pisa.agent.FutureInterrupt
 
 import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException, blocking}
 import scala.concurrent.duration.Duration
+import scala.util.Failure
 
 import sys.process._
 
@@ -575,16 +576,19 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
 
     val timeout_future = Future {
-      Thread.sleep(timeout_in_millis); "timeout"
+      Thread.sleep(timeout_in_millis); Future.failed(new TimeoutException("Future timed out!"))
     }
-    val result = Await.result(Future.firstCompletedOf(Seq(f_st, timeout_future)), scala.concurrent.duration.Duration.Inf)
+    val result = Future.firstCompletedOf(Seq(f_st, timeout_future))
+    result.onComplete {
+      case Failure(error) => {
+        cancel()
+        Thread.sleep(500)
+        assert(f_st.isCompleted)
+        throw new TimeoutException(s"Future timed out after [$timeout_in_millis milliseconds]")
+      }
+      case _ => {}
+    }
 
-    if (result == "timeout") {
-      cancel()
-      Thread.sleep(500)
-      assert(f_st.isCompleted)
-      throw new TimeoutException(s"Future timed out after [$timeout_in_millis milliseconds]")
-    }
     // Await.result(f_st, Duration(timeout_in_millis, "millis"))
     // println("Did step successfully")
 
