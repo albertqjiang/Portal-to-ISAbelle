@@ -10,8 +10,9 @@ import de.unruh.isabelle.mlvalue.MLValue.{compileFunction, compileFunction0, com
 import de.unruh.isabelle.pure.{Context, Position, Theory, TheoryHeader, ToplevelState}
 import pisa.utils.TheoryManager
 import pisa.utils.TheoryManager.{Ops, Source, Text}
+import pisa.agent.FutureInterrupt
 
-import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
+import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException, blocking}
 import scala.concurrent.duration.Duration
 
 import sys.process._
@@ -557,8 +558,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     var stateString: String = ""
     val continue = new Breaks
 
-    val f_st: Future[Unit] = Future.apply {
-      Breaks.breakable {
+    val ph = new FutureInterrupt(Future)
+    val (f_st, cancel) = ph.interruptibly {
+      blocking {
+        Breaks.breakable {
         for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
           continue.breakable {
             if (text.trim.isEmpty) continue.break
@@ -566,12 +569,25 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
             tls_to_return = singleTransition(transition, tls_to_return)
             // println("Applied transition successfully")
           }
+        }
+        "success"
       }
     }
-    Await.result(f_st, Duration(timeout_in_millis, "millis"))
+
+    val timeout_future = Future {
+      Thread.sleep(timeout_in_millis); "timeout"
+    }
+    val result = Await.result(Future.firstCompletedOf(Seq(f_st, timeout_future)), scala.concurrent.duration.Duration.Inf)
+
+    if (result == "timeout") {
+      cancel()
+      Thread.sleep(500)
+      assert(f_st.isCompleted)
+      throw new TimeoutException(s"Future timed out after [$timeout_in_millis milliseconds]")
+    }
+    // Await.result(f_st, Duration(timeout_in_millis, "millis"))
     // println("Did step successfully")
 
-    
     tls_to_return
   }
 
