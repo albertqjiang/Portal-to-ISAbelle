@@ -152,9 +152,66 @@ if __name__ == '__main__':
     env = initialise_env(
         8001, 
         "/home/qj213/Isabelle2021", 
-        "/home/qj213/afp-2021-10-22/thys/Triangle/Triangle.thy", 
-        "/home/qj213/afp-2021-10-22/thys/Triangle"
+        "/home/qj213/afp-2021-10-22/thys/LTL_Master_Theorem/Logical_Characterization/Syntactic_Fragments_and_Stability.thy", 
+        "/home/qj213/afp-2021-10-22/thys/LTL_Master_Theorem/Logical_Characterization"
     )
-    env.proceed_after("qed")
+    env.proceed_after("lemma subformulas\\<^sub>\\<nu>_finite: \"finite (subformulas\\<^sub>\\<nu> \\<phi>)\"")
     env.post("<initialise>")
-    env.step_to_top_level_state('theorem "1+2=3"', "default", "test1")
+
+    for step in [
+        'by auto',
+        'using assms by auto',
+        'by blast',
+        'using assms by blast',
+        'by fastforce',
+        'using assms by fastforce',
+        'by force',
+        'using assms by force',
+        'by linarith',
+        'using assms by linarith',
+        'by presburger',
+        'using assms by presburger',
+        'by simp',
+        'using assms by simp',
+        'by arith',
+        'using assms by arith',
+        'by algebra',
+        'using assms by algebra',
+        'using assms by rule simp_all',
+        'using assms by rule simp',
+        'by (simp add: Finite_Set.finite_induct)',
+        'by (auto simp add: Finite_Set.finite_induct)',
+        'by (metis Finite_Set.finite_induct)',
+        'by (smt (z3) Finite_Set.finite_induct)',
+        'by (meson Finite_Set.finite_induct)',
+        'using assms by (simp add: Finite_Set.finite_induct)',
+        'using assms by (auto simp: Finite_Set.finite_induct)',
+        'using assms by (metis Finite_Set.finite_induct)',
+        'using assms by (smt (z3) Finite_Set.finite_induct)',
+        'by transfer (simp add: Finite_Set.finite_induct)',
+        'by (simp add: Finite_Set.finite_induct Finite_Set.finite_subset)',
+        'by (auto simp add: Finite_Set.finite_induct Finite_Set.finite_subset)',
+        'by (metis Finite_Set.finite_induct Finite_Set.finite_subset)',
+        'by (smt (z3) Finite_Set.finite_induct Finite_Set.finite_subset)',
+        'by (meson Finite_Set.finite_induct Finite_Set.finite_subset)',
+        'by transfer (simp add: Finite_Set.finite_induct Finite_Set.finite_subset)',
+        'by (simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct)',
+        'by (auto simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct)',
+        'by (metis Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct)',
+        'by (smt (z3) Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct)',
+        'by (meson Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct)',
+        'by transfer (simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct)',
+        'by (simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases)',
+        'by (auto simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases)',
+        'by (metis Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases)',
+        'by (smt (z3) Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases)',
+        'by (meson Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases)',
+        'by transfer (simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases)',
+        'by (simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)',
+        'by (auto simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)',
+        'by (metis Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)',
+        'by (smt (z3) Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)',
+        'by (meson Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)',
+        'by transfer (simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)'
+    ]:
+        print(env.step_to_top_level_state(step, "default", "test1"))
