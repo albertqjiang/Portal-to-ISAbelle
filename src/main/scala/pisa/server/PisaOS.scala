@@ -578,17 +578,17 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     val timeout_future = Future {
       Thread.sleep(timeout_in_millis); Future.failed(new Throwable("Future timed out!"))
     }
-    val result = Future.firstCompletedOf(Seq(f_st, timeout_future))
-    println(result)
-    result.onComplete {
-      case Failure(error) => {
-        cancel()
-        Thread.sleep(500)
-        assert(f_st.isCompleted)
+
+    for (i <- 1 to (timeout_in_millis/1000)) {
+      if (f_st.isCompleted) {
+        return tls_to_return
       }
-      case _ => {}
+      Thread.sleep(1000)
     }
-    tls_to_return
+    cancel()
+    Thread.sleep(500)
+    assert(f_st.isCompleted)
+    return tls_to_return
   }
 
   def step(isar_string: String): String = {
