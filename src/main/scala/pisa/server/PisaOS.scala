@@ -563,13 +563,13 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     val (f_st, cancel) = ph.interruptibly {
       blocking {
         Breaks.breakable {
-        for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
-          continue.breakable {
-            if (text.trim.isEmpty) continue.break
-            // println("Small step: " + text)
-            tls_to_return = singleTransition(transition, tls_to_return)
-            // println("Applied transition successfully")
-          }
+          for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
+            continue.breakable {
+              if (text.trim.isEmpty) continue.break
+              // println("Small step: " + text)
+              tls_to_return = singleTransition(transition, tls_to_return)
+              // println("Applied transition successfully")
+            }
         }
         "success"
       }
@@ -579,19 +579,15 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       Thread.sleep(timeout_in_millis); Future.failed(new Throwable("Future timed out!"))
     }
     val result = Future.firstCompletedOf(Seq(f_st, timeout_future))
+    println(result)
     result.onComplete {
       case Failure(error) => {
         cancel()
         Thread.sleep(500)
         assert(f_st.isCompleted)
-        throw new Throwable(s"Future timed out after [$timeout_in_millis milliseconds]")
       }
       case _ => {}
     }
-
-    // Await.result(f_st, Duration(timeout_in_millis, "millis"))
-    // println("Did step successfully")
-
     tls_to_return
   }
 
