@@ -561,10 +561,12 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
     val ph = new FutureInterrupt(Future)
     val (f_st, cancel) = ph.interruptibly {
-      blocking {
+        
         Breaks.breakable {
+          println("start parsing")
           for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
             continue.breakable {
+              println(text)
               if (text.trim.isEmpty) continue.break
               // println("Small step: " + text)
               tls_to_return = singleTransition(transition, tls_to_return)
@@ -572,7 +574,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
             }
         }
         "success"
-      }
+      
     }
 
     val timeout_future = Future {
@@ -580,6 +582,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
 
     for (i <- 1 to (timeout_in_millis/1000)) {
+      println(i)
       if (f_st.isCompleted) {
         return tls_to_return
       }
