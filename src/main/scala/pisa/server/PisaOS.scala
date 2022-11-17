@@ -590,9 +590,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
         case Success(_) => {succeed = true}
         case Failure(x) => {succeed = false; message = x.getMessage}
       }
-
+      Thread.sleep(500)
       if (succeed) tls_to_return
-      else {Thread.sleep(500); println("This message is: " + message); throw new IsabelleException(message)}
+      else {println("This message is: " + message); throw new IsabelleException(message)}
 
     } else {
       cancel()
