@@ -554,6 +554,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   def parse_with_hammer: String = parseStateActionWithHammer(fileContent)
 
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 2000): ToplevelState = {
+    println("Begin step")
     // Normal isabelle business
     var tls_to_return: ToplevelState = clone_tls_scala(top_level_state)
     var stateString: String = ""
