@@ -94,7 +94,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val command_exception_with_10s_timeout: MLFunction3[Boolean, Transition.T, ToplevelState, ToplevelState] = compileFunction[Boolean, Transition.T, ToplevelState, ToplevelState](
     """fn (int, tr, st) => let
       |  fun go_run (a, b, c) = Toplevel.command_exception a b c
-      |  in Timeout.apply (Time.fromSeconds 3) go_run (int, tr, st) end""".stripMargin)
+      |  in Timeout.apply (Time.fromSeconds 10) go_run (int, tr, st) end""".stripMargin)
   val command_errors: MLFunction3[Boolean, Transition.T, ToplevelState, (List[RuntimeError.T], Option[ToplevelState])] = compileFunction[Boolean, Transition.T, ToplevelState, (List[RuntimeError.T], Option[ToplevelState])](
     "fn (int, tr, st) => Toplevel.command_errors int tr st")
   val toplevel_end_theory: MLFunction[ToplevelState, Theory] = compileFunction[ToplevelState, Theory]("Toplevel.end_theory Position.none")
