@@ -14,7 +14,7 @@ import pisa.agent.FutureInterrupt
 
 import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException, blocking}
 import scala.concurrent.duration.Duration
-import scala.util.Failure
+import scala.util.{Success, Failure}
 
 import sys.process._
 
@@ -586,7 +586,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     for (i <- 1 to (timeout_in_millis/1000)) {
       println(i)
       if (f_st.isCompleted) {
-        return tls_to_return
+        f_st.onComplete {
+          case Success(_) => return tls_to_return
+          case Failure(x) => throw x
+        }
       }
       Thread.sleep(1000)
     }

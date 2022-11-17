@@ -218,4 +218,4 @@ if __name__ == '__main__':
         'by transfer (simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)'
     ]):
         print(i) 
-        print(env.step_to_top_level_state(step, "default", "test1", forceTimeout=10))
+        print(env.step_to_top_level_state(step, "default", "test1", forceTimeout=15))
