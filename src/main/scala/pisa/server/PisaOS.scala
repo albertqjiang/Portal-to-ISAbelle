@@ -593,6 +593,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     cancel()
     Thread.sleep(500)
     assert(f_st.isCompleted)
+    throw new TimeoutException("Timeout")
     return tls_to_return
   }
 
