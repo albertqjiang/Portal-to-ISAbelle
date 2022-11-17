@@ -91,6 +91,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val proof_of: MLFunction[ToplevelState, ProofState.T] = compileFunction[ToplevelState, ProofState.T]("Toplevel.proof_of")
   val command_exception: MLFunction3[Boolean, Transition.T, ToplevelState, ToplevelState] = compileFunction[Boolean, Transition.T, ToplevelState, ToplevelState](
     "fn (int, tr, st) => Toplevel.command_exception int tr st")
+  val command_exception_with_10s_timeout: MLFunction3[Boolean, Transition.T, ToplevelState, ToplevelState] = compileFunction[Boolean, Transition.T, ToplevelState, ToplevelState](
+    "Timeout.apply_physical (Time.fromSeconds 123) (fn (int, tr, st) => Toplevel.command_exception int tr st)"
+  )
   val command_errors: MLFunction3[Boolean, Transition.T, ToplevelState, (List[RuntimeError.T], Option[ToplevelState])] = compileFunction[Boolean, Transition.T, ToplevelState, (List[RuntimeError.T], Option[ToplevelState])](
     "fn (int, tr, st) => Toplevel.command_errors int tr st")
   val toplevel_end_theory: MLFunction[ToplevelState, Theory] = compileFunction[ToplevelState, Theory]("Toplevel.end_theory Position.none")
@@ -443,6 +446,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   def getProofLevel: Int = getProofLevel(toplevel)
 
+  def singleTransitionWith10sTimeout(single_transition: Transition.T, top_level_state: ToplevelState): ToplevelState = {
+    command_exception_with_10s_timeout(true, single_transition, top_level_state).retrieveNow.force
+  }
+
   def singleTransition(single_transition: Transition.T, top_level_state: ToplevelState): ToplevelState = {
     command_exception(true, single_transition, top_level_state).retrieveNow.force
   }
@@ -573,7 +580,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
               println(text)
               if (text.trim.isEmpty) continue.break
               // println("Small step: " + text)
-              tls_to_return = singleTransition(transition, tls_to_return)
+              tls_to_return = singleTransitionWith10sTimeout(transition, tls_to_return)
               // println("Applied transition successfully")
             }
         }
@@ -582,24 +589,34 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
     println("inter")
 
-    Thread.sleep(10000)
-    if (f_st.isCompleted) {
-      var succeed : Boolean = false
-      var message : String = ""
-      f_st.onComplete {
-        case Success(_) => {succeed = true}
-        case Failure(x) => {succeed = false; message = x.getMessage}
-      }
-      Thread.sleep(500)
-      if (succeed) tls_to_return
-      else {println("This message is: " + message); throw new IsabelleException(message)}
-
-    } else {
-      cancel()
-      Thread.sleep(500)
-      assert(f_st.isCompleted)
-      throw new TimeoutException("Timeout")
+    var succeed : Boolean = false
+    var message : String = ""
+    f_st.onComplete {
+      case Success(_) => {succeed = true}
+      case Failure(x) => {succeed = false; message = x.getMessage}
     }
+    Thread.sleep(500)
+    if (succeed) tls_to_return
+    else {println("This message is: " + message); throw new IsabelleException(message)}
+
+    // Thread.sleep(10000)
+    // if (f_st.isCompleted) {
+    //   var succeed : Boolean = false
+    //   var message : String = ""
+    //   f_st.onComplete {
+    //     case Success(_) => {succeed = true}
+    //     case Failure(x) => {succeed = false; message = x.getMessage}
+    //   }
+    //   Thread.sleep(500)
+    //   if (succeed) tls_to_return
+    //   else {println("This message is: " + message); throw new IsabelleException(message)}
+
+    // } else {
+    //   cancel()
+    //   Thread.sleep(500)
+    //   assert(f_st.isCompleted)
+    //   throw new TimeoutException("Timeout")
+    // }
   }
 
   def step(isar_string: String): String = {
