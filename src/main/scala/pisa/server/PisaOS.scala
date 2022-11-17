@@ -21,6 +21,7 @@ import sys.process._
 // Implicits
 import de.unruh.isabelle.mlvalue.Implicits._
 import de.unruh.isabelle.pure.Implicits._
+import de.unruh.isabelle.control.IsabelleException
 
 object Transition extends AdHocConverter("Toplevel.transition")
 
@@ -579,25 +580,20 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
     println("inter")
 
-    val timeout_future = Future {
-      Thread.sleep(timeout_in_millis); Future.failed(new Throwable("Future timed out!"))
-    }
-
-    for (i <- 1 to (timeout_in_millis/1000)) {
-      println(i)
-      if (f_st.isCompleted) {
-        f_st.onComplete {
-          case Success(_) => return tls_to_return
-          case Failure(x) => throw x
-        }
+    Thread.sleep(10000)
+    if (f_st.isCompleted) {
+      f_st.onComplete {
+        case Success(_) => return tls_to_return
+        case Failure(x) => throw new IsabelleException(x.getMessage)
       }
-      Thread.sleep(1000)
+    } else {
+      cancel()
+      Thread.sleep(500)
+      assert(f_st.isCompleted)
+      throw new TimeoutException("Timeout")
     }
-    cancel()
-    Thread.sleep(500)
-    assert(f_st.isCompleted)
-    throw new TimeoutException("Timeout")
-    return tls_to_return
+    println("It should never reach here")
+    tls_to_return
   }
 
   def step(isar_string: String): String = {
