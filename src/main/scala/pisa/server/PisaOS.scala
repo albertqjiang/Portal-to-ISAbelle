@@ -558,10 +558,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     var tls_to_return: ToplevelState = clone_tls_scala(top_level_state)
     var stateString: String = ""
     val continue = new Breaks
-
+    println("Starting to step")
     val ph = new FutureInterrupt(Future)
     val (f_st, cancel) = ph.interruptibly {
-        
+      blocking {
         Breaks.breakable {
           println("start parsing")
           for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
@@ -573,9 +573,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
               // println("Applied transition successfully")
             }
         }
-        "success"
-      
+      }
+      "success"
     }
+    println("inter")
 
     val timeout_future = Future {
       Thread.sleep(timeout_in_millis); Future.failed(new Throwable("Future timed out!"))
