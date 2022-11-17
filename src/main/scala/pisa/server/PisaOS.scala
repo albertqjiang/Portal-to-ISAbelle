@@ -578,7 +578,6 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
           println("start parsing")
           for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
             continue.breakable {
-              println(text)
               if (text.trim.isEmpty) continue.break
               // println("Small step: " + text)
               tls_to_return = singleTransitionWith10sTimeout(transition, tls_to_return)
@@ -592,10 +591,14 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
     var succeed : Boolean = false
     var message : String = ""
-    f_st.onComplete {
-      case Success(_) => {succeed = true}
-      case Failure(x) => {succeed = false; message = x.getMessage}
-    }
+
+    // Await for infinite amount of time
+    Await.result(f_st, Duration.Inf)
+    println(f_st)
+    // f_st.onComplete {
+    //   case Success(_) => {succeed = true}
+    //   case Failure(x) => {succeed = false; message = x.getMessage}
+    // }
     Thread.sleep(500)
     if (succeed) tls_to_return
     else {println("This message is: " + message); throw new IsabelleException(message)}
