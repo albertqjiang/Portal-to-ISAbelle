@@ -554,7 +554,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   def parse_with_hammer: String = parseStateActionWithHammer(fileContent)
 
-  def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 2000) = {
+  @throws(classOf[IsabelleException])
+  @throws(classOf[TimeoutException])
+  def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 2000): ToplevelState = {
     println("Begin step")
     // Normal isabelle business
     var tls_to_return: ToplevelState = clone_tls_scala(top_level_state)
@@ -582,10 +584,16 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
     Thread.sleep(10000)
     if (f_st.isCompleted) {
+      var succeed : Boolean = false
+      var exception : Throwable = null
       f_st.onComplete {
-        case Success(_) => tls_to_return
-        case Failure(x) => throw new IsabelleException(x.getMessage)
+        case Success(_) => {succeed = true}
+        case Failure(x) => {succeed = false; exception = x}
       }
+
+      if (succeed) tls_to_return
+      else {throw exception}
+
     } else {
       cancel()
       Thread.sleep(500)
