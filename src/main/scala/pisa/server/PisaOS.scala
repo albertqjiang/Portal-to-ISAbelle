@@ -588,7 +588,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       var exception : Throwable = null
       f_st.onComplete {
         case Success(_) => {succeed = true}
-        case Failure(x) => {succeed = false; exception = x}
+        case Failure(x) => {succeed = false; exception = x; println(x)}
       }
 
       if (succeed) tls_to_return
