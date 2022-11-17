@@ -93,14 +93,17 @@ class PisaEnv:
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
         obs_string = "Step error"
-        done = False
         try:
             obs_string = self.post(f"<apply to top level state> {tls_name} <apply to top level state> {action} <apply to top level state> {new_name}")
+            print(obs_string)
         except Exception as e:
             print("***Something went wrong***")
             print(e)
 
-        done = self.is_finished(new_name)
+        if "error" in obs_string:
+            done = False
+        else:
+            done = self.is_finished(new_name)
         # done = True if ("subgoal" in last_obs_string and "subgoal" not in obs_string) else False
         return obs_string, self.reward(done), done, {}
 
@@ -158,7 +161,7 @@ if __name__ == '__main__':
     env.proceed_after("lemma subformulas\\<^sub>\\<nu>_finite: \"finite (subformulas\\<^sub>\\<nu> \\<phi>)\"")
     env.post("<initialise>")
 
-    for step in [
+    for i, step in enumerate([
         'by auto',
         'using assms by auto',
         'by blast',
@@ -213,8 +216,6 @@ if __name__ == '__main__':
         'by (smt (z3) Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)',
         'by (meson Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)',
         'by transfer (simp add: Finite_Set.finite_induct Finite_Set.finite_subset Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.induct LTL.subfrmlsn_finite LTL.subfrmlsn.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.cases Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>_semantics Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_finite Finite_Set.finite.induct Syntactic_Fragments_and_Stability.subformulas\<^sub>\<nu>.elims Finite_Set.finite.inducts Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>_semantics LTL.subfrmlsr_finite Syntactic_Fragments_and_Stability.subformulas\<^sub>\<mu>.elims)'
-    ]: 
-        try:
-            print(env.step_to_top_level_state(step, "default", "test1", forceTimeout=10))
-        except:
-            print("Timeout")
+    ]):
+        print(i) 
+        print(env.step_to_top_level_state(step, "default", "test1", forceTimeout=10))
