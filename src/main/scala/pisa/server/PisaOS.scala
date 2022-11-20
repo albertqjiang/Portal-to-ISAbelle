@@ -681,7 +681,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       val first_result = normal_with_Sledgehammer(top_level_state, thy1).force.retrieveNow
       (first_result._1, first_result._2._2)
     }
-    Await.result(f_res, Duration(timeout_in_millis, "millis"))
+    val returned = Await.result(f_res, Duration(timeout_in_millis, "millis"))
+    Thread.sleep(1000)
+    returned
   }
 
   println("Checkpoint 13")
