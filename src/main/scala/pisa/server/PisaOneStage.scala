@@ -92,6 +92,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   val ERROR_MSG: String = "error"
   val SMT_HAMMER: String = "sledgehammer"
   val METIS_HAMMER: String = "metishammer"
+  val NORMAL_HAMMER: String = "normalhammer"
   val TIME_STRING1: String = " ms)"
   val TIME_STRING2: String = " s)"
 
@@ -122,7 +123,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     // If found a sledgehammer step, execute it differently
     var raw_hammer_strings = List[String]()
     val actual_step: String = try {
-      val total_result = hammer_method(old_state, 120000)
+      val total_result = hammer_method(old_state, 40000)
       val success = total_result._1
       if (success) {
         println("Hammer string list: " + total_result._2.mkString(" ||| "))
@@ -173,6 +174,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         actual_step = hammer_actual_step(old_state, new_name, pisaos.exp_with_hammer)
       } else if (action == METIS_HAMMER) {
         actual_step = hammer_actual_step(old_state, new_name, pisaos.metis_with_hammer)
+      } else if (action == NORMAL_HAMMER) {
+        actual_step = hammer_actual_step(old_state, new_name, pisaos.normal_with_hammer)
       } else {
         actual_step = action
       }
