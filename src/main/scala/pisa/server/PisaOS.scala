@@ -421,7 +421,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
          |      val override = {add=[],del=[],only=false}
          |    in
-         |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
+         |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state
          |    end)""".stripMargin
     )
 
