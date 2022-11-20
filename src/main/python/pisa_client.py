@@ -161,5 +161,7 @@ if __name__ == '__main__':
     env.proceed_to_line('lemma primes_infinite: "\<not> (finite {(p::nat). prime p})"', "before")
     env.initialise()
     env.step_to_top_level_state('lemma primes_infinite: "\<not> (finite {(p::nat). prime p})"', "default", "test")
-    print(env.step_to_top_level_state('proof assume "finite {(p::nat). prime p}" then obtain p where p_def: "p = {(p::nat). prime p}" by simp let ?N = "(\<Prod>p \<in> p. p) + 1" have "prime ?N \<Longrightarrow> \<not> (finite {(p::nat). prime p})"', 'test', 'test'))
+    print(env.step_to_top_level_state('proof assume "finite {(p::nat). prime p}" then obtain p where p_def: "p = {(p::nat). prime p}"', 'test', 'test'))
+    print(env.step_to_top_level_state('normalhammer', 'test', 'test'))
+    print(env.step_to_top_level_state('let ?N = "(\<Prod>p \<in> p. p) + 1" have "prime ?N \<Longrightarrow> \<not> (finite {(p::nat). prime p})"', 'test', 'test'))
     print(env.step_to_top_level_state('normalhammer', 'test', 'test1'))
