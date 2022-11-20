@@ -421,7 +421,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
          |      val override = {add=[],del=[],only=false}
          |    in
-         |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state
+         |      Timeout.apply (Time.fromSeconds 35) (${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state)
          |    end)""".stripMargin
     )
 
@@ -681,9 +681,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       val first_result = normal_with_Sledgehammer(top_level_state, thy1).force.retrieveNow
       (first_result._1, first_result._2._2)
     }
-    val returned = Await.result(f_res, Duration(timeout_in_millis, "millis"))
-    Thread.sleep(1000)
-    returned
+    Await.result(f_res, Duration(timeout_in_millis, "millis"))
   }
 
   println("Checkpoint 13")
