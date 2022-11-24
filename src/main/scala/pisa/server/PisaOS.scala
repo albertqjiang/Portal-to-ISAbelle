@@ -439,10 +439,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |    | n =>
          |      let
          |        val _ = Proof.assert_backward state
-         |        val print = if mode = ${Sledgehammer}.Normal andalso is_none writeln_result then writeln else K ()
+         |        val print = if mode = ${Sledgehammer_Prover}.Normal andalso is_none writeln_result then writeln else K ()
          |
          |        val found_proof =
-         |          if mode = ${Sledgehammer}.Normal then
+         |          if mode = ${Sledgehammer_Prover}.Normal then
          |            let val proof_found = Synchronized.var "proof_found" false in
          |              fn () =>
          |                if Synchronized.change_result proof_found (rpair true) then ()
