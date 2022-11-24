@@ -441,16 +441,16 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |  let
          |    val ctxt = Proof.context_of state
          |
-         |    val hard_timeout = time_mult 5.0 timeout
-         |    val _ = spying spy (fn () => (state, subgoal, name, "Launched"));
-         |    val max_facts = max_facts |> the_default (default_max_facts_of_prover ctxt name)
+         |    val hard_timeout = ${Sledgehammer_Util}.time_mult 5.0 timeout
+         |    val _ = ${Sledgehammer_Util}.spying spy (fn () => (state, subgoal, name, "Launched"));
+         |    val max_facts = max_facts |> the_default (${Sledgehammer_Prover_Minimize}.default_max_facts_of_prover ctxt name)
          |    val num_facts = length facts |> not only ? Integer.min max_facts
          |
          |    val problem =
          |      {comment = comment, state = state, goal = goal, subgoal = subgoal,
          |       subgoal_count = subgoal_count,
          |       factss = factss
-         |       |> map (apsnd ((not (is_ho_atp ctxt name)
+         |       |> map (apsnd ((not (${Sledgehammer_Prover_ATP}.is_ho_atp ctxt name)
          |           ? filter_out (fn ((_, (_, Induction)), _) => true | _ => false))
          |         #> take num_facts)),
          |       found_proof = found_proof}
@@ -458,21 +458,21 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |    fun print_used_facts used_facts used_from =
          |      tag_list 1 used_from
          |      |> map (fn (j, fact) => fact |> apsnd (K j))
-         |      |> filter_used_facts false used_facts
+         |      |> ${Sledgehammer_Prover}.filter_used_facts false used_facts
          |      |> map (fn ((name, _), j) => name ^ "@" ^ string_of_int j)
          |      |> commas
-         |      |> prefix ("Fact" ^ plural_s (length facts) ^ " in " ^ quote name ^
+         |      |> prefix ("Fact" ^ ${Sledgehammer_Util}.plural_s (length facts) ^ " in " ^ quote name ^
          |        " proof (of " ^ string_of_int (length facts) ^ "): ")
          |      |> writeln
          |
-         |    fun spying_str_of_res ({outcome = NONE, used_facts, used_from, ...} : prover_result) =
+         |    fun spying_str_of_res ({outcome = NONE, used_facts, used_from, ...} : ${Sledgehammer}.prover_result) =
          |        let
          |          val num_used_facts = length used_facts
          |
          |          fun find_indices facts =
          |            tag_list 1 facts
          |            |> map (fn (j, fact) => fact |> apsnd (K j))
-         |            |> filter_used_facts false used_facts
+         |            |> ${Sledgehammer_Prover}.filter_used_facts false used_facts
          |            |> distinct (eq_fst (op =))
          |            |> map (prefix "@" o string_of_int o snd)
          |
@@ -491,7 +491,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |            |> map (fn (indices, fact_filters) => commas fact_filters ^ ": " ^ indices)
          |        in
          |          "Success: Found proof with " ^ string_of_int num_used_facts ^ " of " ^
-         |          string_of_int num_facts ^ " fact" ^ plural_s num_facts ^
+         |          string_of_int num_facts ^ " fact" ^ ${Sledgehammer_Util}.plural_s num_facts ^
          |          (if num_used_facts = 0 then "" else ": " ^ commas filter_infos)
          |        end
          |      | spying_str_of_res {outcome = SOME failure, ...} =
@@ -503,7 +503,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |      |> verbose ? tap (fn {outcome = NONE, used_facts as _ :: _, used_from, ...} =>
          |          print_used_facts used_facts used_from
          |        | _ => ())
-         |      |> spy ? tap (fn res => spying spy (fn () => (state, subgoal, name, spying_str_of_res res)))
+         |      |> spy ? tap (fn res => ${Sledgehammer_Util}.spying spy (fn () => (state, subgoal, name, spying_str_of_res res)))
          |      |> (fn {outcome, used_facts, preferred_methss, message, ...} =>
          |        (if outcome = SOME ATP_Proof.TimedOut then timeoutN
          |         else if is_some outcome then noneN
