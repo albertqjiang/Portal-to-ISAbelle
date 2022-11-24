@@ -352,9 +352,12 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   // setting up Sledgehammer
   // val thy_for_sledgehammer: Theory = Theory("HOL.List")
   val thy_for_sledgehammer = thy1
-  val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
   val Sledgehammer: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer")
+  val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
+  val Sledgehammer_Fact: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Fact")
   val Sledgehammer_Prover: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover")
+  val Sledgehammer_Prover_ATP: String = thy_for_sledgehammer.importMLStructureNow(" Sledgehammer_Prover_ATP")
+  val ATP_Util: String = thy_for_sledgehammer.importMLStructureNow("ATP_Util")
   
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
   // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
@@ -454,11 +457,11 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |        val ctxt = Proof.context_of state
          |        val keywords = Thy_Header.get_keywords' ctxt
          |        val {facts = chained, goal, ...} = Proof.goal state
-         |        val (_, hyp_ts, concl_t) = ${Sledgehammer}.strip_subgoal goal i ctxt
-         |        val ho_atp = exists (${Sledgehammer}.is_ho_atp ctxt) provers
-         |        val css = ${Sledgehammer}.clasimpset_rule_table_of ctxt
+         |        val (_, hyp_ts, concl_t) = ${ATP_Util}.strip_subgoal goal i ctxt
+         |        val ho_atp = exists (${Sledgehammer_Prover_ATP}.is_ho_atp ctxt) provers
+         |        val css = ${Sledgehammer_Fact}.clasimpset_rule_table_of ctxt
          |        val all_facts =
-         |          ${Sledgehammer}.nearly_all_facts ctxt ho_atp fact_override keywords css chained hyp_ts concl_t
+         |          ${Sledgehammer_Fact}.nearly_all_facts ctxt ho_atp fact_override keywords css chained hyp_ts concl_t
          |        val _ =
          |          (case find_first (not o is_prover_supported ctxt) provers of
          |            SOME name => error ("No such prover: " ^ name)
