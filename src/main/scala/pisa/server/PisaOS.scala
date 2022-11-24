@@ -436,7 +436,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |        error "No prover is set"
          |      else
          |        (case subgoal_count state of
-         |          0 => (error "No subgoal!"; (false, (SH_None, "")))
+         |          0 => (error "No subgoal!"; (false, (${Sledgehammer}.SH_None, "")))
          |    | n =>
          |          let
          |            val _ = Proof.assert_backward state
