@@ -435,14 +435,14 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |    error "No prover is set"
          |  else
          |    (case subgoal_count state of
-         |      0 => (error "No subgoal!"; (false, (noneN, [])))
+         |      0 => (error "No subgoal!"; (false, (${Sledgehammer}.noneN, [])))
          |    | n =>
          |      let
          |        val _ = Proof.assert_backward state
-         |        val print = if mode = Normal andalso is_none writeln_result then writeln else K ()
+         |        val print = if mode = ${Sledgehammer}.Normal andalso is_none writeln_result then writeln else K ()
          |
          |        val found_proof =
-         |          if mode = Normal then
+         |          if mode = ${Sledgehammer}.Normal then
          |            let val proof_found = Synchronized.var "proof_found" false in
          |              fn () =>
          |                if Synchronized.change_result proof_found (rpair true) then ()
@@ -454,11 +454,11 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |        val ctxt = Proof.context_of state
          |        val keywords = Thy_Header.get_keywords' ctxt
          |        val {facts = chained, goal, ...} = Proof.goal state
-         |        val (_, hyp_ts, concl_t) = strip_subgoal goal i ctxt
-         |        val ho_atp = exists (is_ho_atp ctxt) provers
-         |        val css = clasimpset_rule_table_of ctxt
+         |        val (_, hyp_ts, concl_t) = ${Sledgehammer}.strip_subgoal goal i ctxt
+         |        val ho_atp = exists (${Sledgehammer}.is_ho_atp ctxt) provers
+         |        val css = ${Sledgehammer}.clasimpset_rule_table_of ctxt
          |        val all_facts =
-         |          nearly_all_facts ctxt ho_atp fact_override keywords css chained hyp_ts concl_t
+         |          ${Sledgehammer}.nearly_all_facts ctxt ho_atp fact_override keywords css chained hyp_ts concl_t
          |        val _ =
          |          (case find_first (not o is_prover_supported ctxt) provers of
          |            SOME name => error ("No such prover: " ^ name)
