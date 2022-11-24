@@ -638,7 +638,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |              (learn chained;
          |               provers
          |               |> Par_List.map (launch problem #> fst)
-         |               |> ${Sledgehammer}.max_outcome_code |> rpair [])
+         |               |> max_outcome_code |> rpair [])
          |          end
          |      in
          |        launch_provers ()
