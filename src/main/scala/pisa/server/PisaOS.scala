@@ -501,10 +501,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |              {comment = "", state = state, goal = goal, subgoal = i, subgoal_count = n,
          |               factss = factss, found_proof = found_proof}
          |            val learn = ${Sledgehammer_MaSh}.mash_learn_proof ctxt params (Thm.prop_of goal)
-         |            val launch = launch_prover params mode writeln_result only learn
+         |            val launch = ${Sledgehammer}.launch_prover params mode writeln_result only learn
          |          in
          |            if mode = ${Sledgehammer_Prover}.Auto_Try then
-         |              (unknownN, [])
+         |              (${Sledgehammer}.unknownN, [])
          |              |> fold (fn prover => fn accum as (outcome_code, _) =>
          |                  if outcome_code = someN then accum else launch problem prover)
          |                provers
