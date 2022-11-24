@@ -545,9 +545,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |     SH_None => (the_default writeln writeln_result
          |                    (if message = "" then "No proof found" else "Warning: " ^ message);
          |                  false)))
-         |          end)
-         |    
-         |    end;
+         |          end);
          |
          |    fun go_run (state, thy) = 
          |        let
