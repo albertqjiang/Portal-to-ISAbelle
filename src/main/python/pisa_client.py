@@ -111,7 +111,7 @@ class PisaEnv:
         return self.post(f"<proceed after> {line_string}", forceTimeout=10000)
 
     def initialise(self):
-        return self.post("<initialise>", forceTimeout=20)
+        return self.post("<initialise>", forceTimeout=10)
 
     def clone_to_new_name(self, new_name):
         return self.post(f"<clone> default <clone> {new_name}", forceTimeout=10)

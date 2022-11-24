@@ -352,11 +352,17 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   // setting up Sledgehammer
   // val thy_for_sledgehammer: Theory = Theory("HOL.List")
   val thy_for_sledgehammer = thy1
+  println("Checkpoint 10.1")
   val Sledgehammer: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer")
+  println("Checkpoint 10.2")
   val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
+  println("Checkpoint 10.3")
   val Sledgehammer_Fact: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Fact")
+  println("Checkpoint 10.5")
   val Sledgehammer_Prover: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover")
+  println("Checkpoint 10.6")
   val Sledgehammer_Prover_ATP: String = thy_for_sledgehammer.importMLStructureNow(" Sledgehammer_Prover_ATP")
+  println("Checkpoint 10.7")
   val ATP_Util: String = thy_for_sledgehammer.importMLStructureNow("ATP_Util")
   
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
