@@ -93,6 +93,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   val SMT_HAMMER: String = "sledgehammer"
   val METIS_HAMMER: String = "metishammer"
   val NORMAL_HAMMER: String = "normalhammer"
+  val DEL_HAMMER: String = "delhammer"
   val TIME_STRING1: String = " ms)"
   val TIME_STRING2: String = " s)"
 
@@ -165,7 +166,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     actual_step
   }
 
-  def deal_with_apply_to_tls(toplevel_state_name: String, action: String, new_name: String): String = {
+  def deal_with_apply_to_tls(
+      toplevel_state_name: String, 
+      action: String, 
+      new_name: String
+    ): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       var actual_timeout = 10000
       val old_state: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
@@ -175,6 +180,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         actual_step = hammer_actual_step(old_state, new_name, pisaos.exp_with_hammer)
       } else if (action == METIS_HAMMER) {
         actual_step = hammer_actual_step(old_state, new_name, pisaos.metis_with_hammer)
+      } else if (action.startsWith(DEL_HAMMER)) {
+        val del_names = action.split(DEL_HAMMER).drop(1).mkString("").trim.split(",").toList
+        val partial_hammer = (state: ToplevelState, timeout: Int) => pisaos.del_with_hammer(state, del_names, timeout)
+        actual_step = hammer_actual_step(old_state, new_name, partial_hammer)
       } else if (action == NORMAL_HAMMER) {
         actual_step = hammer_actual_step(old_state, new_name, pisaos.normal_with_hammer)
       } else {

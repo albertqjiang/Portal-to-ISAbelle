@@ -409,6 +409,23 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |    end)""".stripMargin
     )
 
+  val del_with_Sledgehammer: MLFunction3[ToplevelState, Theory, List[String], (Boolean, (String, List[String]))] = 
+    compileFunction[ToplevelState, Theory, List[String], (Boolean, (String, List[String]))](
+      s""" fn (state, thy, dels) =>
+         |  (
+         |    let
+         |       val p_state = Toplevel.proof_of state;
+         |       val ctxt = Proof.context_of p_state;
+         |       val params = ${Sledgehammer_Commands}.default_params thy
+         |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
+         |       fun get_refs_and_token_lists (name) = (Facts.named name, []);
+         |       val refs_and_token_lists = map get_refs_and_token_lists dels;
+         |       val override = {add=[],del=refs_and_token_lists,only=false}
+         |    in
+         |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
+         |    end)""".stripMargin
+    )
+
   val normal_with_Sledgehammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = 
     compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
       s""" fn (state, thy) => let
@@ -671,6 +688,14 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   def metis_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
     val f_res: Future[(Boolean, List[String])] = Future.apply {
       val first_result = metis_with_Sledgehammer(top_level_state, thy1).force.retrieveNow
+      (first_result._1, first_result._2._2)
+    }
+    Await.result(f_res, Duration(timeout_in_millis, "millis"))
+  }
+
+  def del_with_hammer(top_level_state: ToplevelState, deleted_names: List[String], timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
+    val f_res: Future[(Boolean, List[String])] = Future.apply {
+      val first_result = del_with_Sledgehammer(top_level_state, thy1, deleted_names).force.retrieveNow
       (first_result._1, first_result._2._2)
     }
     Await.result(f_res, Duration(timeout_in_millis, "millis"))
