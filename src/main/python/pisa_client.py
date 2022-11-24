@@ -155,8 +155,8 @@ if __name__ == '__main__':
     env = initialise_env(
         8001, 
         "/home/qj213/Isabelle2021", 
-        "/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy", 
-        "/home/qj213/afp-2021-10-22/thys/FunWithFunctions"
+        "/home/qj213/afp-2021-10-22/thys/Real_Impl/Real_Impl_Auxiliary.thy", 
+        "/home/qj213/afp-2021-10-22/thys/Real_Impl"
     )
     env.proceed_to_line('end', 'before')
     env.initialise()
