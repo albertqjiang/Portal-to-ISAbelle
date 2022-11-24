@@ -515,9 +515,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |               |> max_outcome_code |> rpair [])
          |          end
          |      in
-         |        ${Sledgehammer}.launch_provers ()
+         |        launch_provers ()
          |        handle Timeout.TIMEOUT _ =>
-         |          (print "Sledgehammer ran out of time"; (unknownN, []))
+         |          (print "Sledgehammer ran out of time"; (${Sledgehammer}.unknownN, []))
          |      end
          |      |> `(fn (outcome_code, _) => outcome_code = someN))
          |
