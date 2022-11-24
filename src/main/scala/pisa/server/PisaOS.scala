@@ -361,6 +361,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val Sledgehammer_Prover_Minimize: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover_Minimize")
   val Sledgehammer_Util: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Util")
   val ATP_Util: String = thy_for_sledgehammer.importMLStructureNow("ATP_Util")
+  val ATP_Proof: String = thy_for_sledgehammer.importMLStructureNow("ATP_Proof")
   
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
   // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
@@ -465,7 +466,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |        " proof (of " ^ string_of_int (length facts) ^ "): ")
          |      |> writeln
          |
-         |    fun spying_str_of_res ({outcome = NONE, used_facts, used_from, ...} : ${Sledgehammer}.prover_result) =
+         |    fun spying_str_of_res ({outcome = NONE, used_facts, used_from, ...} : ${Sledgehammer_Prover}.prover_result) =
          |        let
          |          val num_used_facts = length used_facts
          |
@@ -495,20 +496,20 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |          (if num_used_facts = 0 then "" else ": " ^ commas filter_infos)
          |        end
          |      | spying_str_of_res {outcome = SOME failure, ...} =
-         |        "Failure: " ^ string_of_atp_failure failure
+         |        "Failure: " ^ ${ATP_Proof}.string_of_atp_failure failure
          |
          |    fun really_go () =
          |      problem
-         |      |> get_minimizing_prover ctxt mode learn name params
+         |      |> ${Sledgehammer_Prover_Minimize}.get_minimizing_prover ctxt mode learn name params
          |      |> verbose ? tap (fn {outcome = NONE, used_facts as _ :: _, used_from, ...} =>
          |          print_used_facts used_facts used_from
          |        | _ => ())
          |      |> spy ? tap (fn res => ${Sledgehammer_Util}.spying spy (fn () => (state, subgoal, name, spying_str_of_res res)))
          |      |> (fn {outcome, used_facts, preferred_methss, message, ...} =>
-         |        (if outcome = SOME ATP_Proof.TimedOut then timeoutN
-         |         else if is_some outcome then noneN
-         |         else someN,
-         |         fn () => message (fn () => play_one_line_proof minimize preplay_timeout used_facts state
+         |        (if outcome = SOME ${ATP_Proof}.TimedOut then ${Sledgehammer}.timeoutN
+         |         else if is_some outcome then ${Sledgehammer}.noneN
+         |         else ${Sledgehammer}.someN,
+         |         fn () => message (fn () => ${Sledgehammer}.play_one_line_proof minimize preplay_timeout used_facts state
          |           subgoal preferred_methss)))
          |
          |    fun go () =
@@ -519,31 +520,31 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |          else
          |            (really_go ()
          |             handle
-         |               ERROR msg => (unknownN, fn () => "Error: " ^ msg ^ "\\n")
+         |               ERROR msg => (${Sledgehammer}.unknownN, fn () => "Error: " ^ msg ^ "\\n")
          |             | exn =>
          |               if Exn.is_interrupt exn then Exn.reraise exn
-         |               else (unknownN, fn () => "Internal error:\\n" ^ Runtime.exn_message exn ^ "\\n"))
+         |               else (${Sledgehammer}.unknownN, fn () => "Internal error:\\n" ^ Runtime.exn_message exn ^ "\\n"))
          |
          |        val _ =
          |          (* The "expect" argument is deliberately ignored if the prover is
          |             missing so that the "Metis_Examples" can be processed on any
          |             machine. *)
          |          if expect = "" orelse outcome_code = expect orelse
-         |             not (is_prover_installed ctxt name) then
+         |             not (${Sledgehammer_Prover_Minimize}.is_prover_installed ctxt name) then
          |            ()
          |          else
          |            error ("Unexpected outcome: " ^ quote outcome_code)
          |      in (outcome_code, message) end
          |  in
-         |    if mode = Auto_Try then
+         |    if mode = ${Sledgehammer}.Auto_Try then
          |      let val (outcome_code, message) = Timeout.apply timeout go () in
-         |        (outcome_code, if outcome_code = someN then [message ()] else [])
+         |        (outcome_code, if outcome_code = ${Sledgehammer}.someN then [message ()] else [])
          |      end
          |    else
          |      let
          |        val (outcome_code, message) = Timeout.apply hard_timeout go ()
          |        val outcome =
-         |          if outcome_code = someN orelse mode = Normal then quote name ^ ": " ^ message () else ""
+         |          if outcome_code = ${Sledgehammer}.someN orelse mode = ${Sledgehammer}.Normal then quote name ^ ": " ^ message () else ""
          |        val _ =
          |          if outcome <> "" andalso is_some writeln_result then the writeln_result outcome
          |          else writeln outcome
@@ -616,25 +617,25 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |              {comment = "", state = state, goal = goal, subgoal = i, subgoal_count = n,
          |               factss = factss, found_proof = found_proof}
          |            val learn = ${Sledgehammer_MaSh}.mash_learn_proof ctxt params (Thm.prop_of goal)
-         |            val launch = ${Sledgehammer}.launch_prover params mode writeln_result only learn
+         |            val launch = launch_prover params mode writeln_result only learn
          |          in
          |            if mode = ${Sledgehammer_Prover}.Auto_Try then
          |              (${Sledgehammer}.unknownN, [])
          |              |> fold (fn prover => fn accum as (outcome_code, _) =>
-         |                  if outcome_code = someN then accum else launch problem prover)
+         |                  if outcome_code = ${Sledgehammer}.someN then accum else launch problem prover)
          |                provers
          |            else
          |              (learn chained;
          |               provers
          |               |> Par_List.map (launch problem #> fst)
-         |               |> max_outcome_code |> rpair [])
+         |               |> ${Sledgehammer}.max_outcome_code |> rpair [])
          |          end
          |      in
          |        launch_provers ()
          |        handle Timeout.TIMEOUT _ =>
          |          (print "Sledgehammer ran out of time"; (${Sledgehammer}.unknownN, []))
          |      end
-         |      |> `(fn (outcome_code, _) => outcome_code = someN))
+         |      |> `(fn (outcome_code, _) => outcome_code = ${Sledgehammer}.someN))
          |
          |    fun go_run (state, thy) = 
          |        let
