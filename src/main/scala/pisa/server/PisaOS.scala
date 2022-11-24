@@ -429,6 +429,11 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val normal_with_Sledgehammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = 
     compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
       s""" fn (state, thy) => let
+         |  datatype sledgehammer_outcome =
+         |      SH_Some of ${Sledgehammer}.prover_result * ${Sledgehammer}.preplay_result list
+         |      | SH_Unknown
+         |      | SH_Timeout
+         |      | SH_None
          |    fun run_sledgehammer (params as {verbose, spy, provers, induction_rules, max_facts, max_proofs,
          |          slices, ...})
          |        mode writeln_result i (fact_override as {only, ...}) state =
@@ -436,7 +441,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |        error "No prover is set"
          |      else
          |        (case subgoal_count state of
-         |          0 => (error "No subgoal!"; (false, (${Sledgehammer}.SH_None, "")))
+         |          0 => (error "No subgoal!"; (false, (SH_None, "")))
          |    | n =>
          |          let
          |            val _ = Proof.assert_backward state
