@@ -437,7 +437,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |      else
          |        (case subgoal_count state of
          |          0 => (error "No subgoal!"; (false, (SH_None, "")))
-         |     n =>
+         |    | n =>
          |          let
          |            val _ = Proof.assert_backward state
          |            val print = if mode = Normal andalso is_none writeln_result then writeln else K ()
@@ -458,7 +458,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |            val _ =
          |              (case find_first (not o is_prover_supported ctxt) provers of
          |                SOME name => error ("No such prover: " ^ name)
-         |     NONE => ())
+         |    |  NONE => ())
          |            val _ = print "Sledgehammering..."
          |            val _ = spying spy (fn () => (state, i, "***", "Starting " ^ str_of_mode mode ^ " mode"))
          |            val ({elapsed, ...}, all_facts) = Timing.timing
@@ -475,7 +475,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |                val max_max_facts =
          |                  (case max_facts of
          |                    SOME n => n
-         |     NONE =>
+         |    | NONE =>
          |                    fold (fn prover =>
          |                        fold (fn ((_, n, _), _) => Integer.max n) (get_slices ctxt prover))
          |                      provers 0)
@@ -520,9 +520,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |              in
          |                if mode = Auto_Try then
          |                  (SH_Unknown, "")
-         |    > fold (fn (prover, slice) =>
+         |    |> fold (fn (prover, slice) =>
          |                      fn accum as (SH_Some _, _) => accum
-         |     _ => launch problem slice prover)
+         |     | _ => launch problem slice prover)
          |                    prover_slices
          |                else
          |                  (learn chained_thms;
@@ -532,17 +532,17 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |                       else
          |                         (SH_None, ""))
          |                     prover_slices
-         |    > max_outcome)
+         |    |> max_outcome)
          |              end
          |          in
          |            (launch_provers ()
          |             handle Timeout.TIMEOUT _ => (SH_Timeout, ""))
-         |    > `(fn (outcome, message) =>
+         |    |> `(fn (outcome, message) =>
          |              (case outcome of
          |                SH_Some _ => (the_default writeln writeln_result "QED"; true)
-         |     SH_Unknown => (the_default writeln writeln_result message; false)
-         |     SH_Timeout => (the_default writeln writeln_result "No proof found"; false)
-         |     SH_None => (the_default writeln writeln_result
+         |    | SH_Unknown => (the_default writeln writeln_result message; false)
+         |    | SH_Timeout => (the_default writeln writeln_result "No proof found"; false)
+         |    | SH_None => (the_default writeln writeln_result
          |                    (if message = "" then "No proof found" else "Warning: " ^ message);
          |                  false)))
          |          end);
