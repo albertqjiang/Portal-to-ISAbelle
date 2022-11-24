@@ -175,17 +175,22 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       var actual_timeout = 10000
       val old_state: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
       var actual_step: String = "Gibberish"
+      var hammered : Boolean = false
 
       if (action == SMT_HAMMER) {
         actual_step = hammer_actual_step(old_state, new_name, pisaos.exp_with_hammer)
+        hammered = true
       } else if (action == METIS_HAMMER) {
         actual_step = hammer_actual_step(old_state, new_name, pisaos.metis_with_hammer)
+        hammered = true
       } else if (action.startsWith(DEL_HAMMER)) {
         val del_names = action.split(DEL_HAMMER).drop(1).mkString("").trim.split(",").toList
         val partial_hammer = (state: ToplevelState, timeout: Int) => pisaos.del_with_hammer(state, del_names, timeout)
         actual_step = hammer_actual_step(old_state, new_name, partial_hammer)
+        hammered = true
       } else if (action == NORMAL_HAMMER) {
         actual_step = hammer_actual_step(old_state, new_name, pisaos.normal_with_hammer)
+        hammered = true
       } else {
         actual_step = action
       }
@@ -196,7 +201,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       // println("New state: " + pisaos.getStateString(new_state))
       
       pisaos.register_tls(name = new_name, tls = new_state)
-      if (action.trim == "sledgehammer" || action.trim == "metishammer") {
+      if (hammered) {
         s"$actual_step <hammer> ${pisaos.getStateString(new_state)}"
       } else s"${pisaos.getStateString(new_state)}"
     }
