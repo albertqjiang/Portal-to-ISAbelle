@@ -158,7 +158,7 @@ if __name__ == '__main__':
         "/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy", 
         "/home/qj213/afp-2021-10-22/thys/FunWithFunctions"
     )
-    env.proceed_to_line('qed', 'after')
+    env.proceed_to_line('end', 'after')
     env.initialise()
     env.step_to_top_level_state('lemma primes_infinite: "\<not> (finite {(p::nat). prime p})"', "default", "test")
     print(env.step_to_top_level_state('sledgehammer', 'test', 'test1'))
