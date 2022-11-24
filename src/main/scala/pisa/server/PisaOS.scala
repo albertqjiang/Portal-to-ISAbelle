@@ -355,6 +355,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val Sledgehammer: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer")
   val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
   val Sledgehammer_Fact: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Fact")
+  val Sledgehammer_MaSh: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_MaSh")
   val Sledgehammer_Prover: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover")
   val Sledgehammer_Prover_ATP: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover_ATP")
   val Sledgehammer_Prover_Minimize: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover_Minimize")
@@ -481,15 +482,15 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |                SOME n => n
          |              | NONE =>
          |                0 |> fold (Integer.max o ${Sledgehammer_Prover_Minimize}.default_max_facts_of_prover ctxt) provers
-         |                  |> mode = ${Sledgehammer_Prover}.Auto_Try ? (fn n => n div ${Sledgehammer}.auto_try_max_facts_divisor))
+         |                  |> mode = ${Sledgehammer_Prover}.Auto_Try ? (fn n => n div 2))
          |            val _ = ${Sledgehammer_Util}.spying spy (fn () => (state, i, "All",
          |              "Filtering " ^ string_of_int (length all_facts) ^ " facts (MaSh algorithm: " ^
-         |              str_of_mash_algorithm (the_mash_algorithm ()) ^ ")"));
+         |              ${Sledgehammer_MaSh}.str_of_mash_algorithm (${Sledgehammer_MaSh}.the_mash_algorithm ()) ^ ")"));
          |          in
          |            all_facts
-         |            |> relevant_facts ctxt params (hd provers) max_max_facts fact_override hyp_ts concl_t
-         |            |> tap (fn factss => if verbose then print (string_of_factss factss) else ())
-         |            |> spy ? tap (fn factss => spying spy (fn () =>
+         |            |> ${Sledgehammer_MaSh}.relevant_facts ctxt params (hd provers) max_max_facts fact_override hyp_ts concl_t
+         |            |> tap (fn factss => if verbose then print (${Sledgehammer}.string_of_factss factss) else ())
+         |            |> spy ? tap (fn factss => ${Sledgehammer_Util}.spying spy (fn () =>
          |              (state, i, "All", "Selected facts: " ^ spying_str_of_factss factss)))
          |          end
          |
@@ -499,7 +500,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |            val problem =
          |              {comment = "", state = state, goal = goal, subgoal = i, subgoal_count = n,
          |               factss = factss, found_proof = found_proof}
-         |            val learn = mash_learn_proof ctxt params (Thm.prop_of goal)
+         |            val learn = ${Sledgehammer_MaSh}.mash_learn_proof ctxt params (Thm.prop_of goal)
          |            val launch = launch_prover params mode writeln_result only learn
          |          in
          |            if mode = ${Sledgehammer_Prover}.Auto_Try then
@@ -514,7 +515,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |               |> max_outcome_code |> rpair [])
          |          end
          |      in
-         |        launch_provers ()
+         |        ${Sledgehammer}.launch_provers ()
          |        handle Timeout.TIMEOUT _ =>
          |          (print "Sledgehammer ran out of time"; (unknownN, []))
          |      end
