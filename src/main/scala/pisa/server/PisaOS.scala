@@ -429,128 +429,91 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val normal_with_Sledgehammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = 
     compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
       s""" fn (state, thy) => let
-         |  datatype sledgehammer_outcome =
-         |      SH_Some of ${Sledgehammer_Prover}.prover_result * ${Sledgehammer_Prover}.preplay_result list
-         |      | SH_Unknown
-         |      | SH_Timeout
-         |      | SH_None
-         |    fun run_sledgehammer (params as {verbose, spy, provers, induction_rules, max_facts, max_proofs,
-         |          slices, ...})
-         |        mode writeln_result i (fact_override as {only, ...}) state =
-         |      if null provers then
-         |        error "No prover is set"
-         |      else
-         |        (case subgoal_count state of
-         |          0 => (error "No subgoal!"; (false, (SH_None, "")))
+         |  fun run_sledgehammer (params as {verbose, spy, provers, max_facts, ...}) mode writeln_result i
+         |    (fact_override as {only, ...}) state =
+         |  if null provers then
+         |    error "No prover is set"
+         |  else
+         |    (case subgoal_count state of
+         |      0 => (error "No subgoal!"; (false, (noneN, [])))
          |    | n =>
+         |      let
+         |        val _ = Proof.assert_backward state
+         |        val print = if mode = Normal andalso is_none writeln_result then writeln else K ()
+         |
+         |        val found_proof =
+         |          if mode = Normal then
+         |            let val proof_found = Synchronized.var "proof_found" false in
+         |              fn () =>
+         |                if Synchronized.change_result proof_found (rpair true) then ()
+         |                else (writeln_result |> the_default writeln) "Proof found..."
+         |            end
+         |          else
+         |            I
+         |
+         |        val ctxt = Proof.context_of state
+         |        val keywords = Thy_Header.get_keywords' ctxt
+         |        val {facts = chained, goal, ...} = Proof.goal state
+         |        val (_, hyp_ts, concl_t) = strip_subgoal goal i ctxt
+         |        val ho_atp = exists (is_ho_atp ctxt) provers
+         |        val css = clasimpset_rule_table_of ctxt
+         |        val all_facts =
+         |          nearly_all_facts ctxt ho_atp fact_override keywords css chained hyp_ts concl_t
+         |        val _ =
+         |          (case find_first (not o is_prover_supported ctxt) provers of
+         |            SOME name => error ("No such prover: " ^ name)
+         |          | NONE => ())
+         |        val _ = print "Sledgehammering..."
+         |        val _ = spying spy (fn () => (state, i, "***", "Starting " ^ str_of_mode mode ^ " mode"))
+         |
+         |        val spying_str_of_factss =
+         |          commas o map (fn (filter, facts) => filter ^ ": " ^ string_of_int (length facts))
+         |
+         |        fun get_factss provers =
          |          let
-         |            val _ = Proof.assert_backward state
-         |            val print = if mode = Normal andalso is_none writeln_result then writeln else K ()
-         |    
-         |            val found_proofs = Synchronized.var "found_proofs" 0
-         |    
-         |            fun found_proof prover_name =
-         |              if mode = Normal then
-         |                (Synchronized.change found_proofs (fn n => n + 1);
-         |                 (the_default writeln writeln_result) (prover_name ^ " found a proof..."))
-         |              else
-         |                ()
-         |    
-         |            val ctxt = Proof.context_of state
-         |            val inst_inducts = induction_rules = SOME Instantiate
-         |            val {facts = chained_thms, goal, ...} = Proof.goal state
-         |            val (_, hyp_ts, concl_t) = strip_subgoal goal i ctxt
-         |            val _ =
-         |              (case find_first (not o is_prover_supported ctxt) provers of
-         |                SOME name => error ("No such prover: " ^ name)
-         |    |  NONE => ())
-         |            val _ = print "Sledgehammering..."
-         |            val _ = spying spy (fn () => (state, i, "***", "Starting " ^ str_of_mode mode ^ " mode"))
-         |            val ({elapsed, ...}, all_facts) = Timing.timing
-         |              (nearly_all_facts_of_context ctxt inst_inducts fact_override chained_thms hyp_ts) concl_t
+         |            val max_max_facts =
+         |              (case max_facts of
+         |                SOME n => n
+         |              | NONE =>
+         |                0 |> fold (Integer.max o default_max_facts_of_prover ctxt) provers
+         |                  |> mode = Auto_Try ? (fn n => n div auto_try_max_facts_divisor))
          |            val _ = spying spy (fn () => (state, i, "All",
-         |              "Extracting " ^ string_of_int (length all_facts) ^ " facts from background theory in " ^
-         |              string_of_int (Time.toMilliseconds elapsed) ^ " ms"))
-         |    
-         |            val spying_str_of_factss =
-         |              commas o map (fn (filter, facts) => filter ^ ": " ^ string_of_int (length facts))
-         |    
-         |            fun get_factss provers =
-         |              let
-         |                val max_max_facts =
-         |                  (case max_facts of
-         |                    SOME n => n
-         |    | NONE =>
-         |                    fold (fn prover =>
-         |                        fold (fn ((_, n, _), _) => Integer.max n) (get_slices ctxt prover))
-         |                      provers 0)
-         |                  * 51 div 50  (* some slack to account for filtering of induction facts below *)
-         |    
-         |                val ({elapsed, ...}, factss) = Timing.timing
-         |                  (relevant_facts ctxt params (hd provers) max_max_facts fact_override hyp_ts concl_t)
-         |                  all_facts
-         |    
-         |                val induction_rules = the_default (if only then Include else Exclude) induction_rules
-         |                val factss = map (apsnd (maybe_filter_out_induction_rules induction_rules)) factss
-         |    
-         |                val () = spying spy (fn () => (state, i, "All",
-         |                  "Filtering facts in " ^ string_of_int (Time.toMilliseconds elapsed) ^
-         |                  " ms (MaSh algorithm: " ^ str_of_mash_algorithm (the_mash_algorithm ()) ^ ")"));
-         |                val () = if verbose then print (string_of_factss factss) else ()
-         |                val () = spying spy (fn () =>
-         |                  (state, i, "All", "Selected facts: " ^ spying_str_of_factss factss))
-         |              in
-         |                factss
-         |              end
-         |    
-         |            fun launch_provers () =
-         |              let
-         |                val factss = get_factss provers
-         |                val problem =
-         |                  {comment = "", state = state, goal = goal, subgoal = i, subgoal_count = n,
-         |                   factss = factss, found_proof = found_proof}
-         |                val learn = mash_learn_proof ctxt params (Thm.prop_of goal)
-         |                val launch = launch_prover_and_preplay params mode writeln_result learn
-         |    
-         |                val schedule =
-         |                  if mode = Auto_Try then provers
-         |                  else schedule_of_provers provers slices
-         |                val prover_slices = prover_slices_of_schedule ctxt factss params schedule
-         |    
-         |                val _ =
-         |                  if verbose then
-         |                    writeln ("Running " ^ commas (map fst prover_slices) ^ "...")
-         |                  else
-         |                    ()
-         |              in
-         |                if mode = Auto_Try then
-         |                  (SH_Unknown, "")
-         |    |> fold (fn (prover, slice) =>
-         |                      fn accum as (SH_Some _, _) => accum
-         |     | _ => launch problem slice prover)
-         |                    prover_slices
-         |                else
-         |                  (learn chained_thms;
-         |                   Par_List.map (fn (prover, slice) =>
-         |                       if Synchronized.value found_proofs < max_proofs then
-         |                         launch problem slice prover
-         |                       else
-         |                         (SH_None, ""))
-         |                     prover_slices
-         |    |> max_outcome)
-         |              end
+         |              "Filtering " ^ string_of_int (length all_facts) ^ " facts (MaSh algorithm: " ^
+         |              str_of_mash_algorithm (the_mash_algorithm ()) ^ ")"));
          |          in
-         |            (launch_provers ()
-         |             handle Timeout.TIMEOUT _ => (SH_Timeout, ""))
-         |    |> `(fn (outcome, message) =>
-         |              (case outcome of
-         |                SH_Some _ => (the_default writeln writeln_result "QED"; true)
-         |    | SH_Unknown => (the_default writeln writeln_result message; false)
-         |    | SH_Timeout => (the_default writeln writeln_result "No proof found"; false)
-         |    | SH_None => (the_default writeln writeln_result
-         |                    (if message = "" then "No proof found" else "Warning: " ^ message);
-         |                  false)))
-         |          end);
+         |            all_facts
+         |            |> relevant_facts ctxt params (hd provers) max_max_facts fact_override hyp_ts concl_t
+         |            |> tap (fn factss => if verbose then print (string_of_factss factss) else ())
+         |            |> spy ? tap (fn factss => spying spy (fn () =>
+         |              (state, i, "All", "Selected facts: " ^ spying_str_of_factss factss)))
+         |          end
+         |
+         |        fun launch_provers () =
+         |          let
+         |            val factss = get_factss provers
+         |            val problem =
+         |              {comment = "", state = state, goal = goal, subgoal = i, subgoal_count = n,
+         |               factss = factss, found_proof = found_proof}
+         |            val learn = mash_learn_proof ctxt params (Thm.prop_of goal)
+         |            val launch = launch_prover params mode writeln_result only learn
+         |          in
+         |            if mode = Auto_Try then
+         |              (unknownN, [])
+         |              |> fold (fn prover => fn accum as (outcome_code, _) =>
+         |                  if outcome_code = someN then accum else launch problem prover)
+         |                provers
+         |            else
+         |              (learn chained;
+         |               provers
+         |               |> Par_List.map (launch problem #> fst)
+         |               |> max_outcome_code |> rpair [])
+         |          end
+         |      in
+         |        launch_provers ()
+         |        handle Timeout.TIMEOUT _ =>
+         |          (print "Sledgehammer ran out of time"; (unknownN, []))
+         |      end
+         |      |> `(fn (outcome_code, _) => outcome_code = someN))
          |
          |    fun go_run (state, thy) = 
          |        let
