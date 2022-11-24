@@ -436,6 +436,16 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val normal_with_Sledgehammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = 
     compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
       s""" fn (state, thy) => let
+         | val ordered_outcome_codes = [${Sledgehammer}.someN, ${Sledgehammer}.unknownN, ${Sledgehammer}.timeoutN, ${Sledgehammer}.noneN];
+         |
+         | fun max_outcome_code codes =
+         |   NONE
+         |   |> fold (fn candidate =>
+         |       fn accum as SOME _ => accum
+         |        | NONE => if member (op =) codes candidate then SOME candidate else NONE)
+         |     ordered_outcome_codes
+         |   |> the_default ${Sledgehammer}.unknownN;
+         |
          | fun launch_prover (params as {debug, verbose, spy, max_facts, minimize, timeout, preplay_timeout,
          |      expect, ...}) mode writeln_result only learn
          |    {comment, state, goal, subgoal, subgoal_count, factss as (_, facts) :: _, found_proof} name =
@@ -536,7 +546,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |            error ("Unexpected outcome: " ^ quote outcome_code)
          |      in (outcome_code, message) end
          |  in
-         |    if mode = ${Sledgehammer}.Auto_Try then
+         |    if mode = ${Sledgehammer_Prover}.Auto_Try then
          |      let val (outcome_code, message) = Timeout.apply timeout go () in
          |        (outcome_code, if outcome_code = ${Sledgehammer}.someN then [message ()] else [])
          |      end
@@ -544,7 +554,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |      let
          |        val (outcome_code, message) = Timeout.apply hard_timeout go ()
          |        val outcome =
-         |          if outcome_code = ${Sledgehammer}.someN orelse mode = ${Sledgehammer}.Normal then quote name ^ ": " ^ message () else ""
+         |          if outcome_code = ${Sledgehammer}.someN orelse mode = ${Sledgehammer_Prover}.Normal then quote name ^ ": " ^ message () else ""
          |        val _ =
          |          if outcome <> "" andalso is_some writeln_result then the writeln_result outcome
          |          else writeln outcome
