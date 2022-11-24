@@ -163,3 +163,4 @@ if __name__ == '__main__':
     env.step_to_top_level_state('lemma primes_infinite: "\<not> (finite {(p::nat). prime p})"', "default", "test")
     print(env.step_to_top_level_state('sledgehammer', 'test', 'test1'))
     print(env.step_to_top_level_state('delhammer primes_infinite', 'test', 'test2'))
+    print(env.step_to_top_level_state('delhammer primes_infinite,bigger_prime', 'test', 'test3'))
