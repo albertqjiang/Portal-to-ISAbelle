@@ -357,6 +357,8 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val Sledgehammer_Fact: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Fact")
   val Sledgehammer_Prover: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover")
   val Sledgehammer_Prover_ATP: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover_ATP")
+  val Sledgehammer_Prover_Minimize: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover_Minimize")
+  val Sledgehammer_Util: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Util")
   val ATP_Util: String = thy_for_sledgehammer.importMLStructureNow("ATP_Util")
   
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
@@ -463,11 +465,11 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |        val all_facts =
          |          ${Sledgehammer_Fact}.nearly_all_facts ctxt ho_atp fact_override keywords css chained hyp_ts concl_t
          |        val _ =
-         |          (case find_first (not o is_prover_supported ctxt) provers of
+         |          (case find_first (not o ${Sledgehammer_Prover_Minimize}.is_prover_supported ctxt) provers of
          |            SOME name => error ("No such prover: " ^ name)
          |          | NONE => ())
          |        val _ = print "Sledgehammering..."
-         |        val _ = spying spy (fn () => (state, i, "***", "Starting " ^ str_of_mode mode ^ " mode"))
+         |        val _ = ${Sledgehammer_Util}.spying spy (fn () => (state, i, "***", "Starting " ^ ${Sledgehammer_Prover}.str_of_mode mode ^ " mode"))
          |
          |        val spying_str_of_factss =
          |          commas o map (fn (filter, facts) => filter ^ ": " ^ string_of_int (length facts))
@@ -478,9 +480,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |              (case max_facts of
          |                SOME n => n
          |              | NONE =>
-         |                0 |> fold (Integer.max o default_max_facts_of_prover ctxt) provers
-         |                  |> mode = Auto_Try ? (fn n => n div auto_try_max_facts_divisor))
-         |            val _ = spying spy (fn () => (state, i, "All",
+         |                0 |> fold (Integer.max o ${Sledgehammer_Prover_Minimize}.default_max_facts_of_prover ctxt) provers
+         |                  |> mode = ${Sledgehammer_Prover}.Auto_Try ? (fn n => n div ${Sledgehammer}.auto_try_max_facts_divisor))
+         |            val _ = ${Sledgehammer_Util}.spying spy (fn () => (state, i, "All",
          |              "Filtering " ^ string_of_int (length all_facts) ^ " facts (MaSh algorithm: " ^
          |              str_of_mash_algorithm (the_mash_algorithm ()) ^ ")"));
          |          in
@@ -500,7 +502,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |            val learn = mash_learn_proof ctxt params (Thm.prop_of goal)
          |            val launch = launch_prover params mode writeln_result only learn
          |          in
-         |            if mode = Auto_Try then
+         |            if mode = ${Sledgehammer_Prover}.Auto_Try then
          |              (unknownN, [])
          |              |> fold (fn prover => fn accum as (outcome_code, _) =>
          |                  if outcome_code = someN then accum else launch problem prover)
