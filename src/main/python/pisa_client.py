@@ -155,15 +155,10 @@ if __name__ == '__main__':
     env = initialise_env(
         8001, 
         "/home/qj213/Isabelle2021", 
-        "/home/qj213/Isabelle2021/src/HOL/Computational_Algebra/Primes.thy", 
-        "/home/qj213/Isabelle2021/src/HOL/Computational_Algebra"
+        "/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy", 
+        "/home/qj213/afp-2021-10-22/thys/FunWithFunctions"
     )
-    env.proceed_to_line('lemma primes_infinite: "\<not> (finite {(p::nat). prime p})"', "before")
+    env.proceed_to_line('qed', 'after')
     env.initialise()
     env.step_to_top_level_state('lemma primes_infinite: "\<not> (finite {(p::nat). prime p})"', "default", "test")
-    print(env.step_to_top_level_state('proof assume "finite {(p::nat). prime p}" then obtain p where p_def: "p = {(p::nat). prime p}"', 'test', 'test'))
-    print("First hammer result:")
-    print(env.step_to_top_level_state('normalhammer', 'test', 'test1'))
-    print(env.step_to_top_level_state('let ?N = "(\<Prod>p \<in> p. p) + 1" have "prime ?N \<Longrightarrow> \<not> (finite {(p::nat). prime p})"', 'test1', 'test'))
-    print("Second hammer result:")
-    print(env.step_to_top_level_state('normalhammer', 'test', 'test1'))
+    print(env.step_to_top_level_state('sledgehammer', 'test', 'test1'))

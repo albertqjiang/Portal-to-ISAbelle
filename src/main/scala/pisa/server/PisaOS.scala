@@ -10,7 +10,6 @@ import de.unruh.isabelle.mlvalue.MLValue.{compileFunction, compileFunction0, com
 import de.unruh.isabelle.pure.{Context, Position, Theory, TheoryHeader, ToplevelState}
 import pisa.utils.TheoryManager
 import pisa.utils.TheoryManager.{Ops, Source, Text}
-import pisa.agent.FutureInterrupt
 
 import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException, blocking}
 import scala.concurrent.duration.Duration
@@ -588,8 +587,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     var stateString: String = ""
     val continue = new Breaks
     println("Starting to step")
-    val ph = new FutureInterrupt(Future)
-    val (f_st, cancel) = ph.interruptibly {
+    val f_st = Future.apply {
       blocking {
         Breaks.breakable {
           println("start parsing")
