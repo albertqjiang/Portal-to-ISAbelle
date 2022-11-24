@@ -566,7 +566,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |  if null provers then
          |    error "No prover is set"
          |  else
-         |    (case subgoal_count state of
+         |    (case ${Sledgehammer_Util}.subgoal_count state of
          |      0 => (error "No subgoal!"; (false, (${Sledgehammer}.noneN, [])))
          |    | n =>
          |      let
