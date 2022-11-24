@@ -519,10 +519,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |          else
          |            (really_go ()
          |             handle
-         |               ERROR msg => (unknownN, fn () => "Error: " ^ msg ^ "\n")
+         |               ERROR msg => (unknownN, fn () => "Error: " ^ msg ^ "\\n")
          |             | exn =>
          |               if Exn.is_interrupt exn then Exn.reraise exn
-         |               else (unknownN, fn () => "Internal error:\n" ^ Runtime.exn_message exn ^ "\n"))
+         |               else (unknownN, fn () => "Internal error:\\n" ^ Runtime.exn_message exn ^ "\\n"))
          |
          |        val _ =
          |          (* The "expect" argument is deliberately ignored if the prover is
