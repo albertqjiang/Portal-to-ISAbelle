@@ -430,7 +430,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
       s""" fn (state, thy) => let
          |  datatype sledgehammer_outcome =
-         |      SH_Some of ${Sledgehammer}.prover_result * ${Sledgehammer}.preplay_result list
+         |      SH_Some of ${Sledgehammer_Prover}.prover_result * ${Sledgehammer_Prover}.preplay_result list
          |      | SH_Unknown
          |      | SH_Timeout
          |      | SH_None
