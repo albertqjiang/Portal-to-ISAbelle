@@ -629,7 +629,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |            val learn = ${Sledgehammer_MaSh}.mash_learn_proof ctxt params (Thm.prop_of goal)
          |            val launch = launch_prover params mode writeln_result only learn
          |          in
-         |            if ((mode = ${Sledgehammer_Prover}.Auto_Try) orelse (mode = ${Sledgehammer_Prover}.Normal)) then
+         |            if mode = ${Sledgehammer_Prover}.Auto_Try then
          |              (${Sledgehammer}.unknownN, [])
          |              |> fold (fn prover => fn accum as (outcome_code, _) =>
          |                  if outcome_code = ${Sledgehammer}.someN then accum else launch problem prover)
