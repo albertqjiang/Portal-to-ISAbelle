@@ -188,8 +188,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val partial_hammer = (state: ToplevelState, timeout: Int) => pisaos.del_with_hammer(state, del_names, timeout)
         actual_step = hammer_actual_step(old_state, new_name, partial_hammer)
         hammered = true
-      } else if (action == NORMAL_HAMMER) {
-        actual_step = hammer_actual_step(old_state, new_name, pisaos.normal_with_hammer)
+      } else if (action.startsWith(NORMAL_HAMMER)) {
+        val del_names = action.split(NORMAL_HAMMER).drop(1).mkString("").trim.split(",").toList
+        val partial_hammer = (state: ToplevelState, timeout: Int) => pisaos.normal_with_hammer(state, del_names, timeout)
+        actual_step = hammer_actual_step(old_state, new_name, partial_hammer)
         hammered = true
       } else {
         actual_step = action
