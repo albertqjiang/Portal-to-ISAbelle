@@ -546,7 +546,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |            error ("Unexpected outcome: " ^ quote outcome_code)
          |      in (outcome_code, message) end
          |  in
-         |    if (mode = ${Sledgehammer_Prover}.Auto_Try) orelse (mode = ${Sledgehammer_Prover}.Normal) then
+         |    if mode = ${Sledgehammer_Prover}.Auto_Try then
          |      let val (outcome_code, message) = Timeout.apply timeout go () in
          |        (outcome_code, if outcome_code = ${Sledgehammer}.someN then [message ()] else [])
          |      end
@@ -558,7 +558,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |        val _ =
          |          if outcome <> "" andalso is_some writeln_result then the writeln_result outcome
          |          else writeln outcome
-         |      in (outcome_code, []) end
+         |      in (outcome_code, if outcome_code = ${Sledgehammer}.someN then [message ()] else []) end
          |  end;
          |
          |  fun run_sledgehammer (params as {verbose, spy, provers, max_facts, ...}) mode writeln_result i
