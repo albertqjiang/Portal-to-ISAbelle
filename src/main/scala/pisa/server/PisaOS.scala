@@ -439,7 +439,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          | fun get_refs_and_token_lists (name) = (Facts.named name, []);
          | val adds_refs_and_token_lists = map get_refs_and_token_lists adds;
          | val dels_refs_and_token_lists = map get_refs_and_token_lists dels;
-         | val override = {add=adds_refs_and_token_lists,del=refs_and_token_lists,only=false};
+         | val override = {add=adds_refs_and_token_lists,del=dels_refs_and_token_lists,only=false};
          |
          | val ordered_outcome_codes = [${Sledgehammer}.someN, ${Sledgehammer}.unknownN, ${Sledgehammer}.timeoutN, ${Sledgehammer}.noneN];
          |
