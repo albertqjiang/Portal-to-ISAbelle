@@ -12,5 +12,6 @@ if __name__ == '__main__':
     env.initialise()
     env.step_to_top_level_state('lemma primes_infinite: "\<not> (finite {(p::nat). prime p})"', "default", "test")
     print(env.step_to_top_level_state('normalhammer', 'test', 'test1'))
-    print(env.step_to_top_level_state('normalhammer primes_infinite', 'test', 'test2'))
-    print(env.step_to_top_level_state('normalhammer primes_infinite,bigger_prime', 'test', 'test3'))
+    print(env.step_to_top_level_state('normalhammer <del>primes_infinite<del>', 'test', 'test2'))
+    print(env.step_to_top_level_state('normalhammer <del>primes_infinite,bigger_prime<del>', 'test', 'test3'))
+    print(env.step_to_top_level_state('normalhammer <add>next_prime_bound<add> <del>primes_infinite,bigger_prime<del>', 'test', 'test4'))

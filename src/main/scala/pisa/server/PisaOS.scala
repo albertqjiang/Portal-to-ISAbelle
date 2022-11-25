@@ -5,7 +5,7 @@ import scala.collection.mutable.ListBuffer
 import _root_.java.nio.file.{Files, Path}
 import _root_.java.io.File
 import de.unruh.isabelle.control.Isabelle
-import de.unruh.isabelle.mlvalue.{AdHocConverter, MLFunction, MLFunction0, MLFunction2, MLFunction3, MLValue, MLValueWrapper}
+import de.unruh.isabelle.mlvalue.{AdHocConverter, MLFunction, MLFunction0, MLFunction2, MLFunction3, MLFunction4, MLValue, MLValueWrapper}
 import de.unruh.isabelle.mlvalue.MLValue.{compileFunction, compileFunction0, compileValue}
 import de.unruh.isabelle.pure.{Context, Position, Theory, TheoryHeader, ToplevelState}
 import pisa.utils.TheoryManager
@@ -433,12 +433,13 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |    end)""".stripMargin
     )
 
-  val normal_with_Sledgehammer: MLFunction3[ToplevelState, Theory, List[String], (Boolean, (String, List[String]))] = 
-    compileFunction[ToplevelState, Theory, List[String], (Boolean, (String, List[String]))](
-      s""" fn (state, thy, dels) => let
+  val normal_with_Sledgehammer: MLFunction4[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))] = 
+    compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
+      s""" fn (state, thy, adds, dels) => let
          | fun get_refs_and_token_lists (name) = (Facts.named name, []);
-         | val refs_and_token_lists = map get_refs_and_token_lists dels;
-         | val override = {add=[],del=refs_and_token_lists,only=false};
+         | val adds_refs_and_token_lists = map get_refs_and_token_lists adds;
+         | val dels_refs_and_token_lists = map get_refs_and_token_lists dels;
+         | val override = {add=adds_refs_and_token_lists,del=refs_and_token_lists,only=false};
          |
          | val ordered_outcome_codes = [${Sledgehammer}.someN, ${Sledgehammer}.unknownN, ${Sledgehammer}.timeoutN, ${Sledgehammer}.noneN];
          |
@@ -926,9 +927,9 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     Await.result(f_res, Duration(timeout_in_millis, "millis"))
   }
 
-  def normal_with_hammer(top_level_state: ToplevelState, deleted_names: List[String], timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
+  def normal_with_hammer(top_level_state: ToplevelState, added_names: List[String], deleted_names: List[String], timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
     val f_res: Future[(Boolean, List[String])] = Future.apply {
-      val first_result = normal_with_Sledgehammer(top_level_state, thy1, deleted_names).force.retrieveNow
+      val first_result = normal_with_Sledgehammer(top_level_state, thy1, added_names, deleted_names).force.retrieveNow
       (first_result._1, first_result._2._2)
     }
     Await.result(f_res, Duration(timeout_in_millis, "millis"))
