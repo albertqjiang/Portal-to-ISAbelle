@@ -639,7 +639,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |                 val _ = learn chained;
          |                 val proved_results = provers |> Par_List.map (launch problem);
          |                 val first_results = (Par_List.map fst proved_results) |> max_outcome_code;
-         |                 val second_results = Par_List.map snd proved_results;
+         |                 val second_results = List.concat (Par_List.map snd proved_results);
          |              in
          |                 (first_results, second_results)
          |              end
