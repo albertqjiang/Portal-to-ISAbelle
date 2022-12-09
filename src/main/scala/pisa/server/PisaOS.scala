@@ -94,6 +94,12 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     """fn (int, tr, st) => let
       |  fun go_run (a, b, c) = Toplevel.command_exception a b c
       |  in Timeout.apply (Time.fromSeconds 10) go_run (int, tr, st) end""".stripMargin)
+
+  val command_exception_with_timeout: MLFunction4[Boolean, Transition.T, ToplevelState, Int, ToplevelState] = compileFunction[Boolean, Transition.T, ToplevelState, Int, ToplevelState](
+    """fn (int, tr, st, timeout) => let
+      |  fun go_run (a, b, c) = Toplevel.command_exception a b c
+      |  in Timeout.apply (Time.fromSeconds timeout) go_run (int, tr, st) end""".stripMargin)
+
   val command_errors: MLFunction3[Boolean, Transition.T, ToplevelState, (List[RuntimeError.T], Option[ToplevelState])] = compileFunction[Boolean, Transition.T, ToplevelState, (List[RuntimeError.T], Option[ToplevelState])](
     "fn (int, tr, st) => Toplevel.command_errors int tr st")
   val toplevel_end_theory: MLFunction[ToplevelState, Theory] = compileFunction[ToplevelState, Theory]("Toplevel.end_theory Position.none")
@@ -110,6 +116,18 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       |        val (this,rest) = Library.chop (Position.distance_of (Toplevel.pos_of tr, Toplevel.pos_of nextTr) |> Option.valOf) symbols
       |        in (tr, implode this) :: addtext rest (nextTr::trs) end
       |  in addtext (Symbol.explode text) transitions end""".stripMargin)
+  val parse_text_with_timeout: MLFunction3[Theory, String, Int, List[(Transition.T, String)]] = compileFunction[Theory, String, Int, List[(Transition.T, String)]](
+    """fn (thy, text, timeout) => let
+         fun go_run (thy1, text1) = let
+           val transitions = Outer_Syntax.parse_text thy1 (K thy1) Position.start text1
+           fun addtext symbols [tr] = [(tr, implode symbols)]
+             | addtext _ [] = []
+             | addtext symbols (tr::nextTr::trs) = let
+                 val (this,rest) = Library.chop (Position.distance_of (Toplevel.pos_of tr, Toplevel.pos_of nextTr) |> Option.valOf) symbols
+                 in (tr, implode this) :: addtext rest (nextTr::trs) end
+           in addtext (Symbol.explode text1) transitions end
+         in Timeout.apply (Time.fromSeconds timeout) go_run (thy, text) end""")
+ 
   val theoryName: MLFunction2[Boolean, Theory, String] = compileFunction[Boolean, Theory, String](
     "fn (long, thy) => Context.theory_name' {long=long} thy")
   val ancestorsNamesOfTheory: MLFunction[Theory, List[String]] = compileFunction[Theory, List[String]](
@@ -713,6 +731,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   def singleTransition(single_transition: Transition.T, top_level_state: ToplevelState): ToplevelState = {
     command_exception(true, single_transition, top_level_state).retrieveNow.force
   }
+  
+  def singleTransitionWithTimeout(single_transition: Transition.T, top_level_state: ToplevelState, timeout: Int = 10): ToplevelState = {
+    command_exception_with_timeout(true, single_transition, top_level_state, timeout).retrieveNow.force
+  }
 
   def singleTransition(singTransition: Transition.T): String = {
     //    TODO: inlcude global facts
@@ -834,11 +856,11 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       blocking {
         Breaks.breakable {
           println("start parsing")
-          for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
+          for ((transition, text) <- parse_text_with_timeout(thy1, isar_string, 10).force.retrieveNow)
             continue.breakable {
               if (text.trim.isEmpty) continue.break
               // println("Small step: " + text)
-              tls_to_return = singleTransitionWith10sTimeout(transition, tls_to_return)
+              tls_to_return = singleTransitionWithTimeout(transition, tls_to_return, 10)
               // println("Applied transition successfully")
             }
         }
@@ -905,7 +927,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   def exp_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
     val f_res: Future[(Boolean, List[String])] = Future.apply {
-      val first_result = exp_with_Sledgehammer(top_level_state, thy1).force.retrieveNow
+      val first_result = exp_with_Sledgehammer(top_level_state, thy1, 32).force.retrieveNow
       (first_result._1, first_result._2._2)
     }
     Await.result(f_res, Duration(timeout_in_millis, "millis"))
