@@ -5,20 +5,22 @@ import scala.collection.mutable.ListBuffer
 import _root_.java.nio.file.{Files, Path}
 import _root_.java.io.File
 import de.unruh.isabelle.control.Isabelle
-import de.unruh.isabelle.mlvalue.{AdHocConverter, MLFunction, MLFunction0, MLFunction2, MLFunction3, MLValue, MLValueWrapper}
+import de.unruh.isabelle.mlvalue.{AdHocConverter, MLFunction, MLFunction0, MLFunction2, MLFunction3, MLFunction4, MLValue, MLValueWrapper}
 import de.unruh.isabelle.mlvalue.MLValue.{compileFunction, compileFunction0, compileValue}
 import de.unruh.isabelle.pure.{Context, Position, Theory, TheoryHeader, ToplevelState}
 import pisa.utils.TheoryManager
 import pisa.utils.TheoryManager.{Ops, Source, Text}
 
-import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
+import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException, blocking}
 import scala.concurrent.duration.Duration
+import scala.util.{Success, Failure}
 
 import sys.process._
 
 // Implicits
 import de.unruh.isabelle.mlvalue.Implicits._
 import de.unruh.isabelle.pure.Implicits._
+import de.unruh.isabelle.control.IsabelleException
 
 object Transition extends AdHocConverter("Toplevel.transition")
 
@@ -88,6 +90,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val proof_of: MLFunction[ToplevelState, ProofState.T] = compileFunction[ToplevelState, ProofState.T]("Toplevel.proof_of")
   val command_exception: MLFunction3[Boolean, Transition.T, ToplevelState, ToplevelState] = compileFunction[Boolean, Transition.T, ToplevelState, ToplevelState](
     "fn (int, tr, st) => Toplevel.command_exception int tr st")
+  val command_exception_with_10s_timeout: MLFunction3[Boolean, Transition.T, ToplevelState, ToplevelState] = compileFunction[Boolean, Transition.T, ToplevelState, ToplevelState](
+    """fn (int, tr, st) => let
+      |  fun go_run (a, b, c) = Toplevel.command_exception a b c
+      |  in Timeout.apply (Time.fromSeconds 10) go_run (int, tr, st) end""".stripMargin)
   val command_errors: MLFunction3[Boolean, Transition.T, ToplevelState, (List[RuntimeError.T], Option[ToplevelState])] = compileFunction[Boolean, Transition.T, ToplevelState, (List[RuntimeError.T], Option[ToplevelState])](
     "fn (int, tr, st) => Toplevel.command_errors int tr st")
   val toplevel_end_theory: MLFunction[ToplevelState, Theory] = compileFunction[ToplevelState, Theory]("Toplevel.end_theory Position.none")
@@ -346,27 +352,17 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   // setting up Sledgehammer
   // val thy_for_sledgehammer: Theory = Theory("HOL.List")
   val thy_for_sledgehammer = thy1
-  val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
   val Sledgehammer: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer")
+  val Sledgehammer_Commands: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
+  val Sledgehammer_Fact: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Fact")
+  val Sledgehammer_MaSh: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_MaSh")
   val Sledgehammer_Prover: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover")
-  // val check_with_Sledgehammer: MLFunction[ToplevelState, Boolean] = compileFunction[ToplevelState, Boolean](
-  //   s""" fn state =>
-  //      |    (
-  //      |    let
-  //      |      val ctxt = Toplevel.context_of state;
-  //      |      val thy = Proof_Context.theory_of ctxt
-  //      |      val p_state = Toplevel.proof_of state;
-  //      |      val params = ${Sledgehammer_Commands}.default_params thy
-  //      |                      [("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")]
-  //      |      val override = {add=[],del=[],only=false}
-  //      |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
-  //      |                                  NONE 1 override
-  //      |                                : Proof.state -> bool * (string * string list);
-  //      |    in
-  //      |      run_sledgehammer p_state |> fst
-  //      |    end)
-  //   """.stripMargin)
-
+  val Sledgehammer_Prover_ATP: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover_ATP")
+  val Sledgehammer_Prover_Minimize: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover_Minimize")
+  val Sledgehammer_Util: String = thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Util")
+  val ATP_Util: String = thy_for_sledgehammer.importMLStructureNow("ATP_Util")
+  val ATP_Proof: String = thy_for_sledgehammer.importMLStructureNow("ATP_Proof")
+  
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will 
   // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
   // the string to get the actual tactic. For example, one of the string may look like "Try this: by blast (0.5 ms)".
@@ -398,12 +394,280 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
        |      val p_state = Toplevel.proof_of state;
        |      val ctxt = Proof.context_of p_state;
        |      val params = ${Sledgehammer_Commands}.default_params thy
-       |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","0"),("minimize","false"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","true")];
+       |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","0"),("minimize","false"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","false")];
        |      val override = {add=[],del=[],only=false}
        |    in
        |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
        |    end)
     """.stripMargin)
+
+  val metis_with_Sledgehammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = 
+    compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
+      s""" fn (state, thy) =>
+         |    (
+         |    let
+         |      val p_state = Toplevel.proof_of state;
+         |      val ctxt = Proof.context_of p_state;
+         |      val params = ${Sledgehammer_Commands}.default_params thy
+         |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
+         |      val override = {add=[],del=[],only=false}
+         |    in
+         |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
+         |    end)""".stripMargin
+    )
+
+  val del_with_Sledgehammer: MLFunction3[ToplevelState, Theory, List[String], (Boolean, (String, List[String]))] = 
+    compileFunction[ToplevelState, Theory, List[String], (Boolean, (String, List[String]))](
+      s""" fn (state, thy, dels) =>
+         |  (
+         |    let
+         |       val p_state = Toplevel.proof_of state;
+         |       val ctxt = Proof.context_of p_state;
+         |       val params = ${Sledgehammer_Commands}.default_params thy
+         |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
+         |       fun get_refs_and_token_lists (name) = (Facts.named name, []);
+         |       val refs_and_token_lists = map get_refs_and_token_lists dels;
+         |       val override = {add=[],del=refs_and_token_lists,only=false}
+         |    in
+         |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
+         |    end)""".stripMargin
+    )
+
+  val normal_with_Sledgehammer: MLFunction4[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))] = 
+    compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
+      s""" fn (state, thy, adds, dels) => let
+         | fun get_refs_and_token_lists (name) = (Facts.named name, []);
+         | val adds_refs_and_token_lists = map get_refs_and_token_lists adds;
+         | val dels_refs_and_token_lists = map get_refs_and_token_lists dels;
+         | val override = {add=adds_refs_and_token_lists,del=dels_refs_and_token_lists,only=false};
+         |
+         | val ordered_outcome_codes = [${Sledgehammer}.someN, ${Sledgehammer}.unknownN, ${Sledgehammer}.timeoutN, ${Sledgehammer}.noneN];
+         |
+         | fun max_outcome_code codes =
+         |   NONE
+         |   |> fold (fn candidate =>
+         |       fn accum as SOME _ => accum
+         |        | NONE => if member (op =) codes candidate then SOME candidate else NONE)
+         |     ordered_outcome_codes
+         |   |> the_default ${Sledgehammer}.unknownN;
+         |
+         | fun launch_prover (params as {debug, verbose, spy, max_facts, minimize, timeout, preplay_timeout,
+         |      expect, ...}) mode writeln_result only learn
+         |    {comment, state, goal, subgoal, subgoal_count, factss as (_, facts) :: _, found_proof} name =
+         |  let
+         |    val ctxt = Proof.context_of state
+         |
+         |    val hard_timeout = ${Sledgehammer_Util}.time_mult 5.0 timeout
+         |    val _ = ${Sledgehammer_Util}.spying spy (fn () => (state, subgoal, name, "Launched"));
+         |    val max_facts = max_facts |> the_default (${Sledgehammer_Prover_Minimize}.default_max_facts_of_prover ctxt name)
+         |    val num_facts = length facts |> not only ? Integer.min max_facts
+         |
+         |    val problem =
+         |      {comment = comment, state = state, goal = goal, subgoal = subgoal,
+         |       subgoal_count = subgoal_count,
+         |       factss = factss
+         |       |> map (apsnd ((not (${Sledgehammer_Prover_ATP}.is_ho_atp ctxt name)
+         |           ? filter_out (fn ((_, (_, Induction)), _) => true | _ => false))
+         |         #> take num_facts)),
+         |       found_proof = found_proof}
+         |
+         |    fun print_used_facts used_facts used_from =
+         |      tag_list 1 used_from
+         |      |> map (fn (j, fact) => fact |> apsnd (K j))
+         |      |> ${Sledgehammer_Prover}.filter_used_facts false used_facts
+         |      |> map (fn ((name, _), j) => name ^ "@" ^ string_of_int j)
+         |      |> commas
+         |      |> prefix ("Fact" ^ ${Sledgehammer_Util}.plural_s (length facts) ^ " in " ^ quote name ^
+         |        " proof (of " ^ string_of_int (length facts) ^ "): ")
+         |      |> writeln
+         |
+         |    fun spying_str_of_res ({outcome = NONE, used_facts, used_from, ...} : ${Sledgehammer_Prover}.prover_result) =
+         |        let
+         |          val num_used_facts = length used_facts
+         |
+         |          fun find_indices facts =
+         |            tag_list 1 facts
+         |            |> map (fn (j, fact) => fact |> apsnd (K j))
+         |            |> ${Sledgehammer_Prover}.filter_used_facts false used_facts
+         |            |> distinct (eq_fst (op =))
+         |            |> map (prefix "@" o string_of_int o snd)
+         |
+         |          fun filter_info (fact_filter, facts) =
+         |            let
+         |              val indices = find_indices facts
+         |              (* "Int.max" is there for robustness -- it shouldn't be necessary *)
+         |              val unknowns = replicate (Int.max (0, num_used_facts - length indices)) "?"
+         |            in
+         |              (commas (indices @ unknowns), fact_filter)
+         |            end
+         |
+         |          val filter_infos =
+         |            map filter_info (("actual", used_from) :: factss)
+         |            |> AList.group (op =)
+         |            |> map (fn (indices, fact_filters) => commas fact_filters ^ ": " ^ indices)
+         |        in
+         |          "Success: Found proof with " ^ string_of_int num_used_facts ^ " of " ^
+         |          string_of_int num_facts ^ " fact" ^ ${Sledgehammer_Util}.plural_s num_facts ^
+         |          (if num_used_facts = 0 then "" else ": " ^ commas filter_infos)
+         |        end
+         |      | spying_str_of_res {outcome = SOME failure, ...} =
+         |        "Failure: " ^ ${ATP_Proof}.string_of_atp_failure failure
+         |
+         |    fun really_go () =
+         |      problem
+         |      |> ${Sledgehammer_Prover_Minimize}.get_minimizing_prover ctxt mode learn name params
+         |      |> verbose ? tap (fn {outcome = NONE, used_facts as _ :: _, used_from, ...} =>
+         |          print_used_facts used_facts used_from
+         |        | _ => ())
+         |      |> spy ? tap (fn res => ${Sledgehammer_Util}.spying spy (fn () => (state, subgoal, name, spying_str_of_res res)))
+         |      |> (fn {outcome, used_facts, preferred_methss, message, ...} =>
+         |        (if outcome = SOME ${ATP_Proof}.TimedOut then ${Sledgehammer}.timeoutN
+         |         else if is_some outcome then ${Sledgehammer}.noneN
+         |         else ${Sledgehammer}.someN,
+         |         fn () => message (fn () => ${Sledgehammer}.play_one_line_proof minimize preplay_timeout used_facts state
+         |           subgoal preferred_methss)))
+         |
+         |    fun go () =
+         |      let
+         |        val (outcome_code, message) =
+         |          if debug then
+         |            really_go ()
+         |          else
+         |            (really_go ()
+         |             handle
+         |               ERROR msg => (${Sledgehammer}.unknownN, fn () => "Error: " ^ msg ^ "\\n")
+         |             | exn =>
+         |               if Exn.is_interrupt exn then Exn.reraise exn
+         |               else (${Sledgehammer}.unknownN, fn () => "Internal error:\\n" ^ Runtime.exn_message exn ^ "\\n"))
+         |
+         |        val _ =
+         |          (* The "expect" argument is deliberately ignored if the prover is
+         |             missing so that the "Metis_Examples" can be processed on any
+         |             machine. *)
+         |          if expect = "" orelse outcome_code = expect orelse
+         |             not (${Sledgehammer_Prover_Minimize}.is_prover_installed ctxt name) then
+         |            ()
+         |          else
+         |            error ("Unexpected outcome: " ^ quote outcome_code)
+         |      in (outcome_code, message) end
+         |  in
+         |    if mode = ${Sledgehammer_Prover}.Auto_Try then
+         |      let val (outcome_code, message) = Timeout.apply timeout go () in
+         |        (outcome_code, if outcome_code = ${Sledgehammer}.someN then [message ()] else [])
+         |      end
+         |    else
+         |      let
+         |        val (outcome_code, message) = Timeout.apply hard_timeout go ()
+         |        val outcome =
+         |          if outcome_code = ${Sledgehammer}.someN orelse mode = ${Sledgehammer_Prover}.Normal then quote name ^ ": " ^ message () else ""
+         |        val _ =
+         |          if outcome <> "" andalso is_some writeln_result then the writeln_result outcome
+         |          else writeln outcome
+         |      in (outcome_code, if outcome_code = ${Sledgehammer}.someN then [message ()] else []) end
+         |  end;
+         |
+         |  fun run_sledgehammer (params as {verbose, spy, provers, max_facts, ...}) mode writeln_result i
+         |    (fact_override as {only, ...}) state =
+         |  if null provers then
+         |    error "No prover is set"
+         |  else
+         |    (case ${Sledgehammer_Util}.subgoal_count state of
+         |      0 => (error "No subgoal!"; (false, (${Sledgehammer}.noneN, [])))
+         |    | n =>
+         |      let
+         |        val _ = Proof.assert_backward state
+         |        val print = if mode = ${Sledgehammer_Prover}.Normal andalso is_none writeln_result then writeln else K ()
+         |
+         |        val found_proof =
+         |          if mode = ${Sledgehammer_Prover}.Normal then
+         |            let val proof_found = Synchronized.var "proof_found" false in
+         |              fn () =>
+         |                if Synchronized.change_result proof_found (rpair true) then ()
+         |                else (writeln_result |> the_default writeln) "Proof found..."
+         |            end
+         |          else
+         |            I
+         |
+         |        val ctxt = Proof.context_of state
+         |        val keywords = Thy_Header.get_keywords' ctxt
+         |        val {facts = chained, goal, ...} = Proof.goal state
+         |        val (_, hyp_ts, concl_t) = ${ATP_Util}.strip_subgoal goal i ctxt
+         |        val ho_atp = exists (${Sledgehammer_Prover_ATP}.is_ho_atp ctxt) provers
+         |        val css = ${Sledgehammer_Fact}.clasimpset_rule_table_of ctxt
+         |        val all_facts =
+         |          ${Sledgehammer_Fact}.nearly_all_facts ctxt ho_atp fact_override keywords css chained hyp_ts concl_t
+         |        val _ =
+         |          (case find_first (not o ${Sledgehammer_Prover_Minimize}.is_prover_supported ctxt) provers of
+         |            SOME name => error ("No such prover: " ^ name)
+         |          | NONE => ())
+         |        val _ = print "Sledgehammering..."
+         |        val _ = ${Sledgehammer_Util}.spying spy (fn () => (state, i, "***", "Starting " ^ ${Sledgehammer_Prover}.str_of_mode mode ^ " mode"))
+         |
+         |        val spying_str_of_factss =
+         |          commas o map (fn (filter, facts) => filter ^ ": " ^ string_of_int (length facts))
+         |
+         |        fun get_factss provers =
+         |          let
+         |            val max_max_facts =
+         |              (case max_facts of
+         |                SOME n => n
+         |              | NONE =>
+         |                0 |> fold (Integer.max o ${Sledgehammer_Prover_Minimize}.default_max_facts_of_prover ctxt) provers
+         |                  |> mode = ${Sledgehammer_Prover}.Auto_Try ? (fn n => n div 2))
+         |            val _ = ${Sledgehammer_Util}.spying spy (fn () => (state, i, "All",
+         |              "Filtering " ^ string_of_int (length all_facts) ^ " facts (MaSh algorithm: " ^
+         |              ${Sledgehammer_MaSh}.str_of_mash_algorithm (${Sledgehammer_MaSh}.the_mash_algorithm ()) ^ ")"));
+         |          in
+         |            all_facts
+         |            |> ${Sledgehammer_MaSh}.relevant_facts ctxt params (hd provers) max_max_facts fact_override hyp_ts concl_t
+         |            |> tap (fn factss => if verbose then print (${Sledgehammer}.string_of_factss factss) else ())
+         |            |> spy ? tap (fn factss => ${Sledgehammer_Util}.spying spy (fn () =>
+         |              (state, i, "All", "Selected facts: " ^ spying_str_of_factss factss)))
+         |          end
+         |
+         |        fun launch_provers () =
+         |          let
+         |            val factss = get_factss provers
+         |            val problem =
+         |              {comment = "", state = state, goal = goal, subgoal = i, subgoal_count = n,
+         |               factss = factss, found_proof = found_proof}
+         |            val learn = ${Sledgehammer_MaSh}.mash_learn_proof ctxt params (Thm.prop_of goal)
+         |            val launch = launch_prover params mode writeln_result only learn
+         |          in
+         |            if mode = ${Sledgehammer_Prover}.Auto_Try then
+         |              (${Sledgehammer}.unknownN, [])
+         |              |> fold (fn prover => fn accum as (outcome_code, _) =>
+         |                  if outcome_code = ${Sledgehammer}.someN then accum else launch problem prover)
+         |                provers
+         |            else
+         |              let
+         |                 val _ = learn chained;
+         |                 val proved_results = provers |> Par_List.map (launch problem);
+         |                 val first_results = (Par_List.map fst proved_results) |> max_outcome_code;
+         |                 val second_results = List.concat (Par_List.map snd proved_results);
+         |              in
+         |                 (first_results, second_results)
+         |              end
+         |          end
+         |      in
+         |        launch_provers ()
+         |        handle Timeout.TIMEOUT _ =>
+         |          (print "Sledgehammer ran out of time"; (${Sledgehammer}.unknownN, []))
+         |      end
+         |      |> `(fn (outcome_code, _) => outcome_code = ${Sledgehammer}.someN))
+         |
+         |    fun go_run (state, thy) = 
+         |        let
+         |          val p_state = Toplevel.proof_of state;
+         |          val ctxt = Proof.context_of p_state;
+         |          val params = ${Sledgehammer_Commands}.default_params thy
+         |                [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
+         |        in
+         |          run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state
+         |        end
+         |    in Timeout.apply (Time.fromSeconds 35) go_run (state, thy) end
+         |""".stripMargin
+    )
 
   var toplevel: ToplevelState = init_toplevel().force.retrieveNow
   println("Checkpoint 12")
@@ -441,6 +705,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     proof_level(top_level_state).retrieveNow
 
   def getProofLevel: Int = getProofLevel(toplevel)
+
+  def singleTransitionWith10sTimeout(single_transition: Transition.T, top_level_state: ToplevelState): ToplevelState = {
+    command_exception_with_10s_timeout(true, single_transition, top_level_state).retrieveNow.force
+  }
 
   def singleTransition(single_transition: Transition.T, top_level_state: ToplevelState): ToplevelState = {
     command_exception(true, single_transition, top_level_state).retrieveNow.force
@@ -553,26 +821,60 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   def parse_with_hammer: String = parseStateActionWithHammer(fileContent)
 
+  @throws(classOf[IsabelleException])
+  @throws(classOf[TimeoutException])
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 2000): ToplevelState = {
+    println("Begin step")
     // Normal isabelle business
     var tls_to_return: ToplevelState = clone_tls_scala(top_level_state)
     var stateString: String = ""
     val continue = new Breaks
-
-    val f_st: Future[Unit] = Future.apply {
-      Breaks.breakable {
-        for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
-          continue.breakable {
-            if (text.trim.isEmpty) continue.break
-            // println("Small step: " + text)
-            tls_to_return = singleTransition(transition, tls_to_return)
-            // println("Applied transition successfully")
-          }
+    println("Starting to step")
+    val f_st = Future.apply {
+      blocking {
+        Breaks.breakable {
+          println("start parsing")
+          for ((transition, text) <- parse_text(thy1, isar_string).force.retrieveNow)
+            continue.breakable {
+              if (text.trim.isEmpty) continue.break
+              // println("Small step: " + text)
+              tls_to_return = singleTransitionWith10sTimeout(transition, tls_to_return)
+              // println("Applied transition successfully")
+            }
+        }
       }
+      "success"
     }
-    Await.result(f_st, Duration(timeout_in_millis, "millis"))
-    // println("Did step successfully")
+    println("inter")
+
+    // Await for infinite amount of time
+    Await.result(f_st, Duration.Inf)
+    println(f_st)
+    // f_st.onComplete {
+    //   case Success(_) => {succeed = true}
+    //   case Failure(x) => {succeed = false; message = x.getMessage}
+    // }
+    // Thread.sleep(500)
     tls_to_return
+
+    // Thread.sleep(10000)
+    // if (f_st.isCompleted) {
+    //   var succeed : Boolean = false
+    //   var message : String = ""
+    //   f_st.onComplete {
+    //     case Success(_) => {succeed = true}
+    //     case Failure(x) => {succeed = false; message = x.getMessage}
+    //   }
+    //   Thread.sleep(500)
+    //   if (succeed) tls_to_return
+    //   else {println("This message is: " + message); throw new IsabelleException(message)}
+
+    // } else {
+    //   cancel()
+    //   Thread.sleep(500)
+    //   assert(f_st.isCompleted)
+    //   throw new TimeoutException("Timeout")
+    // }
   }
 
   def step(isar_string: String): String = {
@@ -608,6 +910,31 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
     Await.result(f_res, Duration(timeout_in_millis, "millis"))
   }
+
+  def metis_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
+    val f_res: Future[(Boolean, List[String])] = Future.apply {
+      val first_result = metis_with_Sledgehammer(top_level_state, thy1).force.retrieveNow
+      (first_result._1, first_result._2._2)
+    }
+    Await.result(f_res, Duration(timeout_in_millis, "millis"))
+  }
+
+  def del_with_hammer(top_level_state: ToplevelState, deleted_names: List[String], timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
+    val f_res: Future[(Boolean, List[String])] = Future.apply {
+      val first_result = del_with_Sledgehammer(top_level_state, thy1, deleted_names).force.retrieveNow
+      (first_result._1, first_result._2._2)
+    }
+    Await.result(f_res, Duration(timeout_in_millis, "millis"))
+  }
+
+  def normal_with_hammer(top_level_state: ToplevelState, added_names: List[String], deleted_names: List[String], timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
+    val f_res: Future[(Boolean, List[String])] = Future.apply {
+      val first_result = normal_with_Sledgehammer(top_level_state, thy1, added_names, deleted_names).force.retrieveNow
+      (first_result._1, first_result._2._2)
+    }
+    Await.result(f_res, Duration(timeout_in_millis, "millis"))
+  }
+
   println("Checkpoint 13")
   val transitions_and_texts = parse_text(thy1, fileContent).force.retrieveNow
   var frontier_proceeding_index = 0

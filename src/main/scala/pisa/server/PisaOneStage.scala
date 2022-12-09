@@ -69,7 +69,9 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   def deal_with_list_states(): String = pisaos.top_level_state_map.keys.mkString(" | ")
 
   def deal_with_initialise(): String = {
+    println("Intialising the problem...")
     pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
+    println("Intialised...")
     "Toplevel state 'default' is ready"
   }
 
@@ -88,7 +90,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   val TRY_STRING: String = "Try this:"
   val FOUND_PROOF_STRING: String = "found a proof:"
   val ERROR_MSG: String = "error"
-  val GAP_STEP: String = "sledgehammer"
+  val SMT_HAMMER: String = "sledgehammer"
+  val METIS_HAMMER: String = "metishammer"
+  val NORMAL_HAMMER: String = "normalhammer"
+  val DEL_HAMMER: String = "delhammer"
   val TIME_STRING1: String = " ms)"
   val TIME_STRING2: String = " s)"
 
@@ -114,48 +119,90 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     ""
   }
 
-  def deal_with_apply_to_tls(toplevel_state_name: String, action: String, new_name: String): String = {
+  def hammer_actual_step(old_state: ToplevelState, new_name: String, 
+    hammer_method:(ToplevelState, Int) => (Boolean, List[String])): String = {
+    // If found a sledgehammer step, execute it differently
+    var raw_hammer_strings = List[String]()
+    val actual_step: String = try {
+      val total_result = hammer_method(old_state, 40000)
+      println(total_result)
+      val success = total_result._1
+      if (success) {
+        println("Hammer string list: " + total_result._2.mkString(" ||| "))
+        val tentative_step = process_hammer_strings(total_result._2)
+        println("actual_step: " + tentative_step)
+        tentative_step
+      } else {
+        ERROR_MSG
+      }
+    } catch {
+      case _: TimeoutException => {
+        println("Sledgehammer timeout 1")
+        try {
+          val total_result = hammer_method(old_state, 5000)
+          val success = total_result._1
+          if (success) {
+            println("Hammer string list: " + total_result._2.mkString(" ||| "))
+            val tentative_step = process_hammer_strings(total_result._2)
+            println("actual_step: " + tentative_step)
+            tentative_step
+          } else {
+            ERROR_MSG
+          }
+        } catch {
+          case e: TimeoutException => {
+            println("Sledgehammer timeout 2")
+            return s"$ERROR_MSG: ${e.getMessage}"
+          }
+        }
+      }
+      case e: Exception => {
+        println("Exception while trying to run sledgehammer: " + e.getMessage)
+        e.getMessage
+      }
+    }
+    // println(actual_step)
+    assert(actual_step.trim.nonEmpty)
+    actual_step
+  }
+
+  def deal_with_apply_to_tls(
+      toplevel_state_name: String, 
+      action: String, 
+      new_name: String
+    ): String = {
     if (pisaos.top_level_state_map.contains(toplevel_state_name)) {
       var actual_timeout = 10000
       val old_state: ToplevelState = pisaos.retrieve_tls(toplevel_state_name)
       var actual_step: String = "Gibberish"
+      var hammered : Boolean = false
 
-      if (action == GAP_STEP) {
-        // If found a sledgehammer step, execute it differently
-        var raw_hammer_strings = List[String]()
-        try {
-          val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=120000)
-          val success = total_result._1
-          
-          if (success) {
-            println("Hammer string list: " + total_result._2.mkString(" ||| "))
-            actual_step = process_hammer_strings(total_result._2)
-            println("actual_step: " + actual_step)
-          }
-        } catch {
-          case _: TimeoutException => {
-            println("Sledgehammer timeout 1")
-            try {
-              val total_result = pisaos.exp_with_hammer(old_state, timeout_in_millis=5000)
-              val success = total_result._1
-              if (success) {
-                println("Hammer string list: " + total_result._2.mkString(" ||| "))
-                actual_step = process_hammer_strings(total_result._2)
-                println("actual_step: " + actual_step)
-              }
-            } catch {
-              case e: TimeoutException => {
-                println("Sledgehammer timeout 2")
-                return s"$ERROR_MSG: ${e.getMessage}"
-              }
-            }
-          }
-          case e: Exception => {
-            println("Exception while trying to run sledgehammer: " + e.getMessage)
-          }
+      if (action == SMT_HAMMER) {
+        actual_step = hammer_actual_step(old_state, new_name, pisaos.exp_with_hammer)
+        hammered = true
+      } else if (action == METIS_HAMMER) {
+        actual_step = hammer_actual_step(old_state, new_name, pisaos.metis_with_hammer)
+        hammered = true
+      } else if (action.startsWith(DEL_HAMMER)) {
+        val del_names = action.split(DEL_HAMMER).drop(1).mkString("").trim.split(",").toList
+        val partial_hammer = (state: ToplevelState, timeout: Int) => pisaos.del_with_hammer(state, del_names, timeout)
+        actual_step = hammer_actual_step(old_state, new_name, partial_hammer)
+        hammered = true
+      } else if (action.startsWith(NORMAL_HAMMER)) {
+        val additional_arguments_string: String = action.split(NORMAL_HAMMER).drop(1).mkString("").trim
+        val add_names : List[String] = {
+          if (additional_arguments_string contains "<add>") {
+            additional_arguments_string.split("<add>")(1).split(",").toList
+          } else List[String]()
         }
-        // println(actual_step)
-        assert(actual_step.trim.nonEmpty)
+        val del_names : List[String] = {
+          if (additional_arguments_string contains "<del>") {
+            additional_arguments_string.split("<del>")(1).split(",").toList
+          } else List[String]()
+        }
+        val partial_hammer = (state: ToplevelState, timeout: Int) => pisaos.normal_with_hammer(state, add_names, del_names, timeout)
+        actual_step = hammer_actual_step(old_state, new_name, partial_hammer)
+        hammered = true
       } else {
         actual_step = action
       }
@@ -166,7 +213,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       // println("New state: " + pisaos.getStateString(new_state))
       
       pisaos.register_tls(name = new_name, tls = new_state)
-      if (action.trim == "sledgehammer") {
+      if (hammered) {
         s"$actual_step <hammer> ${pisaos.getStateString(new_state)}"
       } else s"${pisaos.getStateString(new_state)}"
     }
@@ -300,6 +347,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           val action: String = isa_command.command.split("<apply to top level state>")(2).trim
           val new_name: String = isa_command.command.split("<apply to top level state>")(3).trim
           try {
+            println("Start dealing")
             deal_with_apply_to_tls(tls_name, action, new_name)
           } catch {
             case e: IsabelleException => {
@@ -307,10 +355,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
               println("IsabelleException: " + e.getMessage + "\n")
               "Step error: " + e.getMessage
             }
-            case e: Throwable => {
+            case f: Throwable => {
               println("Action: " + action)
-              println("Unknown error: " + e.getMessage + "\n")
-              "Unknown error: " + e.getMessage
+              println("Unknown error: " + f.getMessage + "\n")
+              "Unknown error: " + f.getMessage
             }
           }
         }
