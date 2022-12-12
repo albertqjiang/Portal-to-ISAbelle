@@ -707,31 +707,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     // Await for infinite amount of time
     Await.result(f_st, Duration.Inf)
     println(f_st)
-    // f_st.onComplete {
-    //   case Success(_) => {succeed = true}
-    //   case Failure(x) => {succeed = false; message = x.getMessage}
-    // }
-    // Thread.sleep(500)
     tls_to_return
-
-    // Thread.sleep(10000)
-    // if (f_st.isCompleted) {
-    //   var succeed : Boolean = false
-    //   var message : String = ""
-    //   f_st.onComplete {
-    //     case Success(_) => {succeed = true}
-    //     case Failure(x) => {succeed = false; message = x.getMessage}
-    //   }
-    //   Thread.sleep(500)
-    //   if (succeed) tls_to_return
-    //   else {println("This message is: " + message); throw new IsabelleException(message)}
-
-    // } else {
-    //   cancel()
-    //   Thread.sleep(500)
-    //   assert(f_st.isCompleted)
-    //   throw new TimeoutException("Timeout")
-    // }
   }
 
   def step(isar_string: String): String = {
