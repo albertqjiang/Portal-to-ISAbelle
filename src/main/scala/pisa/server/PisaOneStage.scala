@@ -177,18 +177,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       var actual_step: String = "Gibberish"
       var hammered : Boolean = false
 
-      if (action == SMT_HAMMER) {
-        actual_step = hammer_actual_step(old_state, new_name, pisaos.exp_with_hammer)
-        hammered = true
-      } else if (action == METIS_HAMMER) {
-        actual_step = hammer_actual_step(old_state, new_name, pisaos.metis_with_hammer)
-        hammered = true
-      } else if (action.startsWith(DEL_HAMMER)) {
-        val del_names = action.split(DEL_HAMMER).drop(1).mkString("").trim.split(",").toList
-        val partial_hammer = (state: ToplevelState, timeout: Int) => pisaos.del_with_hammer(state, del_names, timeout)
-        actual_step = hammer_actual_step(old_state, new_name, partial_hammer)
-        hammered = true
-      } else if (action.startsWith(NORMAL_HAMMER)) {
+      if (action.startsWith(NORMAL_HAMMER)) {
         val additional_arguments_string: String = action.split(NORMAL_HAMMER).drop(1).mkString("").trim
         val add_names : List[String] = {
           if (additional_arguments_string contains "<add>") {
@@ -458,7 +447,6 @@ object PisaExtraction {
       working_directory = working_directory
     )
     new PrintWriter(dump_path) {
-      write(pisaos.parse_with_hammer);
       close()
     }
   }

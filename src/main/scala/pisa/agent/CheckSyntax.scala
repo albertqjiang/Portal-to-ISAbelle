@@ -49,7 +49,7 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
       for ((_, text) <- parse_text(thy, theorem_string).force.retrieveNow) {
         if (text.trim.isEmpty) {}
         else if (text.trim == "sledgehammer") {
-          val hammer_results = pisaos.prove_with_hammer(trial_state, 60000)
+          val hammer_results = pisaos.normal_with_hammer(trial_state, List[String](), List[String](), 60000)
           val hammered_string = {
             if (hammer_results._1) {
               val hammer_strings = hammer_results._2

@@ -367,71 +367,6 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of 
   // the string to get the actual tactic. For example, one of the string may look like "Try this: by blast (0.5 ms)".
   println("Checkpoint 11")
-  val prove_with_Sledgehammer: MLFunction[ToplevelState, (Boolean, List[String])] = compileFunction[ToplevelState, (Boolean, List[String])](
-    s""" fn state =>
-       |    (
-       |    let
-       |      val ctxt = Toplevel.context_of state;
-       |      val thy = Proof_Context.theory_of ctxt;
-       |      val p_state = Toplevel.proof_of state;
-       |      val params = ${Sledgehammer_Commands}.default_params thy
-       |                      [("provers", "cvc4 e spass vampire z3"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","true"),("timeout","30"),("preplay_timeout","2")]
-       |      val override = {add=[],del=[],only=false}
-       |      val res_list = Synchronized.var "res_list" [];
-       |      val writeln_results = SOME (fn s => Synchronized.change res_list (fn ll => cons s ll));
-       |      val run_sledgehammer = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try
-       |                                  writeln_results 1 override
-       |                                : Proof.state -> bool * (string * string list);
-       |    in
-       |      (fst (run_sledgehammer p_state), Synchronized.value res_list)
-       |    end)
-    """.stripMargin)
-
-  val exp_with_Sledgehammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
-    s""" fn (state, thy) =>
-       |    (
-       |    let
-       |      val p_state = Toplevel.proof_of state;
-       |      val ctxt = Proof.context_of p_state;
-       |      val params = ${Sledgehammer_Commands}.default_params thy
-       |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","0"),("minimize","false"),("isar_proofs", "false"),("smt_proofs", "true"),("learn","false")];
-       |      val override = {add=[],del=[],only=false}
-       |    in
-       |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
-       |    end)
-    """.stripMargin)
-
-  val metis_with_Sledgehammer: MLFunction2[ToplevelState, Theory, (Boolean, (String, List[String]))] = 
-    compileFunction[ToplevelState, Theory, (Boolean, (String, List[String]))](
-      s""" fn (state, thy) =>
-         |    (
-         |    let
-         |      val p_state = Toplevel.proof_of state;
-         |      val ctxt = Proof.context_of p_state;
-         |      val params = ${Sledgehammer_Commands}.default_params thy
-         |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
-         |      val override = {add=[],del=[],only=false}
-         |    in
-         |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
-         |    end)""".stripMargin
-    )
-
-  val del_with_Sledgehammer: MLFunction3[ToplevelState, Theory, List[String], (Boolean, (String, List[String]))] = 
-    compileFunction[ToplevelState, Theory, List[String], (Boolean, (String, List[String]))](
-      s""" fn (state, thy, dels) =>
-         |  (
-         |    let
-         |       val p_state = Toplevel.proof_of state;
-         |       val ctxt = Proof.context_of p_state;
-         |       val params = ${Sledgehammer_Commands}.default_params thy
-         |            [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
-         |       fun get_refs_and_token_lists (name) = (Facts.named name, []);
-         |       val refs_and_token_lists = map get_refs_and_token_lists dels;
-         |       val override = {add=[],del=refs_and_token_lists,only=false}
-         |    in
-         |      ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Auto_Try NONE 1 override p_state
-         |    end)""".stripMargin
-    )
 
   val normal_with_Sledgehammer: MLFunction4[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))] = 
     compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
@@ -720,21 +655,6 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     getStateString
   }
 
-  def singleTransitionWithSledgehammer(): (String, String) = {
-    // Returns two strings, the first one being the real proof step, the second one being the new state string
-    val raw_hammer_strings = prove_with_hammer(toplevel)._2
-    var found = false
-    var real_string = ""
-    for (attempt_string <- raw_hammer_strings) {
-      if (!found && (attempt_string contains "Try this:")) {
-        found = true
-        real_string = attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString("(")
-      }
-    }
-    toplevel = step(real_string, toplevel, 30000)
-    (real_string, getStateString(toplevel))
-  }
-
   def parseStateAction(isarString: String): String = {
     // Here we directly apply transitions to the theory repeatedly
     // to get the (last_observation, action, observation, reward, done) tuple
@@ -747,13 +667,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
       for ((transition, text) <- parse_text(thy1, isarString).force.retrieveNow)
         continue.breakable {
           if (text.trim.isEmpty) continue.break
-          else if (text.trim == "sledgehammer") {
-            val current_state_string = stateString
-            val current_proof_level = getProofLevel
-            val (real_step, new_state_string) = singleTransitionWithSledgehammer()
-            stateString = new_state_string
-            stateActionTotal = stateActionTotal + (current_state_string + "<\\STATESEP>" + real_step.trim + "<\\STATESEP>" + s"$current_proof_level" + "<\\TRANSEP>")
-          } else {
+          else {
             stateActionTotal = stateActionTotal + (stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$getProofLevel" + "<\\TRANSEP>")
             stateString = singleTransition(transition)
           }
@@ -762,64 +676,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     stateActionTotal
   }
 
-  def parseStateActionWithHammer(isarString: String): String = {
-    var stateActionHammerTotal: String = ""
-    val continue = new Breaks
-
-    var parse_toplevel: ToplevelState = toplevel
-    var stateString = getStateString(parse_toplevel)
-    Breaks.breakable {
-      for ((transition, text) <- parse_text(thy1, isarString).force.retrieveNow)
-        continue.breakable {
-          println(stateString)
-          println(text)
-
-          // Continue if empty
-          if (text.trim.isEmpty) continue.break
-
-          val proof_level = getProofLevel(parse_toplevel)
-          // Check if can be solved by hammer
-          // hammer_results : (can we try hammer, did hammer work, what is the result if hammer worked)
-          val hammer_results: (Boolean, Boolean, String) = {
-            if ((proof_level >= 1) && !(stateString contains "No subgoals!") && !(stateString contains "proof (state)") && !(stateString contains "proof (chain)")) {
-              val hammered_tuple = {
-                try {
-                  val raw_hammer_results = prove_with_hammer(parse_toplevel)
-                  val hammer_proof = {
-                    if (raw_hammer_results._1) {
-                      raw_hammer_results._2.head
-                    } else " "
-                  }
-                  (true, raw_hammer_results._1, hammer_proof)
-                } catch {
-                  case _: TimeoutException => (true, false, " ")
-                }
-              }
-
-              ("ps -ef" #| "grep z3" #| "awk '{print $2}'" #| "xargs kill -9").!
-              ("ps -ef" #| "grep veriT" #| "awk '{print $2}'" #| "xargs kill -9").!
-              ("ps -ef" #| "grep cvc4" #| "awk '{print $2}'" #| "xargs kill -9").!
-              ("ps -ef" #| "grep eprover" #| "awk '{print $2}'" #| "xargs kill -9").!
-              ("ps -ef" #| "grep SPASS" #| "awk '{print $2}'" #| "xargs kill -9").!
-              hammered_tuple
-            }
-            else (false, false, " ")
-          }
-          stateActionHammerTotal = stateActionHammerTotal + (
-            stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$proof_level" + "<\\STATESEP>"
-              + s"${hammer_results._1}" + "<\\HAMMERSEP>" + s"${hammer_results._2}"
-              + "<\\HAMMERSEP>" + s"${hammer_results._3}" + "<\\TRANSEP>"
-            )
-          parse_toplevel = singleTransition(transition, parse_toplevel)
-          stateString = getStateString(parse_toplevel)
-        }
-    }
-    stateActionHammerTotal
-  }
-
   def parse: String = parseStateAction(fileContent)
-
-  def parse_with_hammer: String = parseStateActionWithHammer(fileContent)
 
   @throws(classOf[IsabelleException])
   @throws(classOf[TimeoutException])
@@ -882,10 +739,6 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     if (isar_string == "PISA extract data")
       return parse
 
-    // Specific method for extracting data with hammer
-    if (isar_string == "PISA extract data with hammer")
-      return parse_with_hammer
-
     // Exit string
     if (isar_string == "exit") {
       isabelle.destroy()
@@ -894,37 +747,6 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     }
     toplevel = step(isar_string, toplevel)
     getStateString
-  }
-
-  def prove_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
-    val f_res: Future[(Boolean, List[String])] = Future.apply {
-      prove_with_Sledgehammer(top_level_state).force.retrieveNow
-    }
-    Await.result(f_res, Duration(timeout_in_millis, "millis"))
-  }
-
-  def exp_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
-    val f_res: Future[(Boolean, List[String])] = Future.apply {
-      val first_result = exp_with_Sledgehammer(top_level_state, thy1).force.retrieveNow
-      (first_result._1, first_result._2._2)
-    }
-    Await.result(f_res, Duration(timeout_in_millis, "millis"))
-  }
-
-  def metis_with_hammer(top_level_state: ToplevelState, timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
-    val f_res: Future[(Boolean, List[String])] = Future.apply {
-      val first_result = metis_with_Sledgehammer(top_level_state, thy1).force.retrieveNow
-      (first_result._1, first_result._2._2)
-    }
-    Await.result(f_res, Duration(timeout_in_millis, "millis"))
-  }
-
-  def del_with_hammer(top_level_state: ToplevelState, deleted_names: List[String], timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
-    val f_res: Future[(Boolean, List[String])] = Future.apply {
-      val first_result = del_with_Sledgehammer(top_level_state, thy1, deleted_names).force.retrieveNow
-      (first_result._1, first_result._2._2)
-    }
-    Await.result(f_res, Duration(timeout_in_millis, "millis"))
   }
 
   def normal_with_hammer(top_level_state: ToplevelState, added_names: List[String], deleted_names: List[String], timeout_in_millis: Int = 35000): (Boolean, List[String]) = {

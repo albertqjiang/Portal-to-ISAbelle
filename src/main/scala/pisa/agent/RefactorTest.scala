@@ -18,9 +18,9 @@ import java.util.Base64
 import java.nio.charset.StandardCharsets.UTF_8
 
 object RefactorTest {
-  val path_to_isa_bin: String = "/home/qj213/Isabelle2021"
-  val working_directory: String = "/home/qj213/afp-2021-10-22/thys/FunWithFunctions"
-  val path_to_file: String = "/home/qj213/afp-2021-10-22/thys/FunWithFunctions/FunWithFunctions.thy"
+  val path_to_isa_bin: String = "/home/qj213/Isabelle2022"
+  val working_directory: String = "/home/qj213/afp-2022-12-06/thys/FunWithFunctions"
+  val path_to_file: String = "/home/qj213/afp-2022-12-06/thys/FunWithFunctions/FunWithFunctions.thy"
   val theorem_string = "qed"
 
   def main(args: Array[String]): Unit = {
