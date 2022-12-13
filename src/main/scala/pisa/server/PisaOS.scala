@@ -645,8 +645,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |             val ctxt = Proof.context_of p_state;
          |             val params = ${Sledgehammer_Commands}.default_params thy
          |                [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
+         |             val results = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state;
+         |             val (result, (outcome, step)) = results;
          |           in
-         |              ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state
+         |             (result, (${Sledgehammer}.short_string_of_sledgehammer_outcome outcome, [step]))
          |           end;
          |    in 
          |      Timeout.apply (Time.fromSeconds 35) go_run (state, thy) end
