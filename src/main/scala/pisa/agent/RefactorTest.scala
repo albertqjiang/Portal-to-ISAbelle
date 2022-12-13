@@ -19,9 +19,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 object RefactorTest {
   val path_to_isa_bin: String = "/home/qj213/Isabelle2022"
-  val working_directory: String = "/home/qj213/afp-2022-12-06/thys/FunWithFunctions"
-  val path_to_file: String = "/home/qj213/afp-2022-12-06/thys/FunWithFunctions/FunWithFunctions.thy"
-  val theorem_string = "qed"
+  val working_directory: String = "/home/qj213/Isabelle2022/src/HOL/Computational_Algebra"
+  val path_to_file: String = "/home/qj213/Isabelle2022/src/HOL/Computational_Algebra/Primes.thy"
+  val theorem_string = "by (metis mult.right_neutral power_0)"
 
   def main(args: Array[String]): Unit = {
     val pisaos = new PisaOS(
@@ -32,7 +32,8 @@ object RefactorTest {
     implicit val isabelle: Isabelle = pisaos.isabelle
     implicit val ec: ExecutionContext = pisaos.ec
 
-    pisaos.step_to_transition_text(theorem_string, after = true)
-
+    pisaos.step_to_transition_text(theorem_string, after = false)
+    println(pisaos.getStateString(pisaos.toplevel))
+    println(pisaos.normal_with_hammer(pisaos.toplevel, List[String](), List[String]()))
   }
 }
