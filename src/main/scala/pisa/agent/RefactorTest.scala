@@ -34,6 +34,7 @@ object RefactorTest {
 
     pisaos.step_to_transition_text(theorem_string, after = false)
     println(pisaos.getStateString(pisaos.toplevel))
+    println(pisaos.step(theorem_string, pisaos.toplevel))
     println(pisaos.normal_with_hammer(pisaos.toplevel, List[String](), List[String]()))
   }
 }

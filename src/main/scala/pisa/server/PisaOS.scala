@@ -634,17 +634,14 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   val normal_with_Sledgehammer: MLFunction4[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))] = 
     compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
       s""" fn (state, thy, adds, dels) => 
-         |    let 
-         |       fun get_refs_and_token_lists (name) = (Facts.named name, []);
-         |       val adds_refs_and_token_lists = map get_refs_and_token_lists adds;
-         |       val dels_refs_and_token_lists = map get_refs_and_token_lists dels;
-         |       val override = {add=adds_refs_and_token_lists,del=dels_refs_and_token_lists,only=false};
+         |    let
+         |       val override = {add=[],del=[],only=false};
          |       fun go_run (state, thy) = 
          |          let
          |             val p_state = Toplevel.proof_of state;
          |             val ctxt = Proof.context_of p_state;
          |             val params = ${Sledgehammer_Commands}.default_params thy
-         |                [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
+         |                [("provers", "z3"),("timeout","30")];
          |             val results = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state;
          |             val (result, (outcome, step)) = results;
          |           in
