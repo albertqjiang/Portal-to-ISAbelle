@@ -368,289 +368,289 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   // the string to get the actual tactic. For example, one of the string may look like "Try this: by blast (0.5 ms)".
   println("Checkpoint 11")
 
-  // val normal_with_Sledgehammer: MLFunction4[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))] = 
-  //   compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
-  //     s""" fn (state, thy, adds, dels) => let
-  //        | fun get_refs_and_token_lists (name) = (Facts.named name, []);
-  //        | val adds_refs_and_token_lists = map get_refs_and_token_lists adds;
-  //        | val dels_refs_and_token_lists = map get_refs_and_token_lists dels;
-  //        | val override = {add=adds_refs_and_token_lists,del=dels_refs_and_token_lists,only=false};
-  //        |
-  //        | val ordered_outcome_codes = [${Sledgehammer}.SH_Some, ${Sledgehammer}.SH_Unknown, ${Sledgehammer}.SH_Timeout, ${Sledgehammer}.SH_None];
-  //        |
-  //        | fun max_outcome_code codes =
-  //        |   NONE
-  //        |   |> fold (fn candidate =>
-  //        |       fn accum as SOME _ => accum
-  //        |        | NONE => if member (op =) codes candidate then SOME candidate else NONE)
-  //        |     ordered_outcome_codes
-  //        |   |> the_default ${Sledgehammer}.SH_Unknown;
-  //        |
-  //        | fun launch_prover (params as {debug, verbose, spy, max_facts, minimize, timeout, preplay_timeout,
-  //        |      expect, ...}) mode writeln_result only learn
-  //        |    {comment, state, goal, subgoal, subgoal_count, factss as (_, facts) :: _, found_proof} name =
-  //        |  let
-  //        |    val ctxt = Proof.context_of state
-  //        |
-  //        |    val hard_timeout = ${Sledgehammer_Util}.time_mult 5.0 timeout
-  //        |    val _ = ${Sledgehammer_Util}.spying spy (fn () => (state, subgoal, name, "Launched"));
-  //        |    val max_facts = max_facts |> the_default (${Sledgehammer_Prover_Minimize}.default_max_facts_of_prover ctxt name)
-  //        |    val num_facts = length facts |> not only ? Integer.min max_facts
-  //        |
-  //        |    val problem =
-  //        |      {comment = comment, state = state, goal = goal, subgoal = subgoal,
-  //        |       subgoal_count = subgoal_count,
-  //        |       factss = factss
-  //        |       |> map (apsnd ((not (${Sledgehammer_Prover_ATP}.is_ho_atp ctxt name)
-  //        |           ? filter_out (fn ((_, (_, Induction)), _) => true | _ => false))
-  //        |         #> take num_facts)),
-  //        |       found_proof = found_proof}
-  //        |
-  //        |    fun print_used_facts used_facts used_from =
-  //        |      tag_list 1 used_from
-  //        |      |> map (fn (j, fact) => fact |> apsnd (K j))
-  //        |      |> ${Sledgehammer_Prover}.filter_used_facts false used_facts
-  //        |      |> map (fn ((name, _), j) => name ^ "@" ^ string_of_int j)
-  //        |      |> commas
-  //        |      |> prefix ("Fact" ^ ${Sledgehammer_Util}.plural_s (length facts) ^ " in " ^ quote name ^
-  //        |        " proof (of " ^ string_of_int (length facts) ^ "): ")
-  //        |      |> writeln
-  //        |
-  //        |    fun spying_str_of_res ({outcome = NONE, used_facts, used_from, ...} : ${Sledgehammer_Prover}.prover_result) =
-  //        |        let
-  //        |          val num_used_facts = length used_facts
-  //        |
-  //        |          fun find_indices facts =
-  //        |            tag_list 1 facts
-  //        |            |> map (fn (j, fact) => fact |> apsnd (K j))
-  //        |            |> ${Sledgehammer_Prover}.filter_used_facts false used_facts
-  //        |            |> distinct (eq_fst (op =))
-  //        |            |> map (prefix "@" o string_of_int o snd)
-  //        |
-  //        |          fun filter_info (fact_filter, facts) =
-  //        |            let
-  //        |              val indices = find_indices facts
-  //        |              (* "Int.max" is there for robustness -- it shouldn't be necessary *)
-  //        |              val unknowns = replicate (Int.max (0, num_used_facts - length indices)) "?"
-  //        |            in
-  //        |              (commas (indices @ unknowns), fact_filter)
-  //        |            end
-  //        |
-  //        |          val filter_infos =
-  //        |            map filter_info (("actual", used_from) :: factss)
-  //        |            |> AList.group (op =)
-  //        |            |> map (fn (indices, fact_filters) => commas fact_filters ^ ": " ^ indices)
-  //        |        in
-  //        |          "Success: Found proof with " ^ string_of_int num_used_facts ^ " of " ^
-  //        |          string_of_int num_facts ^ " fact" ^ ${Sledgehammer_Util}.plural_s num_facts ^
-  //        |          (if num_used_facts = 0 then "" else ": " ^ commas filter_infos)
-  //        |        end
-  //        |      | spying_str_of_res {outcome = SOME failure, ...} =
-  //        |        "Failure: " ^ ${ATP_Proof}.string_of_atp_failure failure
-  //        |
-  //        |    fun really_go () =
-  //        |      problem
-  //        |      |> ${Sledgehammer_Prover_Minimize}.get_minimizing_prover ctxt mode learn name params
-  //        |      |> verbose ? tap (fn {outcome = NONE, used_facts as _ :: _, used_from, ...} =>
-  //        |          print_used_facts used_facts used_from
-  //        |        | _ => ())
-  //        |      |> spy ? tap (fn res => ${Sledgehammer_Util}.spying spy (fn () => (state, subgoal, name, spying_str_of_res res)))
-  //        |      |> (fn {outcome, used_facts, preferred_methss, message, ...} =>
-  //        |        (if outcome = SOME ${ATP_Proof}.TimedOut then ${Sledgehammer}.SH_Timeout
-  //        |         else if is_some outcome then ${Sledgehammer}.SH_None
-  //        |         else ${Sledgehammer}.SH_Some,
-  //        |         fn () => message (fn () => ${Sledgehammer}.play_one_line_proof minimize preplay_timeout used_facts state
-  //        |           subgoal preferred_methss)))
-  //        |
-  //        |    fun go () =
-  //        |      let
-  //        |        val (outcome_code, message) =
-  //        |          if debug then
-  //        |            really_go ()
-  //        |          else
-  //        |            (really_go ()
-  //        |             handle
-  //        |               ERROR msg => (${Sledgehammer}.SH_Unknown, fn () => "Error: " ^ msg ^ "\\n")
-  //        |             | exn =>
-  //        |               if Exn.is_interrupt exn then Exn.reraise exn
-  //        |               else (${Sledgehammer}.SH_Unknown, fn () => "Internal error:\\n" ^ Runtime.exn_message exn ^ "\\n"))
-  //        |
-  //        |        val _ =
-  //        |          (* The "expect" argument is deliberately ignored if the prover is
-  //        |             missing so that the "Metis_Examples" can be processed on any
-  //        |             machine. *)
-  //        |          if expect = "" orelse outcome_code = expect orelse
-  //        |             not (${Sledgehammer_Prover_Minimize}.is_prover_installed ctxt name) then
-  //        |            ()
-  //        |          else
-  //        |            error ("Unexpected outcome: " ^ quote outcome_code)
-  //        |      in (outcome_code, message) end
-  //        |  in
-  //        |    if mode = ${Sledgehammer_Prover}.Auto_Try then
-  //        |      let val (outcome_code, message) = Timeout.apply timeout go () in
-  //        |        (outcome_code, if outcome_code = ${Sledgehammer}.SH_Some then [message ()] else [])
-  //        |      end
-  //        |    else
-  //        |      let
-  //        |        val (outcome_code, message) = Timeout.apply hard_timeout go ()
-  //        |        val outcome =
-  //        |          if outcome_code = ${Sledgehammer}.SH_Some orelse mode = ${Sledgehammer_Prover}.Normal then quote name ^ ": " ^ message () else ""
-  //        |        val _ =
-  //        |          if outcome <> "" andalso is_some writeln_result then the writeln_result outcome
-  //        |          else writeln outcome
-  //        |      in (outcome_code, if outcome_code = ${Sledgehammer}.SH_Some then [message ()] else []) end
-  //        |  end;
-  //        |
-  //        |  fun run_sledgehammer (params as {verbose, spy, provers, induction_rules, max_facts, max_proofs,
-  //        |      slices, ...}) mode writeln_result i
-  //        |    (fact_override as {only, ...}) state =
-  //        |  if null provers then
-  //        |    error "No prover is set"
-  //        |  else
-  //        |    (case ${Sledgehammer_Util}.subgoal_count state of
-  //        |      0 => (error "No subgoal!"; (false, (${Sledgehammer}.SH_None, [])))
-  //        |    | n =>
-  //        |      let
-  //        |        val _ = Proof.assert_backward state
-  //        |        val print = if mode = ${Sledgehammer_Prover}.Normal andalso is_none writeln_result then writeln else K ()
-  //        |        
-  //        |        val found_proofs = Synchronized.var "found_proofs" 0
-  //        |
-  //        |        fun found_proof prover_name =
-  //        |          if mode = Normal then
-  //        |            (Synchronized.change found_proofs (fn n => n + 1);
-  //        |             (the_default writeln writeln_result) (prover_name ^ " found a proof..."))
-  //        |          else
-  //        |            ()
-  //        |
-  //        |        val ctxt = Proof.context_of state
-  //        |        val inst_inducts = induction_rules = SOME Instantiate
-  //        |        val {facts = chained, goal, ...} = Proof.goal state
-  //        |        val (_, hyp_ts, concl_t) = ${ATP_Util}.strip_subgoal goal i ctxt
-  //        |        val _ =
-  //        |          (case find_first (not o ${Sledgehammer_Prover_Minimize}.is_prover_supported ctxt) provers of
-  //        |            SOME name => error ("No such prover: " ^ name)
-  //        |          | NONE => ())
-  //        |        val _ = print "Sledgehammering..."
-  //        |        val _ = spying spy (fn () => (state, i, "***", "Starting " ^ str_of_mode mode ^ " mode"))
-  //        |        val ({elapsed, ...}, all_facts) = Timing.timing
-  //        |          (nearly_all_facts_of_context ctxt inst_inducts fact_override chained_thms hyp_ts) concl_t
-  //        |        val _ = spying spy (fn () => (state, i, "All",
-  //        |          "Extracting " ^ string_of_int (length all_facts) ^ " facts from background theory in " ^
-  //        |          string_of_int (Time.toMilliseconds elapsed) ^ " ms"))
-  //        |
-  //        |        val spying_str_of_factss =
-  //        |          commas o map (fn (filter, facts) => filter ^ ": " ^ string_of_int (length facts))
-  //        |
-  //        |        fun get_factss provers =
-  //        |          let
-  //        |            val max_max_facts =
-  //        |              (case max_facts of
-  //        |                SOME n => n
-  //        |              | NONE =>
-  //        |                fold (fn prover =>
-  //        |                    fold (fn ((_, n, _), _) => Integer.max n) (get_slices ctxt prover))
-  //        |                  provers 0)
-  //        |              * 51 div 50  (* some slack to account for filtering of induction facts below *)
-  //        |
-  //        |            val ({elapsed, ...}, factss) = Timing.timing
-  //        |              (relevant_facts ctxt params (hd provers) max_max_facts fact_override hyp_ts concl_t)
-  //        |              all_facts
-  //        |
-  //        |            val induction_rules = the_default (if only then Include else Exclude) induction_rules
-  //        |            val factss = map (apsnd (maybe_filter_out_induction_rules induction_rules)) factss
-  //        |
-  //        |            val () = spying spy (fn () => (state, i, "All",
-  //        |              "Filtering facts in " ^ string_of_int (Time.toMilliseconds elapsed) ^
-  //        |              " ms (MaSh algorithm: " ^ str_of_mash_algorithm (the_mash_algorithm ()) ^ ")"));
-  //        |            val () = if verbose then print (string_of_factss factss) else ()
-  //        |            val () = spying spy (fn () =>
-  //        |              (state, i, "All", "Selected facts: " ^ spying_str_of_factss factss))
-  //        |          in
-  //        |            factss
-  //        |          end
-  //        |
-  //        |        fun launch_provers () =
-  //        |          let
-  //        |            val factss = get_factss provers
-  //        |            val problem =
-  //        |              {comment = "", state = state, goal = goal, subgoal = i, subgoal_count = n,
-  //        |               factss = factss, found_proof = found_proof}
-  //        |            val learn = ${Sledgehammer_MaSh}.mash_learn_proof ctxt params (Thm.prop_of goal)
-  //        |            val launch = launch_prover params mode writeln_result only learn
-  //        |            val schedule =
-  //        |              if mode = Auto_Try then provers
-  //        |              else schedule_of_provers provers slices
-  //        |            val prover_slices = prover_slices_of_schedule ctxt factss params schedule
-  //        |
-  //        |            val _ =
-  //        |              if verbose then
-  //        |                writeln ("Running " ^ commas (map fst prover_slices) ^ "...")
-  //        |              else
-  //        |                ()
-  //        |          in
-  //        |            if mode = ${Sledgehammer_Prover}.Auto_Try then
-  //        |              (SH_Unknown, "")
-  //        |              |> fold (fn (prover, slice) =>
-  //        |                   fn accum as (SH_Some _, _) => accum
-  //        |                     | _ => launch problem slice prover)
-  //        |                prover_slices
-  //        |            else
-  //        |              (learn chained_thms;
-  //        |               Par_List.map (fn (prover, slice) =>
-  //        |                   if Synchronized.value found_proofs < max_proofs then
-  //        |                     launch problem slice prover
-  //        |                   else
-  //        |                     (SH_None, ""))
-  //        |                  prover_slices
-  //        |                |> max_outcome)
-  //        |          end
-  //        |      in
-  //        |        (launch_provers ()
-  //        |         handle Timeout.TIMEOUT _ => (SH_Timeout, ""))
-  //        |        |> `(fn (outcome, message) =>
-  //        |          (case outcome of
-  //        |            SH_Some _ => (the_default writeln writeln_result "QED"; true)
-  //        |          | SH_Unknown => (the_default writeln writeln_result message; false)
-  //        |          | SH_Timeout => (the_default writeln writeln_result "No proof found"; false)
-  //        |          | SH_None => (the_default writeln writeln_result
-  //        |                (if message = "" then "No proof found" else "Warning: " ^ message);
-  //        |              false)))
-  //        |      end);
-  //        |
-  //        |    fun go_run (state, thy) = 
-  //        |        let
-  //        |          val p_state = Toplevel.proof_of state;
-  //        |          val ctxt = Proof.context_of p_state;
-  //        |          val params = ${Sledgehammer_Commands}.default_params thy
-  //        |                [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
-  //        |        in
-  //        |          run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state
-  //        |        end
-  //        |    in Timeout.apply (Time.fromSeconds 35) go_run (state, thy) end
-  //        |""".stripMargin
-  //   )
-
   val normal_with_Sledgehammer: MLFunction4[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))] = 
     compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
-      s""" fn (state, thy, adds, dels) => 
-         |    let
-         |       val override = {add=[],del=[],only=false};
-         |       fun go_run (state, thy) = 
+      s""" fn (state, thy, adds, dels) => let
+         | fun get_refs_and_token_lists (name) = (Facts.named name, []);
+         | val adds_refs_and_token_lists = map get_refs_and_token_lists adds;
+         | val dels_refs_and_token_lists = map get_refs_and_token_lists dels;
+         | val override = {add=adds_refs_and_token_lists,del=dels_refs_and_token_lists,only=false};
+         |
+         | val ordered_outcome_codes = [${Sledgehammer}.SH_Some, ${Sledgehammer}.SH_Unknown, ${Sledgehammer}.SH_Timeout, ${Sledgehammer}.SH_None];
+         |
+         | fun max_outcome_code codes =
+         |   NONE
+         |   |> fold (fn candidate =>
+         |       fn accum as SOME _ => accum
+         |        | NONE => if member (op =) codes candidate then SOME candidate else NONE)
+         |     ordered_outcome_codes
+         |   |> the_default ${Sledgehammer}.SH_Unknown;
+         |
+         | fun launch_prover (params as {debug, verbose, spy, max_facts, minimize, timeout, preplay_timeout,
+         |      expect, ...}) mode writeln_result only learn
+         |    {comment, state, goal, subgoal, subgoal_count, factss as (_, facts) :: _, found_proof} name =
+         |  let
+         |    val ctxt = Proof.context_of state
+         |
+         |    val hard_timeout = ${Sledgehammer_Util}.time_mult 5.0 timeout
+         |    val _ = ${Sledgehammer_Util}.spying spy (fn () => (state, subgoal, name, "Launched"));
+         |    val max_facts = max_facts |> the_default (${Sledgehammer_Prover_Minimize}.default_max_facts_of_prover ctxt name)
+         |    val num_facts = length facts |> not only ? Integer.min max_facts
+         |
+         |    val problem =
+         |      {comment = comment, state = state, goal = goal, subgoal = subgoal,
+         |       subgoal_count = subgoal_count,
+         |       factss = factss
+         |       |> map (apsnd ((not (${Sledgehammer_Prover_ATP}.is_ho_atp ctxt name)
+         |           ? filter_out (fn ((_, (_, Induction)), _) => true | _ => false))
+         |         #> take num_facts)),
+         |       found_proof = found_proof}
+         |
+         |    fun print_used_facts used_facts used_from =
+         |      tag_list 1 used_from
+         |      |> map (fn (j, fact) => fact |> apsnd (K j))
+         |      |> ${Sledgehammer_Prover}.filter_used_facts false used_facts
+         |      |> map (fn ((name, _), j) => name ^ "@" ^ string_of_int j)
+         |      |> commas
+         |      |> prefix ("Fact" ^ ${Sledgehammer_Util}.plural_s (length facts) ^ " in " ^ quote name ^
+         |        " proof (of " ^ string_of_int (length facts) ^ "): ")
+         |      |> writeln
+         |
+         |    fun spying_str_of_res ({outcome = NONE, used_facts, used_from, ...} : ${Sledgehammer_Prover}.prover_result) =
+         |        let
+         |          val num_used_facts = length used_facts
+         |
+         |          fun find_indices facts =
+         |            tag_list 1 facts
+         |            |> map (fn (j, fact) => fact |> apsnd (K j))
+         |            |> ${Sledgehammer_Prover}.filter_used_facts false used_facts
+         |            |> distinct (eq_fst (op =))
+         |            |> map (prefix "@" o string_of_int o snd)
+         |
+         |          fun filter_info (fact_filter, facts) =
+         |            let
+         |              val indices = find_indices facts
+         |              (* "Int.max" is there for robustness -- it shouldn't be necessary *)
+         |              val unknowns = replicate (Int.max (0, num_used_facts - length indices)) "?"
+         |            in
+         |              (commas (indices @ unknowns), fact_filter)
+         |            end
+         |
+         |          val filter_infos =
+         |            map filter_info (("actual", used_from) :: factss)
+         |            |> AList.group (op =)
+         |            |> map (fn (indices, fact_filters) => commas fact_filters ^ ": " ^ indices)
+         |        in
+         |          "Success: Found proof with " ^ string_of_int num_used_facts ^ " of " ^
+         |          string_of_int num_facts ^ " fact" ^ ${Sledgehammer_Util}.plural_s num_facts ^
+         |          (if num_used_facts = 0 then "" else ": " ^ commas filter_infos)
+         |        end
+         |      | spying_str_of_res {outcome = SOME failure, ...} =
+         |        "Failure: " ^ ${ATP_Proof}.string_of_atp_failure failure
+         |
+         |    fun really_go () =
+         |      problem
+         |      |> ${Sledgehammer_Prover_Minimize}.get_minimizing_prover ctxt mode learn name params
+         |      |> verbose ? tap (fn {outcome = NONE, used_facts as _ :: _, used_from, ...} =>
+         |          print_used_facts used_facts used_from
+         |        | _ => ())
+         |      |> spy ? tap (fn res => ${Sledgehammer_Util}.spying spy (fn () => (state, subgoal, name, spying_str_of_res res)))
+         |      |> (fn {outcome, used_facts, preferred_methss, message, ...} =>
+         |        (if outcome = SOME ${ATP_Proof}.TimedOut then ${Sledgehammer}.SH_Timeout
+         |         else if is_some outcome then ${Sledgehammer}.SH_None
+         |         else ${Sledgehammer}.SH_Some,
+         |         fn () => message (fn () => ${Sledgehammer}.play_one_line_proof minimize preplay_timeout used_facts state
+         |           subgoal preferred_methss)))
+         |
+         |    fun go () =
+         |      let
+         |        val (outcome_code, message) =
+         |          if debug then
+         |            really_go ()
+         |          else
+         |            (really_go ()
+         |             handle
+         |               ERROR msg => (${Sledgehammer}.SH_Unknown, fn () => "Error: " ^ msg ^ "\\n")
+         |             | exn =>
+         |               if Exn.is_interrupt exn then Exn.reraise exn
+         |               else (${Sledgehammer}.SH_Unknown, fn () => "Internal error:\\n" ^ Runtime.exn_message exn ^ "\\n"))
+         |
+         |        val _ =
+         |          (* The "expect" argument is deliberately ignored if the prover is
+         |             missing so that the "Metis_Examples" can be processed on any
+         |             machine. *)
+         |          if expect = "" orelse outcome_code = expect orelse
+         |             not (${Sledgehammer_Prover_Minimize}.is_prover_installed ctxt name) then
+         |            ()
+         |          else
+         |            error ("Unexpected outcome: " ^ quote outcome_code)
+         |      in (outcome_code, message) end
+         |  in
+         |    if mode = ${Sledgehammer_Prover}.Auto_Try then
+         |      let val (outcome_code, message) = Timeout.apply timeout go () in
+         |        (outcome_code, if outcome_code = ${Sledgehammer}.SH_Some then [message ()] else [])
+         |      end
+         |    else
+         |      let
+         |        val (outcome_code, message) = Timeout.apply hard_timeout go ()
+         |        val outcome =
+         |          if outcome_code = ${Sledgehammer}.SH_Some orelse mode = ${Sledgehammer_Prover}.Normal then quote name ^ ": " ^ message () else ""
+         |        val _ =
+         |          if outcome <> "" andalso is_some writeln_result then the writeln_result outcome
+         |          else writeln outcome
+         |      in (outcome_code, if outcome_code = ${Sledgehammer}.SH_Some then [message ()] else []) end
+         |  end;
+         |
+         |  fun run_sledgehammer (params as {verbose, spy, provers, induction_rules, max_facts, max_proofs,
+         |      slices, ...}) mode writeln_result i
+         |    (fact_override as {only, ...}) state =
+         |  if null provers then
+         |    error "No prover is set"
+         |  else
+         |    (case ${Sledgehammer_Util}.subgoal_count state of
+         |      0 => (error "No subgoal!"; (false, (${Sledgehammer}.SH_None, [])))
+         |    | n =>
+         |      let
+         |        val _ = Proof.assert_backward state
+         |        val print = if mode = ${Sledgehammer_Prover}.Normal andalso is_none writeln_result then writeln else K ()
+         |        
+         |        val found_proofs = Synchronized.var "found_proofs" 0
+         |
+         |        fun found_proof prover_name =
+         |          if mode = Normal then
+         |            (Synchronized.change found_proofs (fn n => n + 1);
+         |             (the_default writeln writeln_result) (prover_name ^ " found a proof..."))
+         |          else
+         |            ()
+         |
+         |        val ctxt = Proof.context_of state
+         |        val inst_inducts = induction_rules = SOME Instantiate
+         |        val {facts = chained, goal, ...} = Proof.goal state
+         |        val (_, hyp_ts, concl_t) = ${ATP_Util}.strip_subgoal goal i ctxt
+         |        val _ =
+         |          (case find_first (not o ${Sledgehammer_Prover_Minimize}.is_prover_supported ctxt) provers of
+         |            SOME name => error ("No such prover: " ^ name)
+         |          | NONE => ())
+         |        val _ = print "Sledgehammering..."
+         |        val _ = spying spy (fn () => (state, i, "***", "Starting " ^ str_of_mode mode ^ " mode"))
+         |        val ({elapsed, ...}, all_facts) = Timing.timing
+         |          (nearly_all_facts_of_context ctxt inst_inducts fact_override chained_thms hyp_ts) concl_t
+         |        val _ = spying spy (fn () => (state, i, "All",
+         |          "Extracting " ^ string_of_int (length all_facts) ^ " facts from background theory in " ^
+         |          string_of_int (Time.toMilliseconds elapsed) ^ " ms"))
+         |
+         |        val spying_str_of_factss =
+         |          commas o map (fn (filter, facts) => filter ^ ": " ^ string_of_int (length facts))
+         |
+         |        fun get_factss provers =
          |          let
-         |             val p_state = Toplevel.proof_of state;
-         |             val ctxt = Proof.context_of p_state;
-         |             val params = ${Sledgehammer_Commands}.default_params thy
-         |                [("provers", "e"),("timeout","30"),("verbose","true")];
-         |             val results = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state;
-         |             val (result, (outcome, step)) = results;
-         |           in
-         |             (result, (${Sledgehammer}.short_string_of_sledgehammer_outcome outcome, [step]))
-         |           end;
-         |    in 
-         |      Timeout.apply (Time.fromSeconds 35) go_run (state, thy) end
+         |            val max_max_facts =
+         |              (case max_facts of
+         |                SOME n => n
+         |              | NONE =>
+         |                fold (fn prover =>
+         |                    fold (fn ((_, n, _), _) => Integer.max n) (get_slices ctxt prover))
+         |                  provers 0)
+         |              * 51 div 50  (* some slack to account for filtering of induction facts below *)
+         |
+         |            val ({elapsed, ...}, factss) = Timing.timing
+         |              (relevant_facts ctxt params (hd provers) max_max_facts fact_override hyp_ts concl_t)
+         |              all_facts
+         |
+         |            val induction_rules = the_default (if only then Include else Exclude) induction_rules
+         |            val factss = map (apsnd (maybe_filter_out_induction_rules induction_rules)) factss
+         |
+         |            val () = spying spy (fn () => (state, i, "All",
+         |              "Filtering facts in " ^ string_of_int (Time.toMilliseconds elapsed) ^
+         |              " ms (MaSh algorithm: " ^ str_of_mash_algorithm (the_mash_algorithm ()) ^ ")"));
+         |            val () = if verbose then print (string_of_factss factss) else ()
+         |            val () = spying spy (fn () =>
+         |              (state, i, "All", "Selected facts: " ^ spying_str_of_factss factss))
+         |          in
+         |            factss
+         |          end
+         |
+         |        fun launch_provers () =
+         |          let
+         |            val factss = get_factss provers
+         |            val problem =
+         |              {comment = "", state = state, goal = goal, subgoal = i, subgoal_count = n,
+         |               factss = factss, found_proof = found_proof}
+         |            val learn = ${Sledgehammer_MaSh}.mash_learn_proof ctxt params (Thm.prop_of goal)
+         |            val launch = launch_prover params mode writeln_result only learn
+         |            val schedule =
+         |              if mode = Auto_Try then provers
+         |              else schedule_of_provers provers slices
+         |            val prover_slices = prover_slices_of_schedule ctxt factss params schedule
+         |
+         |            val _ =
+         |              if verbose then
+         |                writeln ("Running " ^ commas (map fst prover_slices) ^ "...")
+         |              else
+         |                ()
+         |          in
+         |            if mode = ${Sledgehammer_Prover}.Auto_Try then
+         |              (SH_Unknown, "")
+         |              |> fold (fn (prover, slice) =>
+         |                   fn accum as (SH_Some _, _) => accum
+         |                     | _ => launch problem slice prover)
+         |                prover_slices
+         |            else
+         |              (learn chained_thms;
+         |               Par_List.map (fn (prover, slice) =>
+         |                   if Synchronized.value found_proofs < max_proofs then
+         |                     launch problem slice prover
+         |                   else
+         |                     (SH_None, ""))
+         |                  prover_slices
+         |                |> max_outcome)
+         |          end
+         |      in
+         |        (launch_provers ()
+         |         handle Timeout.TIMEOUT _ => (SH_Timeout, ""))
+         |        |> `(fn (outcome, message) =>
+         |          (case outcome of
+         |            SH_Some _ => (the_default writeln writeln_result "QED"; true)
+         |          | SH_Unknown => (the_default writeln writeln_result message; false)
+         |          | SH_Timeout => (the_default writeln writeln_result "No proof found"; false)
+         |          | SH_None => (the_default writeln writeln_result
+         |                (if message = "" then "No proof found" else "Warning: " ^ message);
+         |              false)))
+         |      end);
+         |
+         |    fun go_run (state, thy) = 
+         |        let
+         |          val p_state = Toplevel.proof_of state;
+         |          val ctxt = Proof.context_of p_state;
+         |          val params = ${Sledgehammer_Commands}.default_params thy
+         |                [("provers", "z3 cvc4 spass vampire e"),("timeout","30"),("preplay_timeout","5"),("minimize","false"),("isar_proofs","false"),("smt_proofs","true"),("learn","false")];
+         |        in
+         |          run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state
+         |        end
+         |    in Timeout.apply (Time.fromSeconds 35) go_run (state, thy) end
          |""".stripMargin
     )
+
+  // val normal_with_Sledgehammer: MLFunction4[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))] = 
+  //   compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
+  //     s""" fn (state, thy, adds, dels) => 
+  //        |    let
+  //        |       val override = {add=[],del=[],only=false};
+  //        |       fun go_run (state, thy) = 
+  //        |          let
+  //        |             val p_state = Toplevel.proof_of state;
+  //        |             val ctxt = Proof.context_of p_state;
+  //        |             val params = ${Sledgehammer_Commands}.default_params thy
+  //        |                [("provers", "e"),("timeout","30"),("verbose","true")];
+  //        |             val results = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state;
+  //        |             val (result, (outcome, step)) = results;
+  //        |           in
+  //        |             (result, (${Sledgehammer}.short_string_of_sledgehammer_outcome outcome, [step]))
+  //        |           end;
+  //        |    in 
+  //        |      Timeout.apply (Time.fromSeconds 35) go_run (state, thy) end
+  //        |""".stripMargin
+  //   )
 
   var toplevel: ToplevelState = init_toplevel().force.retrieveNow
   println("Checkpoint 12")
