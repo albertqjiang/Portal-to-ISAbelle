@@ -641,7 +641,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |             val p_state = Toplevel.proof_of state;
          |             val ctxt = Proof.context_of p_state;
          |             val params = ${Sledgehammer_Commands}.default_params thy
-         |                [("provers", "z3"),("timeout","30"),("verbose","true")];
+         |                [("provers", "e"),("timeout","30"),("verbose","true")];
          |             val results = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state;
          |             val (result, (outcome, step)) = results;
          |           in
