@@ -596,7 +596,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |                     | _ => launch problem slice prover)
          |                prover_slices
          |            else
-         |              (val _ = learn chained_thms;
+         |              (learn chained_thms;
          |               Par_List.map (fn (prover, slice) =>
          |                   if Synchronized.value found_proofs < max_proofs then
          |                     launch problem slice prover
