@@ -635,6 +635,10 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
       s""" fn (state, thy, adds, dels) => 
          |    let 
+         |       fun get_refs_and_token_lists (name) = (Facts.named name, []);
+         |       val adds_refs_and_token_lists = map get_refs_and_token_lists adds;
+         |       val dels_refs_and_token_lists = map get_refs_and_token_lists dels;
+         |       val override = {add=adds_refs_and_token_lists,del=dels_refs_and_token_lists,only=false};
          |       fun go_run (state, thy) = 
          |          let
          |             val p_state = Toplevel.proof_of state;
