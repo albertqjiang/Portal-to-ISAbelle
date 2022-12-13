@@ -530,7 +530,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
          |        val _ =
          |          (case find_first (not o ${Sledgehammer_Prover_Minimize}.is_prover_supported ctxt) provers of
          |            SOME name => error ("No such prover: " ^ name)
-         |          NONE => ())
+         |          | NONE => ())
          |        val _ = print "Sledgehammering..."
          |        val _ = spying spy (fn () => (state, i, "***", "Starting " ^ str_of_mode mode ^ " mode"))
          |        val ({elapsed, ...}, all_facts) = Timing.timing
