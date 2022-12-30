@@ -1,6 +1,6 @@
 package pisa.agent
 
-import pisa.utils.NewManager
+import pisa.utils.TheoryManager
 
 import de.unruh.isabelle.control.Isabelle
 import de.unruh.isabelle.control.Isabelle.Setup
@@ -23,15 +23,14 @@ object Transition extends AdHocConverter("Toplevel.transition")
 object RepHammer {
   val isabelleHome: Path = Paths.get("/Applications/Isabelle2022.app")
   val setup: Setup = Setup(isabelleHome = isabelleHome)
-  val theoryManager: NewManager = new NewManager {
-    override def getTheorySource(name: String): NewManager.Source = super.getTheorySource(name)
-    override def getHeader(source: NewManager.Source)(implicit isabelle: Isabelle): TheoryHeader = super.getHeader(source)
-  }
-
+  val theoryManager: TheoryManager = new TheoryManager(
+    path_to_isa_bin="/Applications/Isabelle2022.app",
+    wd="/Applications/Isabelle2022.app/src/HOL"
+  )
   def main(args: Array[String]): Unit = {
     implicit val isabelle: Isabelle = new Isabelle(setup)
 
-    val theorySource = NewManager.Text(
+    val theorySource = TheoryManager.Text(
       """ theory Test imports Main begin lemma test: "1+1=(2::nat)" """,
       Paths.get("Test.thy").toAbsolutePath)
 

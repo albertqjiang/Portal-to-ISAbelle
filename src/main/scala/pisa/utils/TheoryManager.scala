@@ -29,8 +29,7 @@ class TheoryManager(var path_to_isa_bin: String, var wd : String) {
     build=false
   )
   implicit val isabelle: Isabelle = new Isabelle(setup)
-  implicit val ec: ExecutionContext = ExecutionContext.global
-
+  
   val command_exception: MLFunction3[Boolean, Transition.T, ToplevelState, ToplevelState] =
     compileFunction[Boolean, Transition.T, ToplevelState, ToplevelState](
     "fn (int, tr, st) => Toplevel.command_exception int tr st")
@@ -49,7 +48,7 @@ class TheoryManager(var path_to_isa_bin: String, var wd : String) {
   val toplevel_end_theory: MLFunction[ToplevelState, Theory] = compileFunction[ToplevelState, Theory]("Toplevel.end_theory Position.none")
 
   def getTheorySource(name: String): Source = Heap(name)
-  def getTheory(source: Source)(implicit isabelle: Isabelle, ec: ExecutionContext): Theory = source match {
+  def getTheory(source: Source)(implicit isabelle: Isabelle): Theory = source match {
     case Heap(name) => Theory(name)
     case Text(text, path, position) =>
       var toplevel = init_toplevel().force.retrieveNow
@@ -60,13 +59,13 @@ class TheoryManager(var path_to_isa_bin: String, var wd : String) {
       toplevel_end_theory(toplevel).retrieveNow.force
   }
 
-  def beginTheory(source: Source)(implicit isabelle: Isabelle, ec: ExecutionContext): Theory = {
+  def beginTheory(source: Source)(implicit isabelle: Isabelle): Theory = {
     val header = getHeader(source)
     val masterDir = source.path.getParent
-    println(masterDir, header, header.imports.map(getTheorySource).map(getTheory))
+    // println(masterDir, header, header.imports.map(getTheorySource).map(getTheory))
     Ops.begin_theory(masterDir, header, header.imports.map(getTheorySource).map(getTheory)).retrieveNow
   }
-  def getHeader(source: Source)(implicit isabelle: Isabelle, ec: ExecutionContext): TheoryHeader = source match {
+  def getHeader(source: Source)(implicit isabelle: Isabelle): TheoryHeader = source match {
     case Text(text, path, position) => Ops.header_read(text, position).retrieveNow
   }
 }
