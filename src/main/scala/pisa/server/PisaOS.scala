@@ -631,26 +631,26 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
   //        |""".stripMargin
   //   )
 
-  val normal_with_Sledgehammer: MLFunction4[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))] = 
-    compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
-      s""" fn (state, thy, adds, dels) => 
-         |    let
-         |       val override = {add=[],del=[],only=false};
-         |       fun go_run (state, thy) = 
-         |          let
-         |             val p_state = Toplevel.proof_of state;
-         |             val ctxt = Proof.context_of p_state;
-         |             val params = ${Sledgehammer_Commands}.default_params thy
-         |                [("provers", "e"),("timeout","30"),("verbose","true")];
-         |             val results = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state;
-         |             val (result, (outcome, step)) = results;
-         |           in
-         |             (result, (${Sledgehammer}.short_string_of_sledgehammer_outcome outcome, [step]))
-         |           end;
-         |    in 
-         |      Timeout.apply (Time.fromSeconds 35) go_run (state, thy) end
-         |""".stripMargin
-    )
+  // val normal_with_Sledgehammer: MLFunction4[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))] = 
+  //   compileFunction[ToplevelState, Theory, List[String], List[String], (Boolean, (String, List[String]))](
+  //     s""" fn (state, thy, adds, dels) => 
+  //        |    let
+  //        |       val override = {add=[],del=[],only=false};
+  //        |       fun go_run (state, thy) = 
+  //        |          let
+  //        |             val p_state = Toplevel.proof_of state;
+  //        |             val ctxt = Proof.context_of p_state;
+  //        |             val params = ${Sledgehammer_Commands}.default_params thy
+  //        |                [("provers", "e"),("timeout","30"),("verbose","true")];
+  //        |             val results = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state;
+  //        |             val (result, (outcome, step)) = results;
+  //        |           in
+  //        |             (result, (${Sledgehammer}.short_string_of_sledgehammer_outcome outcome, [step]))
+  //        |           end;
+  //        |    in 
+  //        |      Timeout.apply (Time.fromSeconds 35) go_run (state, thy) end
+  //        |""".stripMargin
+  //   )
 
   var toplevel: ToplevelState = init_toplevel().force.retrieveNow
   println("Checkpoint 12")
@@ -773,13 +773,13 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     getStateString
   }
 
-  def normal_with_hammer(top_level_state: ToplevelState, added_names: List[String], deleted_names: List[String], timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
-    val f_res: Future[(Boolean, List[String])] = Future.apply {
-      val first_result = normal_with_Sledgehammer(top_level_state, thy1, added_names, deleted_names).force.retrieveNow
-      (first_result._1, first_result._2._2)
-    }
-    Await.result(f_res, Duration(timeout_in_millis, "millis"))
-  }
+  // def normal_with_hammer(top_level_state: ToplevelState, added_names: List[String], deleted_names: List[String], timeout_in_millis: Int = 35000): (Boolean, List[String]) = {
+  //   val f_res: Future[(Boolean, List[String])] = Future.apply {
+  //     val first_result = normal_with_Sledgehammer(top_level_state, thy1, added_names, deleted_names).force.retrieveNow
+  //     (first_result._1, first_result._2._2)
+  //   }
+  //   Await.result(f_res, Duration(timeout_in_millis, "millis"))
+  // }
 
   println("Checkpoint 13")
   val transitions_and_texts = parse_text(thy1, fileContent).force.retrieveNow

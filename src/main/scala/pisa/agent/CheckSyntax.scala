@@ -48,30 +48,31 @@ class CheckSyntax(path_to_isa_bin: String, path_to_file: String, working_directo
     try {
       for ((_, text) <- parse_text(thy, theorem_string).force.retrieveNow) {
         if (text.trim.isEmpty) {}
-        else if (text.trim == "sledgehammer") {
-          val hammer_results = pisaos.normal_with_hammer(trial_state, List[String](), List[String](), 60000)
-          val hammered_string = {
-            if (hammer_results._1) {
-              val hammer_strings = hammer_results._2
-              var found = false
-              var real_string = ""
-              for (attempt_string <- hammer_strings) {
-                if (!found && (attempt_string contains "Try this:")) {
-                  found = true
-                  real_string = attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString("(")
-                }
-              }
-              if (found) real_string
-              else throw IsabelleException("Hammered said it worked but didn't find proof.")
-            } else {
-              throw IsabelleException("Hammer failed")
-            }
-          }.trim
-          trial_state = step(hammered_string, trial_state, 20000)
-          stateActionTotal = stateActionTotal + (current_state_string + "<\\STATESEP>" + hammered_string.trim + "<\\STATESEP>" + s"$current_proof_level" + "<\\TRANSEP>")
-          current_state_string = pisaos.getStateString(trial_state)
-          current_proof_level = pisaos.getProofLevel(trial_state)
-        } else {
+        // else if (text.trim == "sledgehammer") {
+        //   val hammer_results = pisaos.normal_with_hammer(trial_state, List[String](), List[String](), 60000)
+        //   val hammered_string = {
+        //     if (hammer_results._1) {
+        //       val hammer_strings = hammer_results._2
+        //       var found = false
+        //       var real_string = ""
+        //       for (attempt_string <- hammer_strings) {
+        //         if (!found && (attempt_string contains "Try this:")) {
+        //           found = true
+        //           real_string = attempt_string.trim.stripPrefix("Try this:").trim.split('(').dropRight(1).mkString("(")
+        //         }
+        //       }
+        //       if (found) real_string
+        //       else throw IsabelleException("Hammered said it worked but didn't find proof.")
+        //     } else {
+        //       throw IsabelleException("Hammer failed")
+        //     }
+        //   }.trim
+        //   trial_state = step(hammered_string, trial_state, 20000)
+        //   stateActionTotal = stateActionTotal + (current_state_string + "<\\STATESEP>" + hammered_string.trim + "<\\STATESEP>" + s"$current_proof_level" + "<\\TRANSEP>")
+        //   current_state_string = pisaos.getStateString(trial_state)
+        //   current_proof_level = pisaos.getProofLevel(trial_state)
+        // } 
+        else {
           trial_state = step(text, trial_state)
           stateActionTotal = stateActionTotal + (current_state_string + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$current_proof_level" + "<\\TRANSEP>")
           current_state_string = pisaos.getStateString(trial_state)
