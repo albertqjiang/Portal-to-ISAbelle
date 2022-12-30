@@ -20,7 +20,7 @@ import sys.process._
 // Implicits
 import de.unruh.isabelle.mlvalue.Implicits._
 import de.unruh.isabelle.pure.Implicits._
-import de.unruh.isabelle.control.IsabelleException
+import de.unruh.isabelle.control.IsabelleMLException
 
 object Transition extends AdHocConverter("Toplevel.transition")
 
@@ -726,7 +726,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   def parse: String = parseStateAction(fileContent)
 
-  @throws(classOf[IsabelleException])
+  @throws(classOf[IsabelleMLException])
   @throws(classOf[TimeoutException])
   def step(isar_string: String, top_level_state: ToplevelState, timeout_in_millis: Int = 2000): ToplevelState = {
     println("Begin step")
@@ -831,9 +831,13 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
 
   def clone_tls(old_name: String, new_name: String): Unit = top_level_state_map += (new_name -> top_level_state_map(old_name))
 
-  def clone_tls_scala(tls_scala: ToplevelState): ToplevelState = ToplevelState.instantiate(tls_scala.mlValue)
+  def _clone_tls_scala(tls_scala: ToplevelState): Future[ToplevelState] = ToplevelState.converter.retrieve(tls_scala.mlValue)
 
+  def clone_tls_scala(tls_scala: ToplevelState): ToplevelState = Await.result(_clone_tls_scala(tls_scala), Duration.Inf)
+  
   def register_tls(name: String, tls: ToplevelState): Unit = top_level_state_map += (name -> tls.mlValue)
 
-  def retrieve_tls(tls_name: String): ToplevelState = ToplevelState.instantiate(top_level_state_map(tls_name))
+  def _retrieve_tls(tls_name: String): Future[ToplevelState] = ToplevelState.converter.retrieve(top_level_state_map(tls_name))
+
+  def retrieve_tls(tls_name: String): ToplevelState = Await.result(_retrieve_tls(tls_name), Duration.Inf)
 }

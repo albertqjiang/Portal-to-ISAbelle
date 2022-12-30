@@ -17,7 +17,8 @@ libraryDependencies ++= Seq(
 )
 // libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/large_experiments/theorem/aqj/third_party_software/Portal-to-ISAbelle/lib/scala-isabelle_2.13.jar"// development snapshot
 // libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/Users/qj213/Projects/Portal-to-ISAbelle/lib/scala-isabelle_2.13.jar"// development snapshot
-libraryDependencies += "de.unruh" %% "scala-isabelle" % "0.4.1"  // release
+// libraryDependencies += "de.unruh" %% "scala-isabelle" % "0.4.1"  // release
+libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT"
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.3"

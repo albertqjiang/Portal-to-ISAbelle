@@ -10,7 +10,7 @@ import io.grpc.Status
 import zio.{ZEnv, ZIO}
 import pisa.server.ZioServer.ZServer
 import de.unruh.isabelle.pure.{Theory, ToplevelState}
-import de.unruh.isabelle.control.IsabelleException
+import de.unruh.isabelle.control.IsabelleMLException
 import de.unruh.isabelle.mlvalue.MLValue
 import de.unruh.isabelle.control.Isabelle
 import de.unruh.isabelle.pure.Implicits._
@@ -339,7 +339,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
             println("Start dealing")
             deal_with_apply_to_tls(tls_name, action, new_name)
           } catch {
-            case e: IsabelleException => {
+            case e: IsabelleMLException => {
               println("Action: " + action)
               println("IsabelleException: " + e.getMessage + "\n")
               "Step error: " + e.getMessage
