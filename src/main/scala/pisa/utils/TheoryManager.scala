@@ -85,6 +85,8 @@ object TheoryManager extends OperationCollection {
 
   //noinspection TypeAnnotation
   protected final class Ops(implicit isabelle: Isabelle) {
+    implicit val ec = isabelle.executionContext
+    
     val header_read = compileFunction[String, Position, TheoryHeader]("fn (text,pos) => Thy_Header.read pos text")
     val begin_theory = compileFunction[Path, TheoryHeader, List[Theory], Theory](
       "fn (path, header, parents) => Resources.begin_theory path header parents")
