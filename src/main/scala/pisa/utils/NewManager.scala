@@ -24,7 +24,7 @@ object Transition extends AdHocConverter("Toplevel.transition")
 class NewManager {
   def getTheorySource(name: String): Source = Heap(name)
   def getTheory(source: Source)(implicit isabelle: Isabelle): Theory = {
-    implicit val ec: ExecutionContext = isabelle.executionContext
+    implicit val ec: ExecutionContext = ExecutionContext.global
 
     val init_toplevel: MLFunction0[ToplevelState] = compileFunction0[ToplevelState]("Toplevel.init_toplevel")
     val parse_text: MLFunction2[Theory, String, List[(Transition.T, String)]] =
@@ -58,15 +58,19 @@ class NewManager {
   def beginTheory(source: Source)(implicit isabelle: Isabelle): Theory = {
     val header = getHeader(source)
     val masterDir = source.path.getParent
+    implicit val ec: ExecutionContext = ExecutionContext.global
     Ops.begin_theory(masterDir, header, header.imports.map(getTheorySource).map(getTheory)).retrieveNow
   }
-  def getHeader(source: Source)(implicit isabelle: Isabelle): TheoryHeader = source match {
-    case Text(text, path, position) => Ops.header_read(text, position).retrieveNow
+  def getHeader(source: Source)(implicit isabelle: Isabelle): TheoryHeader = {
+    implicit val ec: ExecutionContext = ExecutionContext.global
+    source match {
+      case Text(text, path, position) => Ops.header_read(text, position).retrieveNow
+    }
   }
 }
 
 object NewManager extends OperationCollection {
-
+  implicit val ec: ExecutionContext = ExecutionContext.global
   trait Source { def path : Path }
   case class Heap(name: String) extends Source {
     override def path: Path = Paths.get("INVALID")
@@ -79,10 +83,13 @@ object NewManager extends OperationCollection {
 
   //noinspection TypeAnnotation
   protected final class Ops(implicit isabelle: Isabelle) {
+    implicit val ec: ExecutionContext = ExecutionContext.global
     val header_read = compileFunction[String, Position, TheoryHeader]("fn (text,pos) => Thy_Header.read pos text")
     val begin_theory = compileFunction[Path, TheoryHeader, List[Theory], Theory](
       "fn (path, header, parents) => Resources.begin_theory path header parents")
   }
 
-  override protected def newOps(implicit isabelle: Isabelle) = new this.Ops
+  override protected def newOps(implicit isabelle: Isabelle, ec: ExecutionContext) = {
+    new this.Ops
+  }
 }

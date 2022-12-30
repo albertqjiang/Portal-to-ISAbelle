@@ -72,7 +72,7 @@ class TheoryManager(var path_to_isa_bin: String, var wd : String) {
 }
 
 object TheoryManager extends OperationCollection {
-
+  implicit val ec: ExecutionContext = ExecutionContext.global
   trait Source { def path : Path }
   case class Heap(name: String) extends Source {
     override def path: Path = Paths.get("INVALID")
@@ -85,12 +85,13 @@ object TheoryManager extends OperationCollection {
 
   //noinspection TypeAnnotation
   protected final class Ops(implicit isabelle: Isabelle) {
-    implicit val ec: ExecutionContext = isabelle.executionContext
-    
+    implicit val ec: ExecutionContext = ExecutionContext.global
     val header_read = compileFunction[String, Position, TheoryHeader]("fn (text,pos) => Thy_Header.read pos text")
     val begin_theory = compileFunction[Path, TheoryHeader, List[Theory], Theory](
       "fn (path, header, parents) => Resources.begin_theory path header parents")
   }
 
-  override protected def newOps(implicit isabelle: Isabelle) = new this.Ops
+  override protected def newOps(implicit isabelle: Isabelle, ec: ExecutionContext) = {
+    new this.Ops
+  }
 }
