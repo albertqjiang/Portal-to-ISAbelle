@@ -16,7 +16,7 @@ import de.unruh.isabelle.pure.Implicits._
 
 object Transition extends AdHocConverter("Toplevel.transition")
 
-object SledgehammerExperiment {
+object RepHammer {
   val isabelleHome: Path = Paths.get("/opt/Isabelle2022")
 
   val setup: Setup = Setup(isabelleHome = isabelleHome)
