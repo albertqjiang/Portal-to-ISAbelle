@@ -2,34 +2,29 @@ package pisa.server
 
 import util.control.Breaks
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException, blocking}
+import scala.concurrent.duration.Duration
+import scala.util.{Success, Failure}
+import sys.process._
 import _root_.java.nio.file.{Files, Path}
 import _root_.java.io.File
+
 import de.unruh.isabelle.control.Isabelle
 import de.unruh.isabelle.mlvalue.{AdHocConverter, MLFunction, MLFunction0, MLFunction2, MLFunction3, MLFunction4, MLValue, MLValueWrapper}
 import de.unruh.isabelle.mlvalue.MLValue.{compileFunction, compileFunction0, compileValue}
 import de.unruh.isabelle.pure.{Context, Position, Theory, TheoryHeader, ToplevelState}
+
 import pisa.utils.TheoryManager
 import pisa.utils.TheoryManager.{Ops, Source, Text}
-
-import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException, blocking}
-import scala.concurrent.duration.Duration
-import scala.util.{Success, Failure}
-
-import sys.process._
-
 // Implicits
 import de.unruh.isabelle.mlvalue.Implicits._
 import de.unruh.isabelle.pure.Implicits._
 import de.unruh.isabelle.control.IsabelleMLException
 
 object Transition extends AdHocConverter("Toplevel.transition")
-
 object ProofState extends AdHocConverter("Proof.state")
-
 object RuntimeError extends AdHocConverter("Runtime.error")
-
 object Pretty extends AdHocConverter("Pretty.T")
-
 object ProofContext extends AdHocConverter("Proof_Context.T")
 
 class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_directory: String, var use_Sledgehammer: Boolean = false) {
