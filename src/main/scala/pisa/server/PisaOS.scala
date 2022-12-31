@@ -116,7 +116,7 @@ class PisaOS(var path_to_isa_bin: String, var path_to_file: String, var working_
     "fn (thy) => map Context.theory_name (Context.ancestors_of thy)"
   )
   val toplevel_string_of_state: MLFunction[ToplevelState, String] = compileFunction[ToplevelState, String](
-    "Toplevel.string_of_state |> YXML.content_of")
+    "fn (s) => YXML.content_of (Toplevel.string_of_state s)")
   val pretty_local_facts: MLFunction2[ToplevelState, Boolean, List[Pretty.T]] = compileFunction[ToplevelState, Boolean, List[Pretty.T]](
     "fn (tls, b) => Proof_Context.pretty_local_facts b (Toplevel.context_of tls)"
   )
