@@ -7,7 +7,7 @@ This particular file is adapted from https://github.com/dominique-unruh/scala-is
 package pisa.utils
 
 import java.nio.file.{Path, Paths}
-import scala.concurrent.ExecutionContext
+// import scala.concurrent.ExecutionContext
 import de.unruh.isabelle.control.{Isabelle, OperationCollection}
 import de.unruh.isabelle.mlvalue.MLValue.{compileFunction, compileFunction0}
 import de.unruh.isabelle.pure.{Position, Theory, TheoryHeader, ToplevelState}
@@ -19,6 +19,7 @@ import TheoryManager.Ops
 // Implicits
 import de.unruh.isabelle.mlvalue.Implicits._
 import de.unruh.isabelle.pure.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class TheoryManager(var path_to_isa_bin: String, var wd : String) {
   val setup: Isabelle.Setup = Isabelle.Setup(isabelleHome = Path.of(path_to_isa_bin),
@@ -88,7 +89,7 @@ object TheoryManager extends OperationCollection {
       "fn (path, header, parents) => Resources.begin_theory path header parents")
   }
 
-  override protected def newOps(implicit isabelle: Isabelle) = {
+  override protected def newOps(implicit isabelle: Isabelle, ec: scala.concurrent.ExecutionContext) = {
     new this.Ops
   }
 }

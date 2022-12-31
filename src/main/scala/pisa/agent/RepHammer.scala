@@ -16,6 +16,7 @@ import java.nio.file.{Path, Paths}
 
 import de.unruh.isabelle.mlvalue.Implicits._
 import de.unruh.isabelle.pure.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object Transition extends AdHocConverter("Toplevel.transition")
 
