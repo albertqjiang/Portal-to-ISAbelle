@@ -28,9 +28,8 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
     ```shell
     git clone https://github.com/albertqjiang/Portal-to-ISAbelle.git
     cd Portal-to-ISAbelle
+    git checkout Isabelle2022
     ```
-    Go into the file build.sbt and change the $PWD on line 19 with the actual path of the current working directory, such that we have the absolute path of the scala-isabelle jar file. For example, the line should look like:
-    libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/home/aqj/Portal-to-ISAbelle/lib/scala-isabelle_2.13.jar".
 
     Then compile the project:
     ```shell
