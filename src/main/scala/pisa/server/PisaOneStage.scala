@@ -33,7 +33,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     isaPath = isa_path.path
     ZIO.succeed(
       IsaMessage(
-        s"***Path to Isabelle source***\n${isa_path.path}\n*********"
+        s"----------Path to Isabelle source----------\n${isa_path.path}"
       )
     )
   }
@@ -44,7 +44,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     isaWorkingDirectory = isa_working_directory.path
     ZIO.succeed(
       IsaMessage(
-        s"***Path to Isabelle working directory***\n${isaWorkingDirectory}\n*********"
+        s"----------Path to Isabelle working directory----------\n${isaWorkingDirectory}"
       )
     )
   }
@@ -61,7 +61,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     stand_in_tls = pisaos.copy_tls
     ZIO.succeed(
       IsaMessage(
-        s"***Path to Isabelle theory file***\n${path_to_file.context}\n*********"
+        s"----------Path to Isabelle theory file----------\n${path_to_file.context}"
       )
     )
   }
