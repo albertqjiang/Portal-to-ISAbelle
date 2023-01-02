@@ -89,9 +89,9 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     pisaos.top_level_state_map.keys.mkString(" | ")
 
   def deal_with_initialise(): String = {
-    println("Intialising the problem...")
+    print("Intialising the problem...")
     pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
-    println("Intialised...")
+    println(" Intialised!")
     "Toplevel state 'default' is ready"
   }
 
@@ -360,7 +360,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val new_name: String =
           isa_command.command.split("<apply to top level state>")(3).trim
         try {
-          println(s"Start applying action ${action} to top level state ${tls_name}")
+          println(s"Start applying action '${action}' to top level state '${tls_name}'")
           deal_with_apply_to_tls(tls_name, action, new_name)
         } catch {
           case e: IsabelleMLException => {
