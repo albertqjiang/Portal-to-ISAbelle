@@ -7,8 +7,8 @@ import grpc
 from copy import copy
 from func_timeout import func_set_timeout
 
-import server_pb2
-import server_pb2_grpc
+from pb_generated import server_pb2
+from pb_generated import server_pb2_grpc
 
 MAX_MESSAGE_LENGTH = 10485760
 
@@ -20,7 +20,7 @@ def create_stub(port=9000):
     return server_pb2_grpc.ServerStub(channel)
 
 
-def initialise_env(port, isa_path, theory_file_path=None, working_directory=None):
+def initialise_env(port, isa_path, theory_file_path, working_directory):
     return PisaEnv(port=port, isa_path=isa_path, starter_string=theory_file_path, working_directory=working_directory)
 
 

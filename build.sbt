@@ -42,6 +42,8 @@ libraryDependencies += "com.ibm.icu" % "icu4j" % "70.1"
 assemblyMergeStrategy in assembly := {
     case x if x.contains("io.netty.versions.properties") => MergeStrategy.discard
     case x if x.contains("de/unruh") => MergeStrategy.first
+    case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+    case x if x.contains("META-INF") => MergeStrategy.discard
     case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
