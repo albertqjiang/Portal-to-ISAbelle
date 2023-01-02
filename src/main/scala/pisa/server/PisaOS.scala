@@ -516,7 +516,7 @@ class PisaOS(
             |             val p_state = Toplevel.proof_of state;
             |             val ctxt = Proof.context_of p_state;
             |             val params = ${Sledgehammer_Commands}.default_params thy
-            |                [("provers", "e"),("timeout","30"),("verbose","true")];
+            |                [("provers", "cvc5 vampire verit e spass z3 zipperposition"),("timeout","30"),("verbose","true")];
             |             val results = ${Sledgehammer}.run_sledgehammer params ${Sledgehammer_Prover}.Normal NONE 1 override p_state;
             |             val (result, (outcome, step)) = results;
             |           in
