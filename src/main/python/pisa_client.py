@@ -95,7 +95,7 @@ class PisaEnv:
         obs_string = "Step error"
         try:
             obs_string = self.post(f"<apply to top level state> {tls_name} <apply to top level state> {action} <apply to top level state> {new_name}")
-            print(obs_string)
+            # print(obs_string)
         except Exception as e:
             print("***Something went wrong***")
             print(e)
@@ -124,9 +124,9 @@ class PisaEnv:
         assert before_after in ["before", "after"]
         try:
             command = f"<proceed {before_after}> {line_stirng}"
-            print(command)
+            # print(command)
             message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=command)).state
-            print(message)
+            # print(message)
         except Exception as e:
             print("Failure to proceed before line")
             print(e)
