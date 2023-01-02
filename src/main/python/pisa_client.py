@@ -7,8 +7,8 @@ import grpc
 from copy import copy
 from func_timeout import func_set_timeout
 
-from pb_generated import server_pb2
-from pb_generated import server_pb2_grpc
+import server_pb2
+import server_pb2_grpc
 
 MAX_MESSAGE_LENGTH = 10485760
 
