@@ -33,8 +33,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     isaPath = isa_path.path
     ZIO.succeed(
       IsaMessage(
-        s"You entered the path to the Isabelle executable: ${isa_path.path} \n" +
-          s"We have successfully received it."
+        s"***Path to Isabelle source***\n${isa_path.path}\n*********"
       )
     )
   }
@@ -45,8 +44,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     isaWorkingDirectory = isa_working_directory.path
     ZIO.succeed(
       IsaMessage(
-        s"You entered the path to the Isabelle working directory: ${isaWorkingDirectory} " +
-          s"We have successfully received it."
+        s"***Path to Isabelle working directory***\n${isaWorkingDirectory}\n*********"
       )
     )
   }
@@ -63,8 +61,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     stand_in_tls = pisaos.copy_tls
     ZIO.succeed(
       IsaMessage(
-        s"You entered the path to the Theory file: ${path_to_file.context} \n" +
-          s"We have successfully initialised the Isabelle environment."
+        s"***Path to Isabelle theory file***\n${path_to_file.context}\n*********"
       )
     )
   }
@@ -155,39 +152,17 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     val actual_step: String =
       try {
         val total_result = hammer_method(old_state, 40000)
-        println(total_result)
+        // println(total_result)
         val success = total_result._1
         if (success) {
-          println("Hammer string list: " + total_result._2.mkString(" ||| "))
+          // println("Hammer string list: " + total_result._2.mkString(" ||| "))
           val tentative_step = process_hammer_strings(total_result._2)
-          println("actual_step: " + tentative_step)
+          // println("actual_step: " + tentative_step)
           tentative_step
         } else {
           ERROR_MSG
         }
       } catch {
-        case _: TimeoutException => {
-          println("Sledgehammer timeout 1")
-          try {
-            val total_result = hammer_method(old_state, 5000)
-            val success = total_result._1
-            if (success) {
-              println(
-                "Hammer string list: " + total_result._2.mkString(" ||| ")
-              )
-              val tentative_step = process_hammer_strings(total_result._2)
-              println("actual_step: " + tentative_step)
-              tentative_step
-            } else {
-              ERROR_MSG
-            }
-          } catch {
-            case e: TimeoutException => {
-              println("Sledgehammer timeout 2")
-              return s"$ERROR_MSG: ${e.getMessage}"
-            }
-          }
-        }
         case e: Exception => {
           println("Exception while trying to run sledgehammer: " + e.getMessage)
           e.getMessage
@@ -385,7 +360,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val new_name: String =
           isa_command.command.split("<apply to top level state>")(3).trim
         try {
-          println("Start dealing")
+          println(s"Start applying action ${action} to top level state ${tls_name}")
           deal_with_apply_to_tls(tls_name, action, new_name)
         } catch {
           case e: IsabelleMLException => {
@@ -461,7 +436,7 @@ object PisaOneStage {
     //    val parsed : String = pisaos.step("PISA extract data")
     val parsed: String = pisaos.step("PISA extract data")
     //    val parsed : String = pisaos.step_to_transition_text(theorem_name)
-    println(parsed)
+    // println(parsed)
     //    println(pisaos.step("by(simp add: delta_conv_steps accepts_def)"))
   }
 }
@@ -482,7 +457,7 @@ object PisaMini {
       """theorem aime_1983_p9: fixes x::real assumes "0<x" "x<pi" shows "12 \<le> ((9 * (x^2 * (sin x)^2)) + 4) / (x * sin x)"""".stripMargin
     val parsed: String = pisaos.step("PISA extract data")
     //    val parsed : String = pisaos.step_to_transition_text(theorem_name)
-    println(parsed)
+    // println(parsed)
     //    println(pisaos.step("by(simp add: delta_conv_steps accepts_def)"))
   }
 }
