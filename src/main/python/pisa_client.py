@@ -49,7 +49,7 @@ class PisaEnv:
             print(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string)).message)
             self.successful_starting = True
         except Exception as e:
-            print("Failure at initialising Isabelle process. "
+            print("Failure at initialising Isabelle process.\n"
                   "Make sure the path your provide is where the Isabelle executable is.")
             print(e)
         return f"Starting is successful: {self.successful_starting}"
