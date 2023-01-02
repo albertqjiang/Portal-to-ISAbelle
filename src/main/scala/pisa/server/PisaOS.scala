@@ -380,9 +380,9 @@ class PisaOS(
       } else registers += theory_name
     }
     if (debug) println("Checkpoint 9_5")
-    println(masterDir)
-    println(header)
-    println(registers.toList)
+    // println(masterDir)
+    // println(header)
+    // println(registers.toList)
     Ops
       .begin_theory(masterDir, header, registers.toList.map(Theory.apply))
       .retrieveNow
