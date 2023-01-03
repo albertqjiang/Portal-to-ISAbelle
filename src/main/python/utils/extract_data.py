@@ -119,7 +119,7 @@ if __name__ == "__main__":
             "isabelle_path": isabelle_path,
             "working_directory": working_directory,
             "theory_file_path": file_path,
-            "saving_path": f"{output_data_path}/{identifier}|output.json"
+            "saving_path": f"{output_data_path}/{identifier}_output.json"
         }
         param_path = os.path.join(output_param_path, f"{identifier}.json")
         json.dump(params, open(param_path, "w"))
