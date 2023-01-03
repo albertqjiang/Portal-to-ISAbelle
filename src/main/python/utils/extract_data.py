@@ -34,7 +34,7 @@ def analyse_file_string(whole_file_string):
             proof_open = False
 
         last_proof_level = proof_level
-        
+
     return {
         "problem_names": problem_names,
         "translations": state_action_proof_level_tuples
@@ -117,17 +117,20 @@ if __name__ == "__main__":
         identifier = file_path.replace("/", "_")
 
         working_directory = "/".join(file_path.split("/")[:6])
+        saving_path = f"{output_data_path}/{identifier}_output.json"
+        if os.path.exists(saving_path):
+            continue
         params = {
             "jar_path": jar_path,
             "isabelle_path": isabelle_path,
             "working_directory": working_directory,
             "theory_file_path": file_path,
-            "saving_path": f"{output_data_path}/{identifier}_output.json"
+            "saving_path": saving_path
         }
         param_path = os.path.join(output_param_path, f"{identifier}.json")
         json.dump(params, open(param_path, "w"))
 
         param_paths.append(param_path)
 
-    with mp.Pool(processes=int(mp.cpu_count()/4)) as pool:
+    with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
         pool.map(extract_a_file, param_paths)
