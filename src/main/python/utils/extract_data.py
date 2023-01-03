@@ -76,7 +76,7 @@ def extract_a_file(params_path):
         theory_file_path=theory_file_path,
         working_directory=working_directory,
     )
-    whole_file_string = env.post("PISA extract data").text
+    whole_file_string = env.post("PISA extract data")
 
     # Parse the string and dump
     analysed_file = analyse_file_string(whole_file_string)
