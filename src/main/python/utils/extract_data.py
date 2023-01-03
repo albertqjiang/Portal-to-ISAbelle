@@ -57,7 +57,7 @@ def extract_a_file(params_path):
     # Figure out the parameters to start the server
     identity = mp.current_process()._identity
     if identity:
-        rank = identity % 200
+        rank = identity[0] % 200
     else:
         rank = 0
     port = 8000 + rank
@@ -76,7 +76,7 @@ def extract_a_file(params_path):
         theory_file_path=theory_file_path,
         working_directory=working_directory,
     )
-    whole_file_string = env.post("PISA extract data")
+    whole_file_string = env.post("PISA extract data").text
 
     # Parse the string and dump
     analysed_file = analyse_file_string(whole_file_string)
