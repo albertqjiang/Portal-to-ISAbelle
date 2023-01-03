@@ -13,7 +13,7 @@ def analyse_file_string(whole_file_string):
     state_action_proof_level_tuples = list()
     problem_names = list()
     proof_open = False
-    last_state = ""
+    last_proof_level = 0
     for transition in transitions:
         if not transition:
             continue
@@ -30,8 +30,11 @@ def analyse_file_string(whole_file_string):
         elif proof_open:
             state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
 
-        if int(proof_level) == 0:
+        if last_proof_level > 0 and proof_level == 0:
             proof_open = False
+
+        last_proof_level = proof_level
+        
     return {
         "problem_names": problem_names,
         "translations": state_action_proof_level_tuples
