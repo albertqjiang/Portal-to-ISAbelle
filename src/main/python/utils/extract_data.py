@@ -72,22 +72,25 @@ def extract_a_file(params_path):
     ).pid
     time.sleep(5)
 
-    # Getting the environment
-    env = initialise_env(
-        port=port,
-        isa_path=isabelle_path,
-        theory_file_path=theory_file_path,
-        working_directory=working_directory,
-    )
-    whole_file_string = env.post("PISA extract data")
-
-    # Parse the string and dump
-    analysed_file = analyse_file_string(whole_file_string)
-    json.dump(analysed_file, open(saving_path, "w"))
+    env = None
+    try:
+        # Getting the environment
+        env = initialise_env(
+            port=port,
+            isa_path=isabelle_path,
+            theory_file_path=theory_file_path,
+            working_directory=working_directory,
+        )
+        whole_file_string = env.post("PISA extract data")
+        # Parse the string and dump
+        analysed_file = analyse_file_string(whole_file_string)
+        json.dump(analysed_file, open(saving_path, "w"))
+    except Exception as e:
+        print(e)
 
     # Clean up
     del env
-
+    
     # Kill the server and its subprocesses
     try:
         p_process = psutil.Process(server_subprocess_id)
