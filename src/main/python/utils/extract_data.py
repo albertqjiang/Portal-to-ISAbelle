@@ -55,7 +55,11 @@ def extract_a_file(params_path):
     saving_path = params["saving_path"]
 
     # Figure out the parameters to start the server
-    rank = mp.current_process()._identity[0] % 200
+    identity = mp.current_process()._identity
+    if identity:
+        rank = identity % 200
+    else:
+        rank = 0
     port = 8000 + rank
     command = ["java", "-cp", jar_path, f"pisa.server.PisaOneStageServer{port}"]
     server_subprocess = subprocess.Popen(
