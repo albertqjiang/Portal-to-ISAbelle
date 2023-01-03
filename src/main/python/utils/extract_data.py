@@ -30,7 +30,7 @@ def analyse_file_string(whole_file_string):
         elif proof_open:
             state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
 
-        if "subgoal" in last_state and "subgoal" not in state:
+        if int(proof_level) == 0:
             proof_open = False
     return {
         "problem_names": problem_names,
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     param_paths = list()
 
     for file_path in tqdm(files):
-        identifier = file_path.replace("/", "|")
+        identifier = file_path.replace("/", "_")
 
         working_directory = "/".join(file_path.split("/")[:6])
         params = {
@@ -115,7 +115,7 @@ if __name__ == "__main__":
             "isabelle_path": isabelle_path,
             "working_directory": working_directory,
             "theory_file_path": file_path,
-            "saving_path": f"{identifier}|output.json"
+            "saving_path": f"{output_data_path}/{identifier}|output.json"
         }
         param_path = os.path.join(output_param_path, f"{identifier}.json")
         json.dump(params, open(param_path, "w"))
