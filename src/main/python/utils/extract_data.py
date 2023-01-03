@@ -62,11 +62,11 @@ def extract_a_file(params_path):
         rank = 0
     port = 8000 + rank
     command = ["java", "-cp", jar_path, f"pisa.server.PisaOneStageServer{port}"]
-    server_subprocess = subprocess.Popen(
+    server_subprocess_id = subprocess.Popen(
         command,
         stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE
-    )
+    ).pid
     time.sleep(5)
 
     # Getting the environment
@@ -87,7 +87,7 @@ def extract_a_file(params_path):
 
     # Kill the server and its subprocesses
     try:
-        p_process = psutil.Process(server_subprocess)
+        p_process = psutil.Process(server_subprocess_id)
         children = p_process.children(recursive=True)
         for process in children:
             process.send_signal(signal.SIGTERM)
