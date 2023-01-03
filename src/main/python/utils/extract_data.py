@@ -122,5 +122,5 @@ if __name__ == "__main__":
 
         param_paths.append(param_path)
 
-    with mp.Pool(processes=len(mp.cpu_count())/4) as pool:
+    with mp.Pool(processes=int(mp.cpu_count()/4)) as pool:
         pool.map(extract_a_file, param_paths)
