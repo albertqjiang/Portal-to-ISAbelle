@@ -112,7 +112,7 @@ if __name__ == "__main__":
     jar_path = "/home/qj213/Portal-to-ISAbelle/target/scala-2.13/PISA-assembly-0.1.jar"
     isabelle_path = "/home/qj213/Isabelle2022"
     # afp_path = "/home/qj213/afp-2022-12-06/thys"
-    isabelle_src_path = "/home/qj213/Isabelle2022/src"
+    isabelle_src_path = "/home/qj213/Isabelle2022/src/HOL"
     # output_param_path = "/home/qj213/afp_extractions/params"
     # output_data_path = "/home/qj213/afp_extractions/data"
     output_param_path = "/home/qj213/std_extractions/params"
@@ -126,7 +126,9 @@ if __name__ == "__main__":
         identifier = file_path.replace("/", "_")
 
         # working_directory = "/".join(file_path.split("/")[:6])
-        working_directory = "/".join(file_path.split("/")[:-1])
+        bits = file_path.split("/")[:-1]
+        bits = bits[:7]
+        working_directory = "/".join(bits)
         saving_path = f"{output_data_path}/{identifier}_output.json"
         error_path = f"{output_data_path}/{identifier}_error.json"
         if os.path.exists(saving_path) or os.path.exists(error_path):
