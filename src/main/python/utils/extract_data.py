@@ -56,24 +56,25 @@ def extract_a_file(params_path):
     working_directory = params["working_directory"]
     theory_file_path = params["theory_file_path"]
     saving_path = params["saving_path"]
-
-    # Figure out the parameters to start the server
-    identity = mp.current_process()._identity
-    if identity:
-        rank = identity[0] % 200
-    else:
-        rank = 0
-    port = 8000 + rank
-    command = ["java", "-cp", jar_path, f"pisa.server.PisaOneStageServer{port}"]
-    server_subprocess_id = subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE, 
-        stderr=subprocess.PIPE
-    ).pid
-    time.sleep(5)
+    error_path = params["error_path"]
 
     env = None
     try:
+        # Figure out the parameters to start the server
+        identity = mp.current_process()._identity
+        if identity:
+            rank = identity[0] % 200
+        else:
+            rank = 0
+        port = 8000 + rank
+        command = ["java", "-cp", jar_path, f"pisa.server.PisaOneStageServer{port}"]
+        server_subprocess_id = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE
+        ).pid
+        time.sleep(5)
+
         # Getting the environment
         env = initialise_env(
             port=port,
@@ -87,6 +88,7 @@ def extract_a_file(params_path):
         json.dump(analysed_file, open(saving_path, "w"))
     except Exception as e:
         print(e)
+        json.dump({"error": str(e)}, open(error_path, "w"))
 
     # Clean up
     del env
@@ -121,14 +123,16 @@ if __name__ == "__main__":
 
         working_directory = "/".join(file_path.split("/")[:6])
         saving_path = f"{output_data_path}/{identifier}_output.json"
-        if os.path.exists(saving_path):
+        error_path = f"{output_data_path}/{identifier}_error.json"
+        if os.path.exists(saving_path) or os.path.exists(error_path):
             continue
         params = {
             "jar_path": jar_path,
             "isabelle_path": isabelle_path,
             "working_directory": working_directory,
             "theory_file_path": file_path,
-            "saving_path": saving_path
+            "saving_path": saving_path,
+            "error_path": error_path,
         }
         param_path = os.path.join(output_param_path, f"{identifier}.json")
         json.dump(params, open(param_path, "w"))
