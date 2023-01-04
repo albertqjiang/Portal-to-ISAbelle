@@ -111,17 +111,22 @@ if __name__ == "__main__":
 
     jar_path = "/home/qj213/Portal-to-ISAbelle/target/scala-2.13/PISA-assembly-0.1.jar"
     isabelle_path = "/home/qj213/Isabelle2022"
-    afp_path = "/home/qj213/afp-2022-12-06/thys"
-    output_param_path = "/home/qj213/afp_extractions/params"
-    output_data_path = "/home/qj213/afp_extractions/data"
+    # afp_path = "/home/qj213/afp-2022-12-06/thys"
+    isabelle_src_path = "/home/qj213/Isabelle2022/src"
+    # output_param_path = "/home/qj213/afp_extractions/params"
+    # output_data_path = "/home/qj213/afp_extractions/data"
+    output_param_path = "/home/qj213/std_extractions/params"
+    output_data_path = "/home/qj213/std_extractions/data"
 
-    files = glob.glob(afp_path + '/**/*.thy', recursive=True)
+    # files = glob.glob(afp_path + '/**/*.thy', recursive=True)
+    files = glob.glob(isabelle_src_path + '/**/*.thy', recursive=True)
     param_paths = list()
 
     for file_path in tqdm(files):
         identifier = file_path.replace("/", "_")
 
-        working_directory = "/".join(file_path.split("/")[:6])
+        # working_directory = "/".join(file_path.split("/")[:6])
+        working_directory = "/".join(file_path.split("/")[:-1])
         saving_path = f"{output_data_path}/{identifier}_output.json"
         error_path = f"{output_data_path}/{identifier}_error.json"
         if os.path.exists(saving_path) or os.path.exists(error_path):
