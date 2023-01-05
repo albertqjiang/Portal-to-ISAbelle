@@ -106,7 +106,7 @@ class PisaEnv:
 
     def get_premises_and_their_definitions(self, name_of_tls, theorem_name, theorem_proof_string):
         premises = self.get_premises(name_of_tls, theorem_name, theorem_proof_string)
-        premises_and_their_definitions = [(premise, self.get_fact_defintion(premise)) for premise in premises]
+        premises_and_their_definitions = [(premise, self.get_fact_defintion(name_of_tls, premise)) for premise in premises]
         return premises_and_their_definitions
 
     @func_set_timeout(1800, allowOverride=True)
