@@ -106,7 +106,7 @@ class PisaEnv:
         possible_premise_chunks = further_break(possible_premise_chunks, ",")
         possible_premise_chunks = further_break(possible_premise_chunks, "(")
         possible_premise_chunks = further_break(possible_premise_chunks, ")")
-        print(char for char in set("".join(possible_premise_chunks)) if not char.isalnum())
+        print(list(char for char in set("".join(possible_premise_chunks)) if not char.isalnum()))
 
 
 
