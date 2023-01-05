@@ -26,7 +26,7 @@ def process_one_extraction_file(file):
         transition_text = transition[1].strip()
         if transition_text.startswith("(*") and transition_text.endswith("*)"):
             continue
-        if transition_text.startswith("text \\\\<open>") and transition_text.endswith("\\\\<close>"):
+        if transition_text.startswith("text \\\<open>") and transition_text.endswith("\\\<close>"):
             continue
         good_transitions.append(transition)
         
@@ -84,4 +84,7 @@ if __name__ == "__main__":
 
     # files = glob.glob(f"{extraction_file_directory}/**/*.thy_output.json", recursive=True)
     # process_extractions(files, saving_directory)
-    print(process_one_extraction_file("/home/qj213/afp_extractions/data/_home_qj213_afp-2022-12-06_thys_pGCL_Tutorial_Primitives.thy_output.json"))
+    json.dump(
+        process_one_extraction_file("/home/qj213/afp_extractions/data/_home_qj213_afp-2022-12-06_thys_pGCL_Tutorial_Primitives.thy_output.json"),
+        open("test.json", "w"),
+    )
