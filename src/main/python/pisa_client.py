@@ -102,16 +102,15 @@ class PisaEnv:
             for chunk in chunks:
                 new_chunks.extend(chunk.split(separator))
             return new_chunks
+
         possible_premise_chunks = further_break([theorem_proof_string])
-        possible_premise_chunks = further_break(possible_premise_chunks, ",")
-        possible_premise_chunks = further_break(possible_premise_chunks, "(")
-        possible_premise_chunks = further_break(possible_premise_chunks, ")")
-        print(list(char for char in set("".join(possible_premise_chunks)) if not char.isalnum()))
-
-
+        legit_separators = [",", "(", ")", "[", "]", "{", "}", ":"]
+        for separtor in legit_separators:
+            possible_premise_chunks = further_break(possible_premise_chunks, separtor)
+        possible_premise_chunks = set(chunk.strip() for chunk in possible_premise_chunks)
 
         premises = [premise for premise in premises 
-            if (premise in theorem_proof_string) or (premise.split(".")[-1] in theorem_proof_string)]
+            if (premise in possible_premise_chunks) or (premise.split(".")[-1] in theorem_proof_string)]
         return premises
 
     def get_fact_defintion(self, name_of_tls, fact_name):
