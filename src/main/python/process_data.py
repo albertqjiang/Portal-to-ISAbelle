@@ -26,7 +26,7 @@ def process_one_extraction_file(file):
         transition_text = transition[1].strip()
         if transition_text.startswith("(*") and transition_text.endswith("*)"):
             continue
-        if transition_text.startswith("text \\\<open>") and transition_text.endswith("\\\<close>"):
+        if transition_text.startswith("text \\<open>") and transition_text.endswith("\\<close>"):
             continue
         good_transitions.append(transition)
         
@@ -46,7 +46,7 @@ def process_one_extraction_file(file):
 
     problems = []
     for key, value in problem_name_to_transitions.items():
-        full_proof_text = " ".join([transition[1] for transition in value])
+        full_proof_text = "\n".join([transition[1] for transition in value])
         problems.append(
             {
                 "problem_name": key,
