@@ -97,7 +97,7 @@ class PisaEnv:
         premises = [premise.strip() for premise in premises]
 
         # Remove theorems that are not in the proof
-        def further_break(chunks: list[str], separator=None):
+        def further_break(chunks, separator=None):
             new_chunks = []
             for chunk in chunks:
                 new_chunks.extend(chunk.split(separator))
