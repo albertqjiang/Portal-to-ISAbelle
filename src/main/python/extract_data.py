@@ -85,6 +85,8 @@ def extract_a_file(params_path):
         whole_file_string = env.post("PISA extract data")
         # Parse the string and dump
         analysed_file = analyse_file_string(whole_file_string)
+        analysed_file["theory_file_path"] = theory_file_path
+        analysed_file["working_directory"] = working_directory
         json.dump(analysed_file, open(saving_path, "w"))
     except Exception as e:
         print(e)
