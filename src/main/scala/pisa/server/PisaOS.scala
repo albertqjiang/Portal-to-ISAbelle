@@ -234,6 +234,22 @@ class PisaOS(
           | (Global_Theory.all_thms_of (Proof_Context.theory_of (Toplevel.context_of tls)) false)
           """.stripMargin
     )
+  val thm_statement: MLFunction2[ToplevelState, String, String] =
+    compileFunction[ToplevelState, String, String](
+      """fn (tls, name) =>
+        | let val ctxt = Toplevel.context_of tls;
+        |     val thm = Global_Theory.get_thms (Proof_Context.theory_of ctxt) name;
+        | in
+        |     Pretty.unformatted_string_of (Element.pretty_statement ctxt "" thm)
+        | end""".stripMargin
+    )
+  def theorem_statement(
+    tls_name: String,
+    theorem_name: String
+  ): String = {
+    val toplevel_state = retrieve_tls(tls_name)
+    thm_statement(toplevel_state, theorem_name).force.retrieveNow
+  }
   val get_dependent_thms: MLFunction2[ToplevelState, String, List[String]] =
     compileFunction[ToplevelState, String, List[String]](
       """fn (tls, name) =>

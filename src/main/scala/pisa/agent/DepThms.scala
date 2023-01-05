@@ -24,6 +24,6 @@ object DepThms {
     
     pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
     println("~"*50)
-    println(pisaos.get_dependent_theorems("default", "prime_nat_naive"))
+    println(pisaos.theorem_statement("default", "prime_nat_naive"))
   }
 }
