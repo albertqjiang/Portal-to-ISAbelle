@@ -240,7 +240,7 @@ class PisaOS(
         | let val ctxt = Toplevel.context_of tls;
         |     val thm = Global_Theory.get_thms (Proof_Context.theory_of ctxt) name;
         | in
-        |     Pretty.unformatted_string_of (Element.pretty_statement ctxt "" (hd thm))
+        |     YXML.content_of (Pretty.unformatted_string_of (Element.pretty_statement ctxt "" (hd thm)))
         | end""".stripMargin
     )
   def theorem_statement(
