@@ -95,6 +95,21 @@ class PisaEnv:
         returned_string = self.post(message)
         premises = returned_string.split(THEOREM_SEPARATOR)
         premises = [premise.strip() for premise in premises]
+
+        # Remove theorems that are not in the proof
+        def further_break(chunks: list[str], separator=None):
+            new_chunks = []
+            for chunk in chunks:
+                new_chunks.extend(chunk.split(separator))
+            return new_chunks
+        possible_premise_chunks = further_break([theorem_proof_string])
+        possible_premise_chunks = further_break(possible_premise_chunks, ",")
+        possible_premise_chunks = further_break(possible_premise_chunks, "(")
+        possible_premise_chunks = further_break(possible_premise_chunks, ")")
+        print(char for char in set("".join(possible_premise_chunks)) if not char.isalnum())
+
+
+
         premises = [premise for premise in premises 
             if (premise in theorem_proof_string) or (premise.split(".")[-1] in theorem_proof_string)]
         return premises
