@@ -110,7 +110,7 @@ class PisaEnv:
         possible_premise_chunks = set(chunk.strip() for chunk in possible_premise_chunks)
 
         premises = [premise for premise in premises 
-            if (premise in possible_premise_chunks) or (premise.split(".")[-1] in theorem_proof_string)]
+            if (premise in possible_premise_chunks) or (premise.split(".")[-1] in possible_premise_chunks)]
         return premises
 
     def get_fact_defintion(self, name_of_tls, fact_name):
