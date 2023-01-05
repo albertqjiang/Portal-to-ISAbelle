@@ -20,7 +20,7 @@ def create_stub(port=9000):
     return server_pb2_grpc.ServerStub(channel)
 
 
-def initialise_env(port, isa_path, theory_file_path=None, working_directory=None):
+def initialise_env(port, isa_path, theory_file_path, working_directory):
     return PisaEnv(port=port, isa_path=isa_path, starter_string=theory_file_path, working_directory=working_directory)
 
 
@@ -49,7 +49,7 @@ class PisaEnv:
             print(self.stub.IsabelleContext(server_pb2.IsaContext(context=self.starter_string)).message)
             self.successful_starting = True
         except Exception as e:
-            print("Failure at initialising Isabelle process. "
+            print("Failure at initialising Isabelle process.\n"
                   "Make sure the path your provide is where the Isabelle executable is.")
             print(e)
         return f"Starting is successful: {self.successful_starting}"
@@ -95,7 +95,7 @@ class PisaEnv:
         obs_string = "Step error"
         try:
             obs_string = self.post(f"<apply to top level state> {tls_name} <apply to top level state> {action} <apply to top level state> {new_name}")
-            print(obs_string)
+            # print(obs_string)
         except Exception as e:
             print("***Something went wrong***")
             print(e)
@@ -124,9 +124,9 @@ class PisaEnv:
         assert before_after in ["before", "after"]
         try:
             command = f"<proceed {before_after}> {line_stirng}"
-            print(command)
+            # print(command)
             message = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=command)).state
-            print(message)
+            # print(message)
         except Exception as e:
             print("Failure to proceed before line")
             print(e)
