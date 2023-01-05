@@ -26,21 +26,26 @@ def process_one_extraction_file(file):
         transition_text = transition[1].strip()
         if transition_text.startswith("(*") and transition_text.endswith("*)"):
             continue
-        if transition_text.startswith("text \\<open>") and transition_text.endswith("\\<close>"):
+        if (transition_text.startswith("text \\<open>") or transition_text.startswith("txt \\<open>")) and transition_text.endswith("\\<close>"):
             continue
         good_transitions.append(transition)
         
     # Filter out all the transitions that are not in proofs
     current_problem_name = None
     problem_name_to_transitions = {}
+    last_proof_level = 0
     for transition in good_transitions:
         _, transition_text, proof_level, _ = transition
         if transition_text in problem_names:
             current_problem_name = transition_text
             assert proof_level == 0, transition
             problem_name_to_transitions[current_problem_name] = [transition]
+        elif proof_level == 0 and last_proof_level > 0:
+            continue
         else:
             problem_name_to_transitions[current_problem_name].append(transition)
+
+        last_proof_level = proof_level
     assert None not in problem_name_to_transitions
     assert set(problem_name_to_transitions.keys()) == set(problem_names)
 
