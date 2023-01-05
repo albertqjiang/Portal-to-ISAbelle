@@ -11,6 +11,7 @@ import server_pb2
 import server_pb2_grpc
 
 MAX_MESSAGE_LENGTH = 10485760
+THEOREM_SEPARATOR = "<THM_SEP>"
 
 
 def create_stub(port=9000):
@@ -88,6 +89,25 @@ class PisaEnv:
             return 1
         else:
             return 0
+
+    def get_premises(self, name_of_tls, theorem_name, theorem_proof_string):
+        message = f"<get dependent theorems>{name_of_tls}<get dependent theorems>{theorem_name}<get dependent theorems>{THEOREM_SEPARATOR}"
+        returned_string = self.post(message)
+        premises = returned_string.split(THEOREM_SEPARATOR)
+        premises = [premise.strip() for premise in premises]
+        premises = [premise for premise in premises 
+            if (premise in theorem_proof_string) or (premise.split(".")[-1] in theorem_proof_string)]
+        return premises
+
+    def get_fact_defintion(self, name_of_tls, fact_name):
+        message = f"<get fact definition>{name_of_tls}<get fact definition>{fact_name}"
+        returned_string = self.post(message)
+        return returned_string
+
+    def get_premises_and_their_definitions(self, name_of_tls, theorem_name, theorem_proof_string):
+        premises = self.get_premises(name_of_tls, theorem_name, theorem_proof_string)
+        premises_and_their_definitions = [(premise, self.get_fact_defintion(premise)) for premise in premises]
+        return premises_and_their_definitions
 
     @func_set_timeout(1800, allowOverride=True)
     def step_to_top_level_state(self, action, tls_name, new_name):

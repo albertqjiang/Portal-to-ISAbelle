@@ -24,6 +24,6 @@ object DepThms {
     
     pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
     println("~"*50)
-    println(pisaos.theorem_statement("default", "prime_dvd_fact_iff"))
+    println(pisaos.fact_definition("default", "prime_dvd_fact_iff"))
   }
 }

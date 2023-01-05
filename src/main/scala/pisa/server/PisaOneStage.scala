@@ -306,6 +306,15 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     pisaos.accumulative_step_to_before_transition_starting(text)
   }
 
+  def deal_with_get_dependent_theorems(tls_name: String, theorem_name: String, separator: String) = {
+    val dependent_theorem_list = pisaos.get_dependent_theorems(tls_name, theorem_name)
+    dependent_theorem_list.mkString(separator)
+  }
+
+  def deal_with_fact_definition(tls_name: String, fact_name: String) = {
+    pisaos.fact_definition(tls_name, fact_name)
+  }
+
   def isabelleCommand(
       isa_command: IsaCommand
   ): ZIO[zio.ZEnv, Status, IsaState] = {
@@ -400,6 +409,16 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         ancestors_names_list.mkString(",")
       } else if (isa_command.command == "exit")
         deal_with_exit(isa_command.command)
+      else if (isa_command.command.startsWith("<get dependent theorems>")) {
+        val tls_name: String = isa_command.command.split("<get dependent theorems>")(1).trim
+        val theorem_name: String = isa_command.command.split("<get dependent theorems>")(2).trim
+        val separator: String = isa_command.command.split("<get dependent theorems>")(3).trim
+        deal_with_get_dependent_theorems(tls_name, theorem_name, separator)
+      } else if (isa_command.command.startsWith("<get fact definition>")) {
+        val tls_name: String = isa_command.command.split("<get fact definition>")(1).trim
+        val fact_name: String = isa_command.command.split("<get fact definition>")(2).trim
+        deal_with_fact_definition(tls_name, fact_name)
+      }
       else "Unrecognised operation."
     }
     ZIO.succeed(IsaState(proof_state))
