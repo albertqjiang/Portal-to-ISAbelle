@@ -13,7 +13,7 @@ def process_one_extraction_file(file):
     extraction = json.load(open(file))
     # Get the information
     theory_file_path = extraction["theory_file_path"]
-    assert os.file.exists(theory_file_path), f"Could not find {theory_file_path}"
+    assert os.path.exists(theory_file_path), f"Could not find {theory_file_path}"
     working_directory = extraction["working_directory"]
     problem_names = extraction["problem_names"]
     transitions = extraction["translations"]
