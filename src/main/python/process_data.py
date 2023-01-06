@@ -41,7 +41,7 @@ def process_one_extraction_file(file):
             current_problem_name = transition_text
             assert proof_level == 0, transition
             problem_name_to_transitions[current_problem_name] = [transition]
-        elif proof_level == 0 and last_proof_level > 0:
+        elif proof_level == 0:
             continue
         else:
             problem_name_to_transitions[current_problem_name].append(transition)
