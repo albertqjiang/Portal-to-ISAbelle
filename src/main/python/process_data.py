@@ -18,7 +18,8 @@ def process_one_extraction_file(file):
     problem_names = extraction["problem_names"]
     transitions = extraction["translations"]
     # Leave in only the actual problem names
-    problem_names = [problem_name for problem_name in problem_names if problem_name.startswith("lemma")]
+    problem_names = [problem_name.strip() for problem_name in problem_names]
+    problem_names = [problem_name for problem_name in problem_names if (problem_name.startswith("lemma") or problem_name.startswith("theorem")) and not problem_name.startswith("lemmas")]
 
     # Filter out comments
     good_transitions = []
