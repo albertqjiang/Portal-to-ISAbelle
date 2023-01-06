@@ -22,19 +22,18 @@ def analyse_file_string(whole_file_string):
             hammer_results = "NA"
         state = state.strip()
         action = action.strip()
-        proof_level = int(proof_level.strip())
-        if action.startswith("lemma") or action.startswith("theorem"):
-            problem_names.append(action)
-            state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
-            proof_open = True
-        elif proof_open:
-            state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
+        # proof_level = int(proof_level.strip())
+        # if action.startswith("lemma") or action.startswith("theorem"):
+        #     problem_names.append(action)
+        #     state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
+        #     proof_open = True
+        # elif proof_open:
+        #     state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
 
-        if last_proof_level > 0 and proof_level == 0:
-            proof_open = False
-
-        last_proof_level = proof_level
-
+        # if last_proof_level > 0 and proof_level == 0:
+        #     proof_open = False
+        # last_proof_level = proof_level
+        state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
     return {
         "problem_names": problem_names,
         "translations": state_action_proof_level_tuples
@@ -120,7 +119,8 @@ if __name__ == "__main__":
     # output_param_path = "/home/qj213/std_extractions/params"
     # output_data_path = "/home/qj213/std_extractions/data"
 
-    files = glob.glob(afp_path + '/**/*.thy', recursive=True)
+    # files = glob.glob(afp_path + '/**/*.thy', recursive=True)
+    files = glob.glob(afp_path + '/pGCL/Tutorial/*.thy', recursive=True)
     # files = glob.glob(isabelle_src_path + '/**/*.thy', recursive=True)
     param_paths = list()
 
