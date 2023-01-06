@@ -12,8 +12,8 @@ def analyse_file_string(whole_file_string):
     transitions = whole_file_string.split("<\TRANSEP>")
     state_action_proof_level_tuples = list()
     problem_names = list()
-    proof_open = False
-    last_proof_level = 0
+    # proof_open = False
+    # last_proof_level = 0
     for transition in transitions:
         if not transition:
             continue
@@ -23,8 +23,8 @@ def analyse_file_string(whole_file_string):
         state = state.strip()
         action = action.strip()
         # proof_level = int(proof_level.strip())
-        # if action.startswith("lemma") or action.startswith("theorem"):
-        #     problem_names.append(action)
+        if (action.startswith("lemma") or action.startswith("theorem")) and not action.startswith("lemmas"):
+            problem_names.append(action)
         #     state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
         #     proof_open = True
         # elif proof_open:
