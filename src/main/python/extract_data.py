@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # output_data_path = "/home/qj213/std_extractions/data"
 
     # files = glob.glob(afp_path + '/**/*.thy', recursive=True)
-    files = glob.glob(afp_path + '/pGCL/Tutorial/*.thy', recursive=True)
+    files = glob.glob(afp_path + '/**/*.thy', recursive=True)
     # files = glob.glob(isabelle_src_path + '/**/*.thy', recursive=True)
     param_paths = list()
 
