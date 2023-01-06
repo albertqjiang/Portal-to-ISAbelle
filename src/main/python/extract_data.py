@@ -22,7 +22,7 @@ def analyse_file_string(whole_file_string):
             hammer_results = "NA"
         state = state.strip()
         action = action.strip()
-        # proof_level = int(proof_level.strip())
+        proof_level = int(proof_level.strip())
         if (action.startswith("lemma") or action.startswith("theorem")) and not action.startswith("lemmas"):
             problem_names.append(action)
         #     state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
