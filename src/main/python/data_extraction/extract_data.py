@@ -113,7 +113,7 @@ if __name__ == "__main__":
     from tqdm import tqdm
     parser = argparse.ArgumentParser(description='Extracting transition data from theory files.')
     parser.add_argument('--jar-path', '-jp', help='Path to the jar file', default=None)
-    parser.add_argument('--isabelle-path', '-ip', help='Path to the Isabelle installation')
+    parser.add_argument('--isabelle-path', '-ip', help='Path to the Isabelle installation', default=None)
     parser.add_argument('--extraction-file-directory', '-efd', help='Where the parsed json files are')
     parser.add_argument('--saving-directory', '-sd', help='Where to save the translation pairs')
     args = parser.parse_args()
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     # saving_directory = "/home/qj213/afp_extractions"
     # saving_directory = "/home/qj213/std_extractions"
 
-    files = glob.glob(extraction_file_directory.rstrip("/") + '/**/*.json', recursive=True)
+    files = glob.glob(extraction_file_directory.rstrip("/") + '/**/*.thy', recursive=True)
     param_paths = list()
 
     for file_path in tqdm(files):
