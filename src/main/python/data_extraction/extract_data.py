@@ -108,29 +108,57 @@ def extract_a_file(params_path):
 if __name__ == "__main__":
     import glob
     import os
+    import argparse
+    import shutil
     from tqdm import tqdm
+    parser = argparse.ArgumentParser(description='Extracting transition data from theory files.')
+    parser.add_argument('--jar-path', '-jp', help='Path to the jar file', default=None)
+    parser.add_argument('--isabelle-path', '-ip', help='Path to the Isabelle installation')
+    parser.add_argument('--extraction-file-directory', '-efd', help='Where the parsed json files are')
+    parser.add_argument('--saving-directory', '-sd', help='Where to save the translation pairs')
+    args = parser.parse_args()
 
-    jar_path = "/home/qj213/Portal-to-ISAbelle/target/scala-2.13/PISA-assembly-0.1.jar"
-    isabelle_path = "/home/qj213/Isabelle2022"
-    afp_path = "/home/qj213/afp-2022-12-06/thys"
-    # isabelle_src_path = "/home/qj213/Isabelle2022/src/HOL"
-    output_param_path = "/home/qj213/afp_extractions/params"
-    output_data_path = "/home/qj213/afp_extractions/data"
-    # output_param_path = "/home/qj213/std_extractions/params"
-    # output_data_path = "/home/qj213/std_extractions/data"
+    jar_path = args.jar_path
+    if jar_path is None:
+        jar_path = "/home/qj213/Portal-to-ISAbelle/target/scala-2.13/PISA-assembly-0.1.jar"
+    isabelle_path = args.isabelle_path
+    if isabelle_path is None:
+        isabelle_path = "/home/qj213/Isabelle2022"
+    extraction_file_directory = args.extraction_file_directory
+    saving_directory = args.saving_directory
+    if not os.path.isdir(saving_directory):
+        os.makedirs(saving_directory)
 
-    # files = glob.glob(afp_path + '/**/*.thy', recursive=True)
-    files = glob.glob(afp_path + '/**/*.thy', recursive=True)
-    # files = glob.glob(isabelle_src_path + '/**/*.thy', recursive=True)
+    output_data_path = os.path.join(saving_directory, "data")
+    output_param_path = os.path.join(saving_directory, "params")
+    if not os.path.isdir(output_data_path):
+        os.makedirs(output_data_path)
+    if not os.path.isdir(output_param_path):
+        os.makedirs(output_param_path)
+
+    # extraction_file_directory = "/home/qj213/afp-2022-12-06/thys"
+    # extraction_file_directory = "/home/qj213/Isabelle2022/src/HOL"
+    # saving_directory = "/home/qj213/afp_extractions"
+    # saving_directory = "/home/qj213/std_extractions"
+
+    files = glob.glob(extraction_file_directory.rstrip("/") + '/**/*.json', recursive=True)
     param_paths = list()
 
     for file_path in tqdm(files):
         identifier = file_path.replace("/", "_")
 
-        working_directory = "/".join(file_path.split("/")[:6])
-        # bits = file_path.split("/")[:-1]
-        # bits = bits[:7]
-        # working_directory = "/".join(bits)
+        if "thys" in file_path:
+            bits = file_path.split("/")
+            thys_index = bits.index("thys")
+            working_directory = "/".join(bits[:thys_index + 2])
+        elif "src/HOL" in file_path:
+            bits = file_path.split("/")
+            hol_index = bits.index("HOL")
+            bits = bits[:-1]
+            bits = bits[:hol_index + 2]
+            working_directory = "/".join(bits)
+        else:
+            raise AssertionError
         saving_path = f"{output_data_path}/{identifier}_output.json"
         error_path = f"{output_data_path}/{identifier}_error.json"
         if os.path.exists(saving_path) or os.path.exists(error_path):

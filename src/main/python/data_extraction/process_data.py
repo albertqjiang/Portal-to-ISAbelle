@@ -34,7 +34,6 @@ def process_one_extraction_file(file):
     # Filter out all the transitions that are not in proofs
     current_problem_name = None
     problem_name_to_transitions = {}
-    last_proof_level = 0
     for transition in good_transitions:
         _, transition_text, proof_level, _ = transition
         if transition_text in problem_names:
@@ -46,18 +45,18 @@ def process_one_extraction_file(file):
         else:
             problem_name_to_transitions[current_problem_name].append(transition)
 
-        last_proof_level = proof_level
     assert None not in problem_name_to_transitions
     assert set(problem_name_to_transitions.keys()) == set(problem_names)
 
     problems = []
-    for key, value in problem_name_to_transitions.items():
-        full_proof_text = "\n".join([transition[1] for transition in value])
+    for problem_name in problem_names:
+        transitions = problem_name_to_transitions[problem_name]
+        full_proof_text = "\n".join([transition[1] for transition in transitions])
         problems.append(
             {
-                "problem_name": key,
+                "problem_name": problem_name,
                 "full_proof_text": full_proof_text,
-                "transitions": value
+                "transitions": transitions
             }
         )
         
@@ -70,9 +69,15 @@ def process_one_extraction_file(file):
 def process_extractions(files, saving_directory):
     """Process the extractions"""
     for file in tqdm(files):
-        extraction = process_one_extraction_file(file)
+        extraction_from_a_file = process_one_extraction_file(file)
+        basename = os.path.basename(file)
+        assert basename.endswith("_thy_output.json")
 
+        new_basename = basename.replace("_thy_output.json", "_thy_problems.json")
+        saving_file_path = os.path.join(saving_directory, new_basename)
+        json.dump(extraction_from_a_file, open(saving_file_path, "w"))
         
+
 if __name__ == "__main__":
     # import argparse
     # import glob
