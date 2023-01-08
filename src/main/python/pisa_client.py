@@ -105,7 +105,7 @@ class PisaEnv:
 
         # Break down the proof string into chunks which might be premises
         possible_premise_chunks = further_break([theorem_proof_string])
-        legit_separators = [",", "(", ")", "[", "]", "{", "}", ":", '"', "\\", "<", ">"]
+        legit_separators = [",", "(", ")", "[", "]", "{", "}", ":", '"', "<", ">"]
         for separtor in legit_separators:
             possible_premise_chunks = further_break(possible_premise_chunks, separtor)
         possible_premise_chunks = set(chunk.strip() for chunk in possible_premise_chunks)
