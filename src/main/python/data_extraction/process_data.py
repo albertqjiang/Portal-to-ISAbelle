@@ -33,7 +33,13 @@ def process_one_extraction_file(file):
     # Leave in only the actual problem names
     problem_names = [problem_name.strip() for problem_name in problem_names]
     problem_names = [problem_name for problem_name in problem_names if (problem_name.startswith("lemma") or problem_name.startswith("theorem")) and not problem_name.startswith("lemmas")]
-
+    
+    if not problem_name:
+        return {
+            "theory_file_path": theory_file_path,
+            "working_directory": working_directory,
+            "problems": []
+        }
     # Filter out comments
     good_transitions = []
     for transition in transitions:
