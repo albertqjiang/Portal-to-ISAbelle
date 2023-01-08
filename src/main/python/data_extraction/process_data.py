@@ -53,6 +53,7 @@ def process_one_extraction_file(file):
     # Filter out all the transitions that are not in proofs
     current_problem_name = None
     problem_name_to_transitions = {}
+    proof_open = False
     for transition in good_transitions:
         _, transition_text, proof_level, _ = transition
         print(transition_text, proof_level)
@@ -60,10 +61,14 @@ def process_one_extraction_file(file):
             current_problem_name = transition_text
             assert proof_level == 0, transition
             problem_name_to_transitions[current_problem_name] = [transition]
+            proof_open = True
         elif proof_level == 0:
+            proof_open = False
             continue
-        else:
+        elif proof_open:
             problem_name_to_transitions[current_problem_name].append(transition)
+        else:
+            pass
 
     assert None not in problem_name_to_transitions
     assert set(problem_name_to_transitions.keys()) == set(problem_names)
