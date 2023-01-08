@@ -61,7 +61,8 @@ def find_premises_from_a_file(path_dict):
             try:
                 problem_name = problem["name"]
                 only_name = problem_name.strip()
-                assert only_name.startswith("lemma") or only_name.startswith("theorem")
+                print("What")
+                assert only_name.startswith("lemma") or only_name.startswith("theorem"), only_name
                 only_name = only_name.lstrip("lemma").lstrip("theorem").strip()
                 only_name = only_name.split(":")[0].strip()
                 only_name = only_name.split()[0].strip()
