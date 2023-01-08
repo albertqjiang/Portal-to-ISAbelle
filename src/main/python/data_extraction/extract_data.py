@@ -1,19 +1,14 @@
-import psutil
-import signal
 import json
 import multiprocessing as mp
-import subprocess
-import time
 
 from pisa_client import initialise_env
+from utils.pisa_server_control import start_server, close_server
 
 
 def analyse_file_string(whole_file_string):
     transitions = whole_file_string.split("<\TRANSEP>")
     state_action_proof_level_tuples = list()
     problem_names = list()
-    # proof_open = False
-    # last_proof_level = 0
     for transition in transitions:
         if not transition:
             continue
@@ -25,14 +20,6 @@ def analyse_file_string(whole_file_string):
         proof_level = int(proof_level.strip())
         if (action.startswith("lemma") or action.startswith("theorem")) and not action.startswith("lemmas"):
             problem_names.append(action)
-        #     state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
-        #     proof_open = True
-        # elif proof_open:
-        #     state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
-
-        # if last_proof_level > 0 and proof_level == 0:
-        #     proof_open = False
-        # last_proof_level = proof_level
         state_action_proof_level_tuples.append((state, action, proof_level, hammer_results))
     return {
         "problem_names": problem_names,
@@ -66,13 +53,7 @@ def extract_a_file(params_path):
         else:
             rank = 0
         port = 8000 + rank
-        command = ["java", "-cp", jar_path, f"pisa.server.PisaOneStageServer{port}"]
-        server_subprocess_id = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE, 
-            stderr=subprocess.PIPE
-        ).pid
-        time.sleep(5)
+        server_subprocess_id = start_server(jar_path, port)
 
         # Getting the environment
         env = initialise_env(
@@ -87,29 +68,21 @@ def extract_a_file(params_path):
         analysed_file["theory_file_path"] = theory_file_path
         analysed_file["working_directory"] = working_directory
         json.dump(analysed_file, open(saving_path, "w"))
+        
+        # Clean up
+        del env
+        close_server(server_subprocess_id)
     except Exception as e:
         print(e)
         json.dump({"error": str(e)}, open(error_path, "w"))
 
-    # Clean up
-    del env
     
-    # Kill the server and its subprocesses
-    try:
-        p_process = psutil.Process(server_subprocess_id)
-        children = p_process.children(recursive=True)
-        for process in children:
-            process.send_signal(signal.SIGTERM)
-        p_process.send_signal(signal.SIGTERM)
-    except psutil.NoSuchProcess:
-        pass
 
 
 if __name__ == "__main__":
     import glob
     import os
     import argparse
-    import shutil
     from tqdm import tqdm
     parser = argparse.ArgumentParser(description='Extracting transition data from theory files.')
     parser.add_argument('--jar-path', '-jp', help='Path to the jar file', default=None)

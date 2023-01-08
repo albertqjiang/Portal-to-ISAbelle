@@ -1,12 +1,25 @@
 import json
-import random
-import shutil
 from tqdm import tqdm
 from mpmath import mp, mpf, fmod
 import hashlib
-import math
 import os
 
+
+def hash_string_to_int(arg):
+    return int(hashlib.sha256(arg.encode("utf-8")).hexdigest(), 16) % 10**30
+
+def hash_string_to_float(arg):
+    x = mpf(hash_string_to_int(arg))
+    return fmod(x * mp.pi, mpf(1.))
+
+def get_split(arg):
+    float_hash = hash_string_to_float(arg)
+    if float_hash < 0.97:
+        return "train"
+    elif float_hash < 0.98:
+        return "val"
+    else:
+        return "test"
 
 def process_one_extraction_file(file):
     # Load the file
@@ -52,11 +65,13 @@ def process_one_extraction_file(file):
     for problem_name in problem_names:
         transitions = problem_name_to_transitions[problem_name]
         full_proof_text = "\n".join([transition[1] for transition in transitions])
+        split = get_split(problem_name)
         problems.append(
             {
                 "problem_name": problem_name,
                 "full_proof_text": full_proof_text,
-                "transitions": transitions
+                "transitions": transitions,
+                "split": split
             }
         )
         
@@ -79,23 +94,24 @@ def process_extractions(files, saving_directory):
         
 
 if __name__ == "__main__":
-    # import argparse
-    # import glob
-    # import os
-    # parser = argparse.ArgumentParser(description='Extracting translation pairs.')
-    # parser.add_argument('--extraction-file-directory', '-efd', help='Where the parsed json files are')
-    # parser.add_argument('--saving-directory', '-sd', help='Where to save the translation pairs')
-    # args = parser.parse_args()
+    import argparse
+    import glob
+    import os
+    import shutil
+    parser = argparse.ArgumentParser(description='Processing and filtering proving data.')
+    parser.add_argument('--extraction-file-directory', '-efd', help='Where the parsed json files are')
+    parser.add_argument('--saving-directory', '-sd', help='Where to save the translation pairs')
+    args = parser.parse_args()
 
-    # extraction_file_directory = args.extraction_file_directory
-    # saving_directory = args.saving_directory
-    # if os.path.isdir(saving_directory):
-    #     shutil.rmtree(saving_directory)
-    # os.makedirs(saving_directory)
+    extraction_file_directory = args.extraction_file_directory
+    saving_directory = args.saving_directory
+    if os.path.isdir(saving_directory):
+        shutil.rmtree(saving_directory)
+    os.makedirs(saving_directory)
 
-    # files = glob.glob(f"{extraction_file_directory}/**/*.thy_output.json", recursive=True)
-    # process_extractions(files, saving_directory)
-    json.dump(
-        process_one_extraction_file("/home/qj213/afp_extractions/data/_home_qj213_afp-2022-12-06_thys_pGCL_Tutorial_Primitives.thy_output.json"),
-        open("test.json", "w"),
-    )
+    files = glob.glob(f"{extraction_file_directory}/**/*.thy_output.json", recursive=True)
+    process_extractions(files, saving_directory)
+    # json.dump(
+    #     process_one_extraction_file("/home/qj213/afp_extractions/data/_home_qj213_afp-2022-12-06_thys_pGCL_Tutorial_Primitives.thy_output.json"),
+    #     open("test.json", "w"),
+    # )

@@ -315,6 +315,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     pisaos.fact_definition(tls_name, fact_name)
   }
 
+  def deal_with_parse_entire_thy : String = {
+    val entire_thy_parsed = pisaos.parse_entire_thy
+    entire_thy_parsed.filter(_.trim.nonEmpty).mkString("<SEP>")
+  }
+
   def isabelleCommand(
       isa_command: IsaCommand
   ): ZIO[zio.ZEnv, Status, IsaState] = {
@@ -418,6 +423,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val tls_name: String = isa_command.command.split("<get fact definition>")(1).trim
         val fact_name: String = isa_command.command.split("<get fact definition>")(2).trim
         deal_with_fact_definition(tls_name, fact_name)
+      } else if (isa_command.command.trim == "<parse entire thy>") {
+        deal_with_parse_entire_thy
       }
       else "Unrecognised operation."
     }

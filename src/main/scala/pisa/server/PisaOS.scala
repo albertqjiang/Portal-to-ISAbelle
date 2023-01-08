@@ -496,20 +496,8 @@ class PisaOS(
     thy_for_sledgehammer.importMLStructureNow("Sledgehammer")
   val Sledgehammer_Commands: String =
     thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Commands")
-  val Sledgehammer_Fact: String =
-    thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Fact")
-  val Sledgehammer_MaSh: String =
-    thy_for_sledgehammer.importMLStructureNow("Sledgehammer_MaSh")
   val Sledgehammer_Prover: String =
     thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover")
-  val Sledgehammer_Prover_ATP: String =
-    thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover_ATP")
-  val Sledgehammer_Prover_Minimize: String =
-    thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Prover_Minimize")
-  val Sledgehammer_Util: String =
-    thy_for_sledgehammer.importMLStructureNow("Sledgehammer_Util")
-  val ATP_Util: String = thy_for_sledgehammer.importMLStructureNow("ATP_Util")
-  val ATP_Proof: String = thy_for_sledgehammer.importMLStructureNow("ATP_Proof")
 
   // prove_with_Sledgehammer is mostly identical to check_with_Sledgehammer except for that when the returned Boolean is true, it will
   // also return a non-empty list of Strings, each of which contains executable commands to close the top subgoal. We might need to chop part of
@@ -787,4 +775,6 @@ class PisaOS(
 
   def retrieve_tls(tls_name: String): ToplevelState =
     Await.result(_retrieve_tls(tls_name), Duration.Inf)
+
+  def parse_entire_thy: List[String] = parse_text(thy1, fileContent).force.retrieveNow.map(_._2)
 }
