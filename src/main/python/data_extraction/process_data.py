@@ -55,6 +55,7 @@ def process_one_extraction_file(file):
     problem_name_to_transitions = {}
     for transition in good_transitions:
         _, transition_text, proof_level, _ = transition
+        print(transition_text, proof_level)
         if transition_text in problem_names:
             current_problem_name = transition_text
             assert proof_level == 0, transition
