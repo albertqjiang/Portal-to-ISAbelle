@@ -86,9 +86,9 @@ def process_extractions(files, saving_directory):
     for file in tqdm(files):
         extraction_from_a_file = process_one_extraction_file(file)
         basename = os.path.basename(file)
-        assert basename.endswith("_thy_output.json"), basename
+        assert basename.endswith("thy_output.json"), basename
 
-        new_basename = basename.replace("_thy_output.json", "_thy_problems.json")
+        new_basename = basename.replace("thy_output.json", "thy_problems.json")
         saving_file_path = os.path.join(saving_directory, new_basename)
         json.dump(extraction_from_a_file, open(saving_file_path, "w"))
         
