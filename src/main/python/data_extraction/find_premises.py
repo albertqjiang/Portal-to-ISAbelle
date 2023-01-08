@@ -132,6 +132,11 @@ if __name__ == "__main__":
     # with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
     #     pool.map(find_premises_from_a_file, list_of_path_dicts)
     find_premises_from_a_file(
-        {"problems_path": file, "saving_directory": saving_directory, "jar_path": jar_path, "isabelle_path": isabelle_path}
+        {
+            "problems_path": "/home/qj213/problems/afp/_home_qj213_afp-2022-12-06_thys_pGCL_WellDefined.thy_problems.json", 
+            "saving_directory": saving_directory, 
+            "jar_path": jar_path, 
+            "isabelle_path": isabelle_path
+        }
     )
     
