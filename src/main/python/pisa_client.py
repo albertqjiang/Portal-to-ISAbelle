@@ -105,7 +105,7 @@ class PisaEnv:
 
         # Break down the proof string into chunks which might be premises
         possible_premise_chunks = further_break([theorem_proof_string])
-        legit_separators = [",", "(", ")", "[", "]", "{", "}", ":", '"']
+        legit_separators = [",", "(", ")", "[", "]", "{", "}", ":", '"', "\\", "<", ">"]
         for separtor in legit_separators:
             possible_premise_chunks = further_break(possible_premise_chunks, separtor)
         possible_premise_chunks = set(chunk.strip() for chunk in possible_premise_chunks)
@@ -113,7 +113,6 @@ class PisaEnv:
         # Only include theorems that are in the proof string
         premises = [premise for premise in premises 
             if (premise in possible_premise_chunks) or (premise.split(".")[-1] in possible_premise_chunks)]
-        print(premises)
         return premises
 
     def get_fact_defintion(self, name_of_tls, fact_name):

@@ -54,7 +54,6 @@ def find_premises_from_a_file(path_dict):
         steps_before_last_end = entire_thy_concatenated[:i]
         steps_before_last_end = ' '.join(steps_before_last_end)
         env.initialise()
-        print()
         env.step_to_top_level_state(steps_before_last_end, "default", "default")
 
         # Find the premises to each problem
@@ -63,7 +62,6 @@ def find_premises_from_a_file(path_dict):
             try:
                 problem_name = problem["problem_name"]
                 only_name = problem_name.strip()
-                print("What")
                 assert only_name.startswith("lemma") or only_name.startswith("theorem"), only_name
                 only_name = only_name.lstrip("lemma").lstrip("theorem").strip()
                 only_name = only_name.split(":")[0].strip()
@@ -72,9 +70,7 @@ def find_premises_from_a_file(path_dict):
 
                 full_proof_text = problem["full_proof_text"]
                 split = problem["split"]
-                print("Here")
                 premises_and_their_definitions = env.get_premises_and_their_definitions("default", only_name, full_proof_text)
-                print("There")
                 premises.append(
                     {   
                         "theory_file_path": theory_file_path,
