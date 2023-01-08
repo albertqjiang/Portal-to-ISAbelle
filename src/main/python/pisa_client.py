@@ -113,6 +113,7 @@ class PisaEnv:
         # Only include theorems that are in the proof string
         premises = [premise for premise in premises 
             if (premise in possible_premise_chunks) or (premise.split(".")[-1] in possible_premise_chunks)]
+        print(premises)
         return premises
 
     def get_fact_defintion(self, name_of_tls, fact_name):

@@ -69,9 +69,9 @@ def find_premises_from_a_file(path_dict):
 
                 full_proof_text = problem["full_proof_text"]
                 split = problem["split"]
-
+                print("Here")
                 premises_and_their_definitions = env.get_premises_and_their_definitions("default", only_name, full_proof_text)
-
+                print("There")
                 premises.append(
                     {   
                         "theory_file_path": theory_file_path,
