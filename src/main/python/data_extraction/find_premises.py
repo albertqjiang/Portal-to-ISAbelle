@@ -94,8 +94,11 @@ def find_premises_from_a_file(path_dict):
         # Clean up
         del env
         close_server(server_subprocess_id)
+        
     except Exception as e:
         print(e)
+        with open(error_path, "w") as fout:
+            fout.write(e)
 
    
 if __name__ == "__main__":
@@ -120,11 +123,15 @@ if __name__ == "__main__":
         shutil.rmtree(saving_directory)
     os.makedirs(saving_directory)
 
-    files = glob.glob(f"{extraction_file_directory}/**/*.thy_problems.json", recursive=True)
-    list_of_path_dicts = [
-        {"problems_path": file, "saving_directory": saving_directory, "jar_path": jar_path, "isabelle_path": isabelle_path}
-        for file in files
-    ]
+    # files = glob.glob(f"{extraction_file_directory}/**/*.thy_problems.json", recursive=True)
+    # list_of_path_dicts = [
+    #     {"problems_path": file, "saving_directory": saving_directory, "jar_path": jar_path, "isabelle_path": isabelle_path}
+    #     for file in files
+    # ]
     
-    with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
-        pool.map(find_premises_from_a_file, list_of_path_dicts)
+    # with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
+    #     pool.map(find_premises_from_a_file, list_of_path_dicts)
+    find_premises_from_a_file(
+        {"problems_path": file, "saving_directory": saving_directory, "jar_path": jar_path, "isabelle_path": isabelle_path}
+    )
+    
