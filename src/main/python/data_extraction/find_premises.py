@@ -21,6 +21,7 @@ def find_premises_from_a_file(path_dict):
     problems = problems_json["problems"]
 
     env = None
+    server_subprocess_id = None
     try:
         # Figure out the parameters to start the server
         identity = mp.current_process()._identity
@@ -53,13 +54,14 @@ def find_premises_from_a_file(path_dict):
         steps_before_last_end = entire_thy_concatenated[:i]
         steps_before_last_end = ' '.join(steps_before_last_end)
         env.initialise()
+        print()
         env.step_to_top_level_state(steps_before_last_end, "default", "default")
 
         # Find the premises to each problem
         premises = []
         for problem in problems:
             try:
-                problem_name = problem["name"]
+                problem_name = problem["problem_name"]
                 only_name = problem_name.strip()
                 print("What")
                 assert only_name.startswith("lemma") or only_name.startswith("theorem"), only_name
@@ -92,14 +94,15 @@ def find_premises_from_a_file(path_dict):
             for premise in premises:
                 fout.write(json.dumps(premise) + "\n")
 
-        # Clean up
-        del env
-        close_server(server_subprocess_id)
-        
     except Exception as e:
         print(e)
         with open(error_path, "w") as fout:
             fout.write(e)
+
+    # Clean up
+    del env
+    if server_subprocess_id is not None:
+        close_server(server_subprocess_id)
 
    
 if __name__ == "__main__":
