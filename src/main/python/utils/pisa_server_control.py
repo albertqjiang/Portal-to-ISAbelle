@@ -11,8 +11,8 @@ def start_server(jar_path, port, outputfile=None, errorfile=None):
 
     server_subprocess_id = subprocess.Popen(
         command,
-        stdout=outputfile,
-        stderr=errorfile,
+        stdout=open(outputfile, "w"),
+        stderr=open(errorfile, "w"),
     ).pid
     time.sleep(5)
     return server_subprocess_id

@@ -110,7 +110,7 @@ def find_premises_from_a_file(path_dict):
     except Exception as e:
         print(e)
         with open(error_path, "w") as fout:
-            fout.write(e)
+            fout.write(str(e))
 
     # Clean up
     del env
