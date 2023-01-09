@@ -4,12 +4,15 @@ import psutil
 import signal
 
 
-def start_server(jar_path, port):
+def start_server(jar_path, port, outputfile=None, errorfile=None):
     command = ["java", "-cp", jar_path, f"pisa.server.PisaOneStageServer{port}"]
+    outputfile = subprocess.PIPE if outputfile is None else outputfile
+    errorfile = subprocess.PIPE if errorfile is None else errorfile
+
     server_subprocess_id = subprocess.Popen(
         command,
-        stdout=subprocess.PIPE, 
-        stderr=subprocess.PIPE
+        stdout=outputfile,
+        stderr=errorfile,
     ).pid
     time.sleep(5)
     return server_subprocess_id
