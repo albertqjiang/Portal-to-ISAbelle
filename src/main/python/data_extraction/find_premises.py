@@ -71,7 +71,7 @@ def find_premises_from_a_file(path_dict):
                 full_proof_text = problem["full_proof_text"]
                 split = problem["split"]
                 premises_and_their_definitions = env.get_premises_and_their_definitions("default", only_name, full_proof_text)
-                print(premises_and_their_definitions)
+                # print(premises_and_their_definitions)
                 premises.append(
                     {   
                         "theory_file_path": theory_file_path,
@@ -86,7 +86,7 @@ def find_premises_from_a_file(path_dict):
             except Exception as excp:
                 print(excp)
                 continue
-        print(saving_path)
+        # print(saving_path)
         with open(saving_path, "w") as fout:
             for premise in premises:
                 fout.write(json.dumps(premise) + "\n")
