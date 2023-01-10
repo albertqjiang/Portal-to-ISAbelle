@@ -92,7 +92,9 @@ class PisaEnv:
 
     def get_premises(self, name_of_tls, theorem_name, theorem_proof_string):
         message = f"<get dependent theorems>{name_of_tls}<get dependent theorems>{theorem_name}<get dependent theorems>{THEOREM_SEPARATOR}"
+        print(message)
         returned_string = self.post(message)
+        print(returned_string)
         premises = returned_string.split(THEOREM_SEPARATOR)
         premises = [premise.strip() for premise in premises]
 
