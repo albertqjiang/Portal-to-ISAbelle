@@ -734,6 +734,7 @@ class PisaOS(
     var found_theorem : Boolean = false
     while (!found_theorem){
       val (transition, text) = transitions_and_texts(accumulative_index)
+      println(text)
       val sanitised_text = text.trim.replaceAll("\n", " ").replaceAll(" +", " ")
       if (sanitised_text == sanitised_theorem_name){
         found_theorem = true
@@ -746,6 +747,7 @@ class PisaOS(
     var proof_finished : Boolean = false
     while (!proof_finished) {
       val (transition, text) = transitions_and_texts(accumulative_index)
+      println(text)
       val sanitised_text = text.trim.replaceAll("\n", " ").replaceAll(" +", " ")
       if (sanitised_text.isEmpty) {
         accumulative_index += 1
