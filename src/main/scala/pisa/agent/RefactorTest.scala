@@ -31,7 +31,10 @@ object RefactorTest {
       working_directory=working_directory
     )
     println(pisaos.accumulative_step_to_theorem_end(problem1))
+    pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
+    println(pisaos.get_dependent_theorems("default", "corrKey_shrK_bad"))
     println(pisaos.accumulative_step_to_theorem_end(problem2))
-
+    pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
+    println(pisaos.get_dependent_theorems("default", "PO_m3_inv1_lkeysec_init"))
   }
 }
