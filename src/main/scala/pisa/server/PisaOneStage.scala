@@ -320,6 +320,10 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     entire_thy_parsed.filter(_.trim.nonEmpty).mkString("<SEP>")
   }
 
+  def deal_with_proceed_until_end: String = {
+    pisaos.proceed_until_last_end
+  }
+
   def isabelleCommand(
       isa_command: IsaCommand
   ): ZIO[zio.ZEnv, Status, IsaState] = {
@@ -425,6 +429,8 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         deal_with_fact_definition(tls_name, fact_name)
       } else if (isa_command.command.trim == "<parse entire thy>") {
         deal_with_parse_entire_thy
+      } else if (isa_command.command.trim == "<proceed until end>") {
+        deal_with_proceed_until_end
       }
       else "Unrecognised operation."
     }

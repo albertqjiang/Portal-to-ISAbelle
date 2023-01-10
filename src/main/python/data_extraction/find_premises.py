@@ -55,22 +55,10 @@ def find_premises_from_a_file(path_dict):
             theory_file_path=theory_file_path,
             working_directory=working_directory,
         )
-        entire_thy_concatenated = env.post("<parse entire thy>")
-        entire_thy_concatenated = entire_thy_concatenated.split("<SEP>")
-        entire_thy_concatenated = [line.strip() for line in entire_thy_concatenated]
 
-        # Find the index where the last "end" is
-        for i in range(len(entire_thy_concatenated)-1, -1, -1):
-            if entire_thy_concatenated[i] == "end":
-                break
-
-        if i == 0:
-            raise Exception(f"The file is empty:\n{' '.join(entire_thy_concatenated)}")
-
-        steps_before_last_end = entire_thy_concatenated[:i]
-        steps_before_last_end = ' '.join(steps_before_last_end)
+        # Proceed until the end of the thy and initialise the environment
+        env.proceed_until_end()
         env.initialise()
-        env.step_to_top_level_state(steps_before_last_end, "default", "default")
 
         # Find the premises to each problem
         premises = []

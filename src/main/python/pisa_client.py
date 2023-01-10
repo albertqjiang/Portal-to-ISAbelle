@@ -167,6 +167,9 @@ class PisaEnv:
             print("Failure to proceed before line")
             print(e)
 
+    def proceed_until_end(self):
+        return self.post("<proceed until end>")
+
 
 def parsed_json_to_env_and_dict(path_to_json, afp_path, port=9000, isa_path="/Applications/Isabelle2020.app/Isabelle"):
     save_dict = json.load(open(path_to_json))

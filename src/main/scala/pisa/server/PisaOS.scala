@@ -703,6 +703,24 @@ class PisaOS(
   val transitions_and_texts = parse_text(thy1, fileContent).force.retrieveNow
   var frontier_proceeding_index = 0
   if (debug) println("Checkpoint 14")
+
+  def proceed_until_last_end: String = {
+    val only_texts = transitions_and_texts.map(_._2.trim)
+    val last_end_index = only_texts.lastIndexOf("end")
+    if (last_end_index == -1) {
+      "<WARNING> No end found in file"
+    } else {
+      for (i <- List.range(0, last_end_index)) {
+        val (transition, text) = transitions_and_texts(i)
+        if (text.trim.isEmpty) {}
+        else {
+          toplevel = singleTransition(transition, toplevel)
+        }
+      }
+      "<SUCCESS>"
+    }
+  }
+
   def accumulative_step_to_before_transition_starting(
       isar_string: String
   ): String = {
