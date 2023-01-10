@@ -147,6 +147,7 @@ if __name__ == "__main__":
             "problems_path": "/home/qj213/problems/afp/_home_qj213_afp-2022-12-06_thys_Security_Protocol_Refinement_Key_establish_m3_ds_par.thy_problems.json", 
             "saving_directory": saving_directory, 
             "jar_path": jar_path, 
-            "isabelle_path": isabelle_path
+            "isabelle_path": isabelle_path,
+            "server_dump_path": server_dump_path,
         }
     )
