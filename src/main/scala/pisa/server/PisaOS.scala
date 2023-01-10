@@ -244,8 +244,8 @@ class PisaOS(
         | end""".stripMargin
     )
   def fact_definition(
-    tls_name: String,
-    theorem_name: String
+      tls_name: String,
+      theorem_name: String
   ): String = {
     val toplevel_state = retrieve_tls(tls_name)
     fact_definition(toplevel_state, theorem_name).force.retrieveNow
@@ -705,23 +705,6 @@ class PisaOS(
   var frontier_proceeding_index = 0
   if (debug) println("Checkpoint 14")
 
-  def proceed_until_last_end: String = {
-    val only_texts = transitions_and_texts.map(_._2.trim)
-    val last_end_index = only_texts.lastIndexOf("end")
-    if (last_end_index == -1) {
-      "<WARNING> No end found in file"
-    } else {
-      for (i <- List.range(0, last_end_index)) {
-        val (transition, text) = transitions_and_texts(i)
-        if (text.trim.isEmpty) {}
-        else {
-          toplevel = singleTransition(transition, toplevel)
-        }
-      }
-      "<SUCCESS>"
-    }
-  }
-
   def accumulative_step_to_before_transition_starting(
       isar_string: String
   ): String = {
@@ -742,6 +725,37 @@ class PisaOS(
         singleTransition(transition, top_level_proceeding_state)
       register_tls("default", resulting_state)
       accumulative_step_to_before_transition_starting(sanitised_isar_string)
+    }
+  }
+
+  var accumulative_index : Int = 0
+  def accumulative_step_to_theorem_end(theorem_name: String) : Unit ={
+    val sanitised_theorem_name = theorem_name.trim.replaceAll("\n", " ").replaceAll(" +", " ")
+    var found_theorem : Boolean = false
+    while (!found_theorem){
+      val (transition, text) = transitions_and_texts(accumulative_index)
+      val sanitised_text = text.trim.replaceAll("\n", " ").replaceAll(" +", " ")
+      if (sanitised_text == sanitised_theorem_name){
+        found_theorem = true
+      } else {
+        if (sanitised_text.nonEmpty) singleTransition(transition)
+        accumulative_index += 1
+      }
+    }
+
+    var proof_finished : Boolean = false
+    while (!proof_finished) {
+      val (transition, text) = transitions_and_texts(accumulative_index)
+      val sanitised_text = text.trim.replaceAll("\n", " ").replaceAll(" +", " ")
+      if (sanitised_text.isEmpty) {
+        accumulative_index += 1
+      }
+      else {
+        singleTransition(transition)
+        val proof_level = getProofLevel
+        if (proof_level == 0) proof_finished = true
+        accumulative_index += 1
+      }
     }
   }
 
@@ -795,5 +809,6 @@ class PisaOS(
   def retrieve_tls(tls_name: String): ToplevelState =
     Await.result(_retrieve_tls(tls_name), Duration.Inf)
 
-  def parse_entire_thy: List[String] = parse_text(thy1, fileContent).force.retrieveNow.map(_._2)
+  def parse_entire_thy: List[String] =
+    parse_text(thy1, fileContent).force.retrieveNow.map(_._2)
 }

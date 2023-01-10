@@ -32,6 +32,5 @@ object RefactorTest {
     implicit val isabelle: Isabelle = pisaos.isabelle
     implicit val ec: ExecutionContext = pisaos.ec
 
-    println(pisaos.proceed_until_last_end)
   }
 }

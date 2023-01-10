@@ -321,8 +321,9 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     entire_thy_parsed.filter(_.trim.nonEmpty).mkString("<SEP>")
   }
 
-  def deal_with_proceed_until_end: String = {
-    pisaos.proceed_until_last_end
+  def deal_with_accumulative_step_to_theorem_end(theorem_name: String) = {
+    pisaos.accumulative_step_to_theorem_end(theorem_name)
+    "<SUCCESS>"
   }
 
   def isabelleCommand(
@@ -430,8 +431,9 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         deal_with_fact_definition(tls_name, fact_name)
       } else if (isa_command.command.trim == "<parse entire thy>") {
         deal_with_parse_entire_thy
-      } else if (isa_command.command.trim == "<proceed until end>") {
-        deal_with_proceed_until_end
+      } else if (isa_command.command.trim.startsWith("<accumulative_step_to_theorem_end>")) {
+        val theorem_name = isa_command.command.trim.split("<accumulative_step_to_theorem_end>")(1).trim
+        deal_with_accumulative_step_to_theorem_end(theorem_name)
       }
       else "Unrecognised operation."
     }

@@ -120,11 +120,16 @@ class PisaEnv:
         returned_string = self.post(message)
         return returned_string
 
-    def get_premises_and_their_definitions(self, name_of_tls, theorem_name, theorem_proof_string):
+    def get_premises_and_their_definitions(self, name_of_tls, full_theorem_def, theorem_name, theorem_proof_string):
+        print(self.proceed_until_end_of_theorem_proof(full_theorem_def))
         premises = self.get_premises(name_of_tls, theorem_name, theorem_proof_string)
         premises_and_their_definitions = [(premise, self.get_fact_defintion(name_of_tls, premise)) for premise in premises]
         return premises_and_their_definitions
 
+    def proceed_until_end_of_theorem_proof(self, theorem_name):
+        message = f"<accumulative_step_to_theorem_end> {theorem_name}"
+        return self.post(message)
+    
     @func_set_timeout(1800, allowOverride=True)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state
