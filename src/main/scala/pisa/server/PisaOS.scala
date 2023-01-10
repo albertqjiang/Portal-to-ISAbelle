@@ -264,6 +264,7 @@ class PisaOS(
       theorem_name: String
   ): List[String] = {
     val toplevel_state = retrieve_tls(tls_name)
+    println("Retrieved top level")
     get_dependent_thms(toplevel_state, theorem_name).force.retrieveNow
   }
 

@@ -307,6 +307,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   }
 
   def deal_with_get_dependent_theorems(tls_name: String, theorem_name: String, separator: String) = {
+    println("Start dealing with dependent theorems")
     val dependent_theorem_list = pisaos.get_dependent_theorems(tls_name, theorem_name)
     dependent_theorem_list.mkString(separator)
   }
