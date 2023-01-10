@@ -22,7 +22,7 @@ object RefactorTest {
   val working_directory: String = "/home/qj213/afp-2022-12-06/thys/Security_Protocol_Refinement"
   val path_to_file: String = "/home/qj213/afp-2022-12-06/thys/Security_Protocol_Refinement/Key_establish/m3_ds_par.thy"
   val problem1: String = "lemma corrKey_shrK_bad [simp]: \"corrKey = shrK`bad\""
-  val problem2: String = "lemma PO_m3_inv1_lkeysec_init [iff]:\\n  \"init m3 \\\\<subseteq> m3_inv1_lkeysec\""
+  val problem2: String = "lemma PO_m3_inv1_lkeysec_init [iff]:\n  \"init m3 \\\\<subseteq> m3_inv1_lkeysec\""
 
   def main(args: Array[String]): Unit = {
     val pisaos = new PisaOS(
