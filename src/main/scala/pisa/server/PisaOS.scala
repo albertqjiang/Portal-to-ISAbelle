@@ -127,6 +127,7 @@ class PisaOS(
   implicit val isabelle: Isabelle = new Isabelle(setup)
   implicit val ec: ExecutionContext = ExecutionContext.global
   if (debug) println("Checkpoint 4")
+
   // Complie useful ML functions
   val script_thy: MLFunction2[String, Theory, Theory] =
     compileFunction[String, Theory, Theory](
@@ -250,6 +251,7 @@ class PisaOS(
     val toplevel_state = retrieve_tls(tls_name)
     fact_definition(toplevel_state, theorem_name).force.retrieveNow
   }
+
   val get_dependent_thms: MLFunction2[ToplevelState, String, List[String]] =
     compileFunction[ToplevelState, String, List[String]](
       """fn (tls, name) =>
@@ -335,6 +337,16 @@ class PisaOS(
     )
     val deduplicated_all_defs: List[String] = all_defs.flatten
     deduplicated_all_defs.distinct
+  }
+
+  // Nasty locales
+  val locales_opened_for_state: MLFunction[ToplevelState, List[String]] = compileFunction[ToplevelState, List[String]](
+    """fn (tls) => Locale.get_locales (Toplevel.theory_of tls)""".stripMargin
+  )
+
+  def locales_defined_in_file(tls: ToplevelState): List[String] = {
+    val locales_opened: List[String] = locales_opened_for_state(tls).force.retrieveNow
+    locales_opened.filter(_.startsWith(currentTheoryName))
   }
 
   def local_facts_and_defs_string(tls: ToplevelState): String =
