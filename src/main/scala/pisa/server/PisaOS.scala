@@ -267,7 +267,25 @@ class PisaOS(
   ): List[String] = {
     val toplevel_state = retrieve_tls(tls_name)
     println("Retrieved top level")
-    get_dependent_thms(toplevel_state, theorem_name).force.retrieveNow
+    try {
+      val dependent_thms = get_dependent_thms(toplevel_state, theorem_name).force.retrieveNow
+      return dependent_thms
+    } catch {
+      case e: IsabelleMLException => {println("Name not found. Trying locales.")}
+      case o: Throwable => {println(o)}
+    }
+    val relevant_locales = locales_defined_in_file(toplevel_state)
+    println(relevant_locales)
+    for (relevant_locale <- relevant_locales) {
+      val full_name = relevant_locale + '.' + theorem_name
+      try {
+        val dependent_thms = get_dependent_thms(toplevel_state, full_name).force.retrieveNow
+        return dependent_thms
+      } catch {
+        case _: Throwable => {}
+      }
+    }
+    return List()
   }
 
   val get_used_consts: MLFunction2[ToplevelState, String, List[String]] =
@@ -758,7 +776,6 @@ class PisaOS(
     var proof_finished : Boolean = false
     while (!proof_finished) {
       val (transition, text) = transitions_and_texts(accumulative_index)
-      println(text)
       val sanitised_text = text.trim.replaceAll("\n", " ").replaceAll(" +", " ")
       if (sanitised_text.isEmpty) {
         accumulative_index += 1
