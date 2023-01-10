@@ -32,8 +32,6 @@ object RefactorTest {
     implicit val isabelle: Isabelle = pisaos.isabelle
     implicit val ec: ExecutionContext = pisaos.ec
 
-    pisaos.step_to_transition_text(theorem_string, after = false)
-    println(pisaos.getStateString(pisaos.toplevel))
-    println(pisaos.normal_with_hammer(pisaos.toplevel, List[String](), List[String]()))
+    println(pisaos.proceed_until_last_end)
   }
 }

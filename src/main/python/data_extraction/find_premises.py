@@ -152,4 +152,3 @@ if __name__ == "__main__":
     #         "isabelle_path": isabelle_path
     #     }
     # )
-    
