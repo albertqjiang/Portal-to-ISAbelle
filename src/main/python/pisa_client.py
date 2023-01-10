@@ -120,10 +120,11 @@ class PisaEnv:
         returned_string = self.post(message)
         return returned_string
 
-    def get_premises_and_their_definitions(self, name_of_tls, full_theorem_def, theorem_name, theorem_proof_string):
+    def get_premises_and_their_definitions(self, full_theorem_def, theorem_name, theorem_proof_string):
         print(self.proceed_until_end_of_theorem_proof(full_theorem_def))
-        premises = self.get_premises(name_of_tls, theorem_name, theorem_proof_string)
-        premises_and_their_definitions = [(premise, self.get_fact_defintion(name_of_tls, premise)) for premise in premises]
+        self.initialise()
+        premises = self.get_premises("default", theorem_name, theorem_proof_string)
+        premises_and_their_definitions = [(premise, self.get_fact_defintion("default", premise)) for premise in premises]
         return premises_and_their_definitions
 
     def proceed_until_end_of_theorem_proof(self, theorem_name):

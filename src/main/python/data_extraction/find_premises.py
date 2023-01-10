@@ -56,10 +56,6 @@ def find_premises_from_a_file(path_dict):
             working_directory=working_directory,
         )
 
-        # Proceed until the end of the thy and initialise the environment
-        env.proceed_until_end()
-        env.initialise()
-
         # Find the premises to each problem
         premises = []
         for problem in problems:
@@ -74,7 +70,9 @@ def find_premises_from_a_file(path_dict):
 
                 full_proof_text = problem["full_proof_text"]
                 split = problem["split"]
-                premises_and_their_definitions = env.get_premises_and_their_definitions("default", problem_name, only_name, full_proof_text)
+                premises_and_their_definitions = env.get_premises_and_their_definitions(
+                    problem_name, only_name, full_proof_text
+                )
                 # print(premises_and_their_definitions)
                 premises.append(
                     {   
