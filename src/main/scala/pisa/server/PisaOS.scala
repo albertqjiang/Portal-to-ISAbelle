@@ -737,7 +737,7 @@ class PisaOS(
       println(text)
       println(sanitised_theorem_name)
       println("*******")
-      Thread.sleep(5000)
+      Thread.sleep(1000)
       val sanitised_text = text.trim.replaceAll("\n", " ").replaceAll(" +", " ")
       if (sanitised_text == sanitised_theorem_name){
         found_theorem = true
