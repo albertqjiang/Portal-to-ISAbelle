@@ -283,7 +283,7 @@ class PisaOS(
         val dependent_thms = get_dependent_thms(toplevel_state, full_name).force.retrieveNow
         return dependent_thms
       } catch {
-        case _: Throwable => {}
+        case e: Throwable => {println(e)}
       }
     }
     return List()
