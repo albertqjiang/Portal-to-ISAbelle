@@ -277,20 +277,20 @@ class PisaOS(
     val relevant_locales = locales_defined_in_file(toplevel_state)
     println(relevant_locales)
 
-    var dependent_thms: List[String] = List()
-    Breaks.breakable{
+    val dep_thms = {
       for (relevant_locale <- relevant_locales) {
-        val full_name = relevant_locale.split('.').last.trim + '.' + theorem_name
+        val full_name = relevant_locale.trim + '.' + theorem_name
         println(s"Trying out full name: ${full_name}")
         try {
-          dependent_thms = get_dependent_thms(toplevel_state, full_name).force.retrieveNow
-          Breaks.break
+          val dependent_thms = get_dependent_thms(toplevel_state, full_name).force.retrieveNow
+          return dependent_thms
         } catch {
           case e: Throwable => {println(e)}
         }
       }
+      List()
     }
-    dependent_thms
+    dep_thms
 
   }
 
