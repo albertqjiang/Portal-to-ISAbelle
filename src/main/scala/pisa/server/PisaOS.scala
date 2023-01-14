@@ -276,17 +276,22 @@ class PisaOS(
     }
     val relevant_locales = locales_defined_in_file(toplevel_state)
     println(relevant_locales)
-    for (relevant_locale <- relevant_locales) {
-      val full_name = relevant_locale.split('.').last.trim + '.' + theorem_name
-      println(s"Trying out full name: ${full_name}")
-      try {
-        val dependent_thms = get_dependent_thms(toplevel_state, full_name).force.retrieveNow
-        return dependent_thms
-      } catch {
-        case e: Throwable => {println(e)}
+
+    var dependent_thms: List[String] = List()
+    Breaks.breakable{
+      for (relevant_locale <- relevant_locales) {
+        val full_name = relevant_locale.split('.').last.trim + '.' + theorem_name
+        println(s"Trying out full name: ${full_name}")
+        try {
+          dependent_thms = get_dependent_thms(toplevel_state, full_name).force.retrieveNow
+          Breaks.break
+        } catch {
+          case e: Throwable => {println(e)}
+        }
       }
     }
-    return List()
+    dependent_thms
+
   }
 
   val get_used_consts: MLFunction2[ToplevelState, String, List[String]] =
