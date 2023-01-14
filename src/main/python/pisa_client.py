@@ -92,11 +92,12 @@ class PisaEnv:
 
     def get_premises(self, name_of_tls, theorem_name, theorem_proof_string):
         message = f"<get dependent theorems>{name_of_tls}<get dependent theorems>{theorem_name}<get dependent theorems>{THEOREM_SEPARATOR}"
-        print(message)
+        print(f"Get dependent theroem string: {message}")
         returned_string = self.post(message)
-        print(returned_string)
+        print(f"Returned string: {returned_string}")
         premises = returned_string.split(THEOREM_SEPARATOR)
         premises = [premise.strip() for premise in premises]
+        print(f"Returned premises: {'||'.join(premises)}")
 
         # Function to break down the proof string
         def further_break(chunks, separator=None):
@@ -128,6 +129,7 @@ class PisaEnv:
         print("Get to end: " + self.proceed_until_end_of_theorem_proof(full_theorem_def))
         self.initialise()
         premises = self.get_premises("default", theorem_name, theorem_proof_string)
+        print(premises)
         premises_and_their_definitions = [(premise, self.get_fact_defintion("default", premise)) for premise in premises]
         return premises_and_their_definitions
 
