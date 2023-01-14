@@ -44,11 +44,12 @@ def find_premises_from_a_file(path_dict):
             rank = 0
         port = 8000 + rank
 
-        server_subprocess_id = start_server(
-            jar_path, port, outputfile=server_output_path, errorfile=server_error_path
-        )
+        # server_subprocess_id = start_server(
+        #     jar_path, port, outputfile=server_output_path, errorfile=server_error_path
+        # )
         
         # Getting the environment
+        print(f"Port: {port}")
         env = initialise_env(
             port=port,
             isa_path=isabelle_path,
