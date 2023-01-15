@@ -125,8 +125,6 @@ if __name__ == "__main__":
     jar_path = args.jar_path
     isabelle_path = args.isabelle_path
     server_dump_path = args.server_dump_path
-    if os.path.isdir(saving_directory):
-        shutil.rmtree(saving_directory)
     os.makedirs(saving_directory)
 
     # files = glob.glob(f"{extraction_file_directory}/**/*.thy_problems.json", recursive=True)
