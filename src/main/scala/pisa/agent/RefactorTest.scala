@@ -30,10 +30,10 @@ object RefactorTest {
       path_to_file=path_to_file,
       working_directory=working_directory
     )
-    println(pisaos.accumulative_step_to_theorem_end(problem1))
+    pisaos.accumulative_step_to_theorem_end(problem1)
     pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
     println(pisaos.get_dependent_theorems("default", "phiDefNodes_aux_cases"))
-    println(pisaos.accumulative_step_to_theorem_end(problem2))
+    pisaos.accumulative_step_to_theorem_end(problem2)
     pisaos.top_level_state_map += ("default" -> pisaos.copy_tls)
     println(pisaos.get_dependent_theorems("default", "phiDefNode_aux_is_join_node"))
   }
