@@ -125,7 +125,9 @@ if __name__ == "__main__":
     jar_path = args.jar_path
     isabelle_path = args.isabelle_path
     server_dump_path = args.server_dump_path
-    os.makedirs(saving_directory)
+
+    if not os.path.exists(saving_directory):
+        os.makedirs(saving_directory)
 
     # files = glob.glob(f"{extraction_file_directory}/**/*.thy_problems.json", recursive=True)
     # list_of_path_dicts = [
