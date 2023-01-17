@@ -275,7 +275,7 @@ class PisaOS(
       case o: Throwable => {println(o)}
     }
     val relevant_locales = locales_defined_in_file(toplevel_state)
-    // println(relevant_locales)
+    println(relevant_locales)
 
     var dep_thms: List[String] = List()
     
@@ -688,7 +688,7 @@ class PisaOS(
           )
             continue.breakable {
               if (text.trim.isEmpty) continue.break
-              // println("Small step: " + text)
+              // println("Small step : " + text)
               tls_to_return =
                 singleTransitionWith10sTimeout(transition, tls_to_return)
               // println("Applied transition successfully")
