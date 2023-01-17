@@ -126,7 +126,7 @@ class PisaEnv:
         return returned_string
 
     def get_premises_and_their_definitions(self, full_theorem_def, theorem_name, theorem_proof_string):
-        print("Get to end: " + self.proceed_until_end_of_theorem_proof(full_theorem_def))
+        # print("Get to end: " + self.proceed_until_end_of_theorem_proof(full_theorem_def))
         self.initialise()
         premises = self.get_premises("default", theorem_name, theorem_proof_string)
         # print(premises)

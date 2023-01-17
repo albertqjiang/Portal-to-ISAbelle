@@ -44,9 +44,9 @@ def find_premises_from_a_file(path_dict):
             rank = 0
         port = 8000 + rank
 
-        # server_subprocess_id = start_server(
-        #     jar_path, port, outputfile=server_output_path, errorfile=server_error_path
-        # )
+        server_subprocess_id = start_server(
+            jar_path, port, outputfile=server_output_path, errorfile=server_error_path
+        )
         
         # Getting the environment
         print(f"Port: {port}")
@@ -70,10 +70,10 @@ def find_premises_from_a_file(path_dict):
                 only_name = only_name.split("[")[0].strip()
 
                 if not only_name: continue
-                
+
                 full_proof_text = problem["full_proof_text"]
                 split = problem["split"]
-                print(f"Problem name: {problem_name}. Only name: {only_name}.")
+                # print(f"Problem name: {problem_name}. Only name: {only_name}.")
                 premises_and_their_definitions = env.get_premises_and_their_definitions(
                     problem_name, only_name, full_proof_text
                 )
@@ -132,27 +132,27 @@ if __name__ == "__main__":
     if not os.path.exists(saving_directory):
         os.makedirs(saving_directory)
 
-    # files = glob.glob(f"{extraction_file_directory}/**/*.thy_problems.json", recursive=True)
-    # list_of_path_dicts = [
-    #     {
-    #         "problems_path": file, 
-    #         "saving_directory": saving_directory, 
-    #         "jar_path": jar_path, 
-    #         "isabelle_path": isabelle_path,
-    #         "server_dump_path": server_dump_path,
-    #     }
-    #     for file in files
-    # ]
-    
-    # with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
-    # with mp.Pool(processes=1) as pool:
-    #     pool.map(find_premises_from_a_file, list_of_path_dicts)
-    find_premises_from_a_file(
+    files = glob.glob(f"{extraction_file_directory}/**/*.thy_problems.json", recursive=True)
+    list_of_path_dicts = [
         {
-            "problems_path": "/home/qj213/problems/afp/_home_qj213_afp-2022-12-06_thys_Formal_SSA_Construct_SSA.thy_problems.json", 
+            "problems_path": file, 
             "saving_directory": saving_directory, 
             "jar_path": jar_path, 
             "isabelle_path": isabelle_path,
             "server_dump_path": server_dump_path,
         }
-    )
+        for file in files
+    ]
+    
+    with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
+    # with mp.Pool(processes=1) as pool:
+        pool.map(find_premises_from_a_file, list_of_path_dicts)
+    # find_premises_from_a_file(
+    #     {
+    #         "problems_path": "/home/qj213/problems/afp/_home_qj213_afp-2022-12-06_thys_Formal_SSA_Construct_SSA.thy_problems.json", 
+    #         "saving_directory": saving_directory, 
+    #         "jar_path": jar_path, 
+    #         "isabelle_path": isabelle_path,
+    #         "server_dump_path": server_dump_path,
+    #     }
+    # )

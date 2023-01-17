@@ -789,7 +789,7 @@ class PisaOS(
         accumulative_index += 1
       }
       else {
-        println("Stepping to: " + sanitised_text)
+        // println("Stepping to: " + sanitised_text)
         singleTransition(transition)
         val proof_level = getProofLevel
         if (proof_level == 0) proof_finished = true

@@ -380,7 +380,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
         val new_name: String =
           isa_command.command.split("<apply to top level state>")(3).trim
         try {
-          println(s"Start applying action '${action}' to top level state '${tls_name}'")
+          // println(s"Start applying action '${action}' to top level state '${tls_name}'")
           deal_with_apply_to_tls(tls_name, action, new_name)
         } catch {
           case e: IsabelleMLException => {
