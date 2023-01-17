@@ -69,6 +69,8 @@ def find_premises_from_a_file(path_dict):
                 only_name = only_name.split()[0].strip()
                 only_name = only_name.split("[")[0].strip()
 
+                if not only_name: continue
+
                 full_proof_text = problem["full_proof_text"]
                 split = problem["split"]
                 print(f"Problem name: {problem_name}. Only name: {only_name}.")
