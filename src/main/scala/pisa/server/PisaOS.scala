@@ -266,7 +266,7 @@ class PisaOS(
       theorem_name: String
   ): List[String] = {
     val toplevel_state = retrieve_tls(tls_name)
-    println("Retrieved top level")
+    // println("Retrieved top level")
     try {
       val dependent_thms = get_dependent_thms(toplevel_state, theorem_name).force.retrieveNow
       return dependent_thms
@@ -275,14 +275,14 @@ class PisaOS(
       case o: Throwable => {println(o)}
     }
     val relevant_locales = locales_defined_in_file(toplevel_state)
-    println(relevant_locales)
+    // println(relevant_locales)
 
     var dep_thms: List[String] = List()
     
     Breaks.breakable {
       for (relevant_locale <- relevant_locales) {
         val full_name = relevant_locale.trim + '.' + theorem_name
-        println(s"Trying out full name: ${full_name}")
+        // println(s"Trying out full name: ${full_name}")
         // try {
           val dependent_thms = get_dependent_thms(toplevel_state, full_name).force.retrieveNow
           dep_thms = dependent_thms
