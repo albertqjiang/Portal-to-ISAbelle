@@ -74,6 +74,7 @@ def find_premises_from_a_file(path_dict):
                 full_proof_text = problem["full_proof_text"]
                 split = problem["split"]
                 # print(f"Problem name: {problem_name}. Only name: {only_name}.")
+                env.proceed_until_end_of_theorem_proof(problem_name)
                 premises_and_their_definitions = env.get_premises_and_their_definitions(
                     problem_name, only_name, full_proof_text
                 )
