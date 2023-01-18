@@ -144,11 +144,11 @@ if __name__ == "__main__":
         for file in files
     ]
 
-    print(list_of_path_dicts[0])
+    print(list_of_path_dicts[1])
     
     # with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
     with mp.Pool(processes=1) as pool:
-        pool.map(find_premises_from_a_file, [list_of_path_dicts[0]])
+        pool.map(find_premises_from_a_file, [list_of_path_dicts[1]])
     # find_premises_from_a_file(
     #     {
     #         "problems_path": "/home/qj213/problems/afp/_home_qj213_afp-2022-12-06_thys_Formal_SSA_Construct_SSA.thy_problems.json", 
