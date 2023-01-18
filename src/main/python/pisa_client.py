@@ -166,6 +166,7 @@ class PisaEnv:
 
     @func_set_timeout(1800, allowOverride=True)
     def post(self, action):
+        print(action)
         return self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
 
     def proceed_to_line(self, line_stirng, before_after):
