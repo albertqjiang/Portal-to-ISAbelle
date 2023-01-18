@@ -21,8 +21,8 @@ def create_stub(port=9000):
     return server_pb2_grpc.ServerStub(channel)
 
 
-def initialise_env(port, isa_path, theory_file_path, working_directory):
-    return PisaEnv(port=port, isa_path=isa_path, starter_string=theory_file_path, working_directory=working_directory)
+def initialise_env(port, isa_path, theory_file_path, working_directory, debug=False):
+    return PisaEnv(port=port, isa_path=isa_path, starter_string=theory_file_path, working_directory=working_directory, debug=debug)
 
 
 class PisaEnv:
@@ -30,12 +30,14 @@ class PisaEnv:
         port=9000, 
         isa_path="/Applications/Isabelle2020.app/Isabelle",
         starter_string="theory Test imports Complex_Main begin",
-        working_directory="/Users/qj213/Projects/afp-2021-02-11/thys/Functional-Automata"
+        working_directory="/Users/qj213/Projects/afp-2021-02-11/thys/Functional-Automata",
+        debug=False
     ):
         self.port = port
         self.isa_path = isa_path
         self.starter_string = starter_string
         self.working_directory = working_directory
+        self.debug = debug
 
         self.stub = None
         self.obs_string = None
@@ -166,8 +168,10 @@ class PisaEnv:
 
     @func_set_timeout(1800, allowOverride=True)
     def post(self, action):
-        print(action)
-        return self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
+        if self.debug: print(action)
+        returned = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=action)).state
+        if self.debug: print(returned)
+        return returned
 
     def proceed_to_line(self, line_stirng, before_after):
         assert before_after in ["before", "after"]
