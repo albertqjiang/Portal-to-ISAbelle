@@ -27,6 +27,53 @@ def analyse_file_string(whole_file_string):
     }
 
 
+def extract_a_file_from_params(
+    jar_path, 
+    isabelle_path, 
+    working_directory, 
+    theory_file_path,
+    saving_path, 
+    error_path,
+    sub_saving_path,
+    sub_error_path
+):
+    env = None
+
+    if os.path.isfile(saving_path):
+        return
+    try:
+        # Figure out the parameters to start the server
+        identity = mp.current_process()._identity
+        if identity:
+            rank = identity[0] % 200
+        else:
+            rank = 0
+        port = 8000 + rank
+        server_subprocess_id = start_server(jar_path, port, 
+            outputfile=sub_saving_path, errorfile=sub_error_path)
+        # Getting the environment
+        env = initialise_env(
+            port=port,
+            isa_path=isabelle_path,
+            theory_file_path=theory_file_path,
+            working_directory=working_directory,
+        )
+        whole_file_string = env.post("PISA extract data")
+        # Parse the string and dump
+        analysed_file = analyse_file_string(whole_file_string)
+        analysed_file["theory_file_path"] = theory_file_path
+        analysed_file["working_directory"] = working_directory
+        json.dump(analysed_file, open(saving_path, "w"))
+        
+    except Exception as e:
+        print(e)
+        json.dump({"error": str(e)}, open(error_path, "w"))
+
+    # Clean up
+    del env
+    close_server(server_subprocess_id)
+
+
 def extract_a_file(params_path):
     """
     Extracts the data from a single file.
@@ -43,40 +90,19 @@ def extract_a_file(params_path):
     theory_file_path = params["theory_file_path"]
     saving_path = params["saving_path"]
     error_path = params["error_path"]
+    sub_saving_path = params["sub_saving_path"]
+    sub_error_path = params["sub_error_path"]
 
-    env = None
-    try:
-        # Figure out the parameters to start the server
-        identity = mp.current_process()._identity
-        if identity:
-            rank = identity[0] % 200
-        else:
-            rank = 0
-        port = 8000 + rank
-        server_subprocess_id = start_server(jar_path, port)
-
-        # Getting the environment
-        env = initialise_env(
-            port=port,
-            isa_path=isabelle_path,
-            theory_file_path=theory_file_path,
-            working_directory=working_directory,
-        )
-        whole_file_string = env.post("PISA extract data")
-        # Parse the string and dump
-        analysed_file = analyse_file_string(whole_file_string)
-        analysed_file["theory_file_path"] = theory_file_path
-        analysed_file["working_directory"] = working_directory
-        json.dump(analysed_file, open(saving_path, "w"))
-        
-        # Clean up
-        del env
-        close_server(server_subprocess_id)
-    except Exception as e:
-        print(e)
-        json.dump({"error": str(e)}, open(error_path, "w"))
-
-    
+    extract_a_file_from_params(
+        jar_path, 
+        isabelle_path, 
+        working_directory, 
+        theory_file_path,
+        saving_path, 
+        error_path,
+        sub_saving_path, 
+        sub_error_path,
+    )
 
 
 if __name__ == "__main__":
@@ -134,6 +160,8 @@ if __name__ == "__main__":
             raise AssertionError
         saving_path = f"{output_data_path}/{identifier}_output.json"
         error_path = f"{output_data_path}/{identifier}_error.json"
+        sub_saving_path = f"{output_data_path}/{identifier}_subout.json"
+        sub_error_path = f"{output_data_path}/{identifier}_suberr.json"
         if os.path.exists(saving_path) or os.path.exists(error_path):
             continue
         params = {
@@ -143,11 +171,14 @@ if __name__ == "__main__":
             "theory_file_path": file_path,
             "saving_path": saving_path,
             "error_path": error_path,
+            "sub_saving_path": sub_saving_path,
+            "sub_error_path": sub_error_path
         }
         param_path = os.path.join(output_param_path, f"{identifier}.json")
         json.dump(params, open(param_path, "w"))
 
         param_paths.append(param_path)
-
-    with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
+    
+    print(f"Extracting {len(param_paths)} files in total.")
+    with mp.Pool(processes=int(mp.cpu_count()/8)) as pool:
         pool.map(extract_a_file, param_paths)

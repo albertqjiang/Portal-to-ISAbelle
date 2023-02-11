@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import json
 import grpc
+import hashlib
 
 from copy import copy
 from func_timeout import func_set_timeout
@@ -10,7 +11,7 @@ from func_timeout import func_set_timeout
 import server_pb2
 import server_pb2_grpc
 
-MAX_MESSAGE_LENGTH = 10485760
+MAX_MESSAGE_LENGTH = 10485760 * 10
 THEOREM_SEPARATOR = "<THM_SEP>"
 
 
@@ -99,6 +100,8 @@ class PisaEnv:
         # print(f"Returned string: {returned_string}")
         premises = returned_string.split(THEOREM_SEPARATOR)
         premises = [premise.strip() for premise in premises]
+        # print(premises)
+        # print("premises raw", premises)
         # print(f"Returned premises: {'||'.join(premises)}")
 
         # Function to break down the proof string
@@ -110,15 +113,30 @@ class PisaEnv:
 
         # Break down the proof string into chunks which might be premises
         possible_premise_chunks = further_break([theorem_proof_string])
+        # print("First filter", possible_premise_chunks)
         legit_separators = [",", "(", ")", "[", "]", "{", "}", ":", '"', "<", ">", "\\"]
         for separtor in legit_separators:
             possible_premise_chunks = further_break(possible_premise_chunks, separtor)
+        # print("Second filter", possible_premise_chunks)
         possible_premise_chunks = set(chunk.strip() for chunk in possible_premise_chunks)
+        # print("Third filter", possible_premise_chunks)
+        
         
         # Only include theorems that are in the proof string
-        premises = [premise for premise in premises 
-            if (premise in possible_premise_chunks) or (premise.split(".")[-1] in possible_premise_chunks)]
-        return premises
+        explicit_premises = []
+        for premise in premises:
+            premise_divisions = premise.split(".")
+            for i in range(len(premise_divisions)):
+                possible_way_to_refer_to_premise = ".".join(premise_divisions[i:])
+                # print("possible_way", possible_way_to_refer_to_premise)
+                if possible_way_to_refer_to_premise in possible_premise_chunks:
+                    explicit_premises.append(premise)
+                    break
+
+        explicit_premises = [premise for premise in explicit_premises if premise.strip()]
+        # print(theorem_name, theorem_proof_string, explicit_premises)
+        # print("*"*100)
+        return explicit_premises
 
     def get_fact_defintion(self, name_of_tls, fact_name):
         message = f"<get fact definition>{name_of_tls}<get fact definition>{fact_name}"
@@ -127,18 +145,49 @@ class PisaEnv:
         # print(f"Returned definition: {returned_string}")
         return returned_string
 
-    def get_premises_and_their_definitions(self, full_theorem_def, theorem_name, theorem_proof_string):
-        # print("Get to end: " + self.proceed_until_end_of_theorem_proof(full_theorem_def))
+    def get_premises_and_their_definitions(self, proof_body):
+        # print("-1")
         self.initialise()
-        premises = self.get_premises("default", theorem_name, theorem_proof_string)
-        # print(premises)
-        premises_and_their_definitions = [(premise, self.get_fact_defintion("default", premise)) for premise in premises]
+        # print("0")
+        # Getting unique name and clone the top level there
+
+        unique_name = str(hashlib.sha256(proof_body.encode("utf-8")).hexdigest())
+        unique_name = ''.join(filter(str.isalpha, unique_name))
+        self.clone_to_new_name(unique_name)
+        # print(0.5, "post clone")
+        # Substitute proof
+        
+        sub_proof = f"<allow more time> theorem {unique_name}: {proof_body}"
+        # print("1", sub_proof)
+        self.step_to_top_level_state(sub_proof, unique_name, unique_name)
+        # print("2, stepping")
+        premises = self.get_premises(unique_name, unique_name, sub_proof)
+        # print("3", premises)
+        premises_and_their_definitions = [(premise, self.get_fact_defintion(unique_name, premise)) for premise in premises]
+        # print("4", premises_and_their_definitions)
+        self.post(f"<delete> {unique_name}")
         return premises_and_their_definitions
+
+    # def get_premises_and_their_definitions(self, full_theorem_def, theorem_name, theorem_proof_string):
+    #     # print("Get to end: " + self.proceed_until_end_of_theorem_proof(full_theorem_def))
+    #     self.initialise()
+    #     premises = self.get_premises("default", theorem_name, theorem_proof_string)
+    #     # print(premises)
+    #     premises_and_their_definitions = [(premise, self.get_fact_defintion("default", premise)) for premise in premises]
+    #     return premises_and_their_definitions
 
     def proceed_until_end_of_theorem_proof(self, theorem_name):
         message = f"<accumulative_step_to_theorem_end> {theorem_name}"
         return self.post(message)
+
+    def accumulative_step_before_theorem_starts(self, theorem_name):
+        message = f"<accumulative_step_before_theorem_starts> {theorem_name}"
+        return self.post(message)
     
+    def accumulative_step_through_a_theorem(self):
+        message = f"<accumulative_step_through_a_theorem>"
+        return self.post(message)
+
     @func_set_timeout(1800, allowOverride=True)
     def step_to_top_level_state(self, action, tls_name, new_name):
         # last_obs_string = self.stub.IsabelleCommand(server_pb2.IsaCommand(command=f"<get state> {tls_name}")).state

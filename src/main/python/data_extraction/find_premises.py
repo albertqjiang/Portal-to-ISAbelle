@@ -16,6 +16,9 @@ def find_premises_from_a_file(path_dict):
     )
     error_path = saving_path.replace("thy_premises.jsonl", "thy_errors.txt")
 
+    if os.path.isfile(saving_path) or os.path.isfile(error_path):
+        return
+
     if server_dump_path is None:
         server_output_path, server_error_path = None, None
     else:
@@ -59,25 +62,38 @@ def find_premises_from_a_file(path_dict):
 
         # Find the premises to each problem
         premises = []
+        # print(len(problems))
         for problem in problems:
             try:
+                # As an example
+                # lemma easy [simp]: "1+2=3" 
+                #   by auto
+                # problem_name = 'lemma easy [simp]: "1+2=3"'
+                # only_name = 'easy'
+                # proof_body = 'by auto'
+                # full_proof_text = 'lemma easy [simp]: "1+2=3" 
+                #   by auto'
                 problem_name = problem["problem_name"].strip()
-                
+                # print(problem_name)
                 assert problem_name.startswith("lemma") or problem_name.startswith("theorem"), problem_name
                 only_name = problem_name.lstrip("lemma").lstrip("theorem").strip()
                 only_name = only_name.split(":")[0].strip()
                 only_name = only_name.split()[0].strip()
                 only_name = only_name.split("[")[0].strip()
 
-                if not only_name: continue
-
                 full_proof_text = problem["full_proof_text"]
+                proof_body = ":".join(full_proof_text.strip().split(":")[1:]).strip()
                 split = problem["split"]
                 # print(f"Problem name: {problem_name}. Only name: {only_name}.")
-                env.proceed_until_end_of_theorem_proof(problem_name)
-                premises_and_their_definitions = env.get_premises_and_their_definitions(
-                    problem_name, only_name, full_proof_text
-                )
+                # print(0.0, full_proof_text)
+                env.accumulative_step_before_theorem_starts(problem_name)
+                premises_and_their_definitions = env.get_premises_and_their_definitions(proof_body)
+                env.accumulative_step_through_a_theorem()
+                
+                # premises_and_their_definitions = env.get_premises_and_their_definitions(
+                #     problem_name, only_name, full_proof_text
+                # )
+                # env.proceed_until_end_of_theorem_proof(problem_name)
                 # print(premises_and_their_definitions)
                 premises.append(
                     {   
@@ -113,7 +129,6 @@ if __name__ == "__main__":
     import argparse
     import glob
     import os
-    import shutil
     parser = argparse.ArgumentParser(description='Extracting translation pairs.')
     parser.add_argument('--extraction-file-directory', '-efd', help='Where the parsed json files are')
     parser.add_argument('--saving-directory', '-sd', help='Where to save the translation pairs')
@@ -148,6 +163,9 @@ if __name__ == "__main__":
     with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
     # with mp.Pool(processes=1) as pool:
         pool.map(find_premises_from_a_file, list_of_path_dicts)
+
+    # print(list_of_path_dicts[1])
+    # find_premises_from_a_file(list_of_path_dicts[1])
     # find_premises_from_a_file(
     #     {
     #         "problems_path": "/home/qj213/problems/afp/_home_qj213_afp-2022-12-06_thys_Formal_SSA_Construct_SSA.thy_problems.json", 

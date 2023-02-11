@@ -8,7 +8,6 @@ def start_server(jar_path, port, outputfile=None, errorfile=None):
     command = ["java", "-cp", jar_path, f"pisa.server.PisaOneStageServer{port}"]
     outputfile = subprocess.PIPE if outputfile is None else outputfile
     errorfile = subprocess.PIPE if errorfile is None else errorfile
-
     server_subprocess_id = subprocess.Popen(
         command,
         stdout=open(outputfile, "w"),

@@ -80,7 +80,13 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     "The problem is reset."
   }
 
-  def deal_with_extraction(): String = pisaos.step("PISA extract data")
+  def deal_with_extraction(): String = {
+    try{
+      pisaos.step("PISA extract data")
+    } catch {
+      case t: Throwable => {println(t); t.toString()}
+    }
+  }
 
   def deal_with_extraction_with_hammer(): String =
     pisaos.step("PISA extract data with hammer")
@@ -118,6 +124,7 @@ class OneStageBody extends ZServer[ZEnv, Any] {
   val DEL_HAMMER: String = "delhammer"
   val TIME_STRING1: String = " ms)"
   val TIME_STRING2: String = " s)"
+  val ALLOW_MORE_TIME: String = "<allow more time>"
 
   def process_hammer_strings(hammer_string_list: List[String]): String = {
     var found = false
@@ -201,6 +208,9 @@ class OneStageBody extends ZServer[ZEnv, Any] {
           pisaos.normal_with_hammer(state, add_names, del_names, timeout)
         actual_step = hammer_actual_step(old_state, new_name, partial_hammer)
         hammered = true
+      } else if (action.startsWith(ALLOW_MORE_TIME)) {
+        actual_step = action.split(ALLOW_MORE_TIME).drop(1).mkString("").trim
+        actual_timeout = 30000
       } else {
         actual_step = action
       }
@@ -326,6 +336,16 @@ class OneStageBody extends ZServer[ZEnv, Any] {
     "<SUCCESS>"
   }
 
+  def deal_with_accumulative_step_before_theorem_starts(theorem_name: String) = {
+    pisaos.accumulative_step_before_theorem_starts(theorem_name)
+    "<SUCCESS>"
+  }
+
+  def deal_with_accumulative_step_through_a_theorem = {
+    pisaos.accumulative_step_through_a_theorem
+    "<SUCCESS>"
+  }
+
   def isabelleCommand(
       isa_command: IsaCommand
   ): ZIO[zio.ZEnv, Status, IsaState] = {
@@ -434,6 +454,11 @@ class OneStageBody extends ZServer[ZEnv, Any] {
       } else if (isa_command.command.trim.startsWith("<accumulative_step_to_theorem_end>")) {
         val theorem_name = isa_command.command.trim.split("<accumulative_step_to_theorem_end>")(1).trim
         deal_with_accumulative_step_to_theorem_end(theorem_name)
+      } else if (isa_command.command.trim.startsWith("<accumulative_step_before_theorem_starts>")) {
+        val theorem_name = isa_command.command.trim.split("<accumulative_step_before_theorem_starts>")(1).trim
+        deal_with_accumulative_step_before_theorem_starts(theorem_name)
+      } else if (isa_command.command.trim.startsWith("<accumulative_step_through_a_theorem>")) {
+        deal_with_accumulative_step_through_a_theorem
       }
       else "Unrecognised operation."
     }

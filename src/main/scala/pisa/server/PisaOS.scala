@@ -155,6 +155,13 @@ class PisaOS(
         |  fun go_run (a, b, c) = Toplevel.command_exception a b c
         |  in Timeout.apply (Time.fromSeconds 10) go_run (int, tr, st) end""".stripMargin
     )
+  val command_exception_with_30s_timeout
+      : MLFunction3[Boolean, Transition.T, ToplevelState, ToplevelState] =
+    compileFunction[Boolean, Transition.T, ToplevelState, ToplevelState](
+      """fn (int, tr, st) => let
+        |  fun go_run (a, b, c) = Toplevel.command_exception a b c
+        |  in Timeout.apply (Time.fromSeconds 30) go_run (int, tr, st) end""".stripMargin
+    )
   val command_errors: MLFunction3[
     Boolean,
     Transition.T,
@@ -275,7 +282,7 @@ class PisaOS(
       case o: Throwable => {println(o)}
     }
     val relevant_locales = locales_defined_in_file(toplevel_state)
-    println(relevant_locales)
+    // println(relevant_locales)
 
     var dep_thms: List[String] = List()
     
@@ -430,17 +437,34 @@ class PisaOS(
     val registers: ListBuffer[String] = new ListBuffer[String]()
     if (debug) println("Checkpoint 9_4")
     for (theory_name <- header.imports) {
+      // var treated_name = theory_name.trim
+      // if (treated_name.startsWith("..")) {
+      //   val filedir_chunks = path_to_file.split("/").dropRight(1)
+      //   var imported_dir_chunks = filedir_chunks
+      //   var treated_chunks = treated_name.split("/")
+      //   while (treated_chunks.head == "..") {
+      //     imported_dir_chunks = imported_dir_chunks.dropRight(1)
+      //     treated_chunks = treated_chunks.drop(1)
+      //   }
+      //   imported_dir_chunks = imported_dir_chunks ++ treated_chunks
+      //   imported_dir_chunks = imported_dir_chunks.dropWhile(_!=currentProjectName)
+      //   val imported_dir = imported_dir_chunks.mkString(".")
+      //   registers += imported_dir
+      // } else 
       if (importMap.contains(theory_name)) {
         registers += s"${currentProjectName}.${importMap(theory_name)}"
       } else registers += theory_name
     }
     if (debug) println("Checkpoint 9_5")
-    // println(masterDir)
-    // println(header)
-    // println(registers.toList)
+
+    if (debug) {
+      println(masterDir)
+      println(header)
+      println(registers.toList)
+    }
+    
     Ops
-      .begin_theory(masterDir, header, registers.toList.map(Theory.apply))
-      .retrieveNow
+      .begin_theory(masterDir, header, registers.toList.map(Theory.apply)).force.retrieveNow
   }
   if (debug) println("Checkpoint 5")
   def getHeader(
@@ -525,6 +549,7 @@ class PisaOS(
     TheoryManager.Text(starter_string, setup.workingDirectory.resolve(""))
   if (debug) println("Checkpoint 9")
   var thy1: Theory = beginTheory(theoryStarter)
+  if (debug) println("Checkpoint 9_6")
   thy1.await
   if (debug) println("Checkpoint 10")
 
@@ -622,6 +647,17 @@ class PisaOS(
     ).retrieveNow.force
   }
 
+  def singleTransitionWith30sTimeout(
+      single_transition: Transition.T,
+      top_level_state: ToplevelState
+  ): ToplevelState = {
+    command_exception_with_30s_timeout(
+      true,
+      single_transition,
+      top_level_state
+    ).retrieveNow.force
+  }
+
   def singleTransition(
       single_transition: Transition.T,
       top_level_state: ToplevelState
@@ -651,6 +687,8 @@ class PisaOS(
       for ((transition, text) <- parse_text(thy1, isarString).force.retrieveNow)
         continue.breakable {
           if (text.trim.isEmpty) continue.break
+          else if (text.trim.startsWith("text \\<open>") && text.trim.endsWith("\\<close>")) continue.break
+          else if (text.trim.startsWith("(*") && text.trim.endsWith("*)")) continue.break
           else {
             stateActionTotal =
               stateActionTotal + (stateString + "<\\STATESEP>" + text.trim + "<\\STATESEP>" + s"$getProofLevel" + "<\\TRANSEP>")
@@ -685,12 +723,13 @@ class PisaOS(
               thy1,
               isar_string
             ).force.retrieveNow
-          )
+          ) 
             continue.breakable {
               if (text.trim.isEmpty) continue.break
               // println("Small step : " + text)
-              tls_to_return =
-                singleTransitionWith10sTimeout(transition, tls_to_return)
+              tls_to_return = if (timeout_in_millis > 10000) {
+                singleTransitionWith30sTimeout(transition, tls_to_return)
+              } else singleTransitionWith10sTimeout(transition, tls_to_return)
               // println("Applied transition successfully")
             }
         }
@@ -767,7 +806,7 @@ class PisaOS(
   }
 
   var accumulative_index : Int = 0
-  def accumulative_step_to_theorem_end(theorem_name: String) : Unit ={
+  def accumulative_step_before_theorem_starts(theorem_name: String): Unit = {
     val sanitised_theorem_name = theorem_name.trim.replaceAll("\n", " ").replaceAll(" +", " ")
     var found_theorem : Boolean = false
     while (!found_theorem){
@@ -776,11 +815,13 @@ class PisaOS(
       if (sanitised_text == sanitised_theorem_name){
         found_theorem = true
       } else {
+        // println("Before theorem" + sanitised_text)
         if (sanitised_text.nonEmpty) singleTransition(transition)
         accumulative_index += 1
       }
     }
-
+  }
+  def accumulative_step_through_a_theorem: Unit = {
     var proof_finished : Boolean = false
     while (!proof_finished) {
       val (transition, text) = transitions_and_texts(accumulative_index)
@@ -789,6 +830,7 @@ class PisaOS(
         accumulative_index += 1
       }
       else {
+        // println("During theorem" + sanitised_text)
         // println("Stepping to: " + sanitised_text)
         singleTransition(transition)
         val proof_level = getProofLevel
@@ -796,6 +838,10 @@ class PisaOS(
         accumulative_index += 1
       }
     }
+  }
+  def accumulative_step_to_theorem_end(theorem_name: String) : Unit ={
+    accumulative_step_before_theorem_starts(theorem_name)
+    accumulative_step_through_a_theorem
   }
 
   def step_to_transition_text(

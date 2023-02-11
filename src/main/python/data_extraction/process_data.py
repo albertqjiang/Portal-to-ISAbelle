@@ -14,9 +14,9 @@ def hash_string_to_float(arg):
 
 def get_split(arg):
     float_hash = hash_string_to_float(arg)
-    if float_hash < 0.97:
+    if float_hash < 0.98:
         return "train"
-    elif float_hash < 0.98:
+    elif float_hash < 0.99:
         return "val"
     else:
         return "test"
