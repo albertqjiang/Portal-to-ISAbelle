@@ -288,11 +288,13 @@ class PisaOS(
     
     Breaks.breakable {
       for (relevant_locale <- relevant_locales) {
+        println("Trying locale: " + relevant_locale)
         val full_name = relevant_locale.trim + '.' + theorem_name
         // println(s"Trying out full name: ${full_name}")
         try {
           val dependent_thms = get_dependent_thms(toplevel_state, full_name).force.retrieveNow
           dep_thms = dependent_thms
+          println("This locale works: " + relevant_locale)
           Breaks.break
         } catch {
           case e: Throwable => {println(e)}

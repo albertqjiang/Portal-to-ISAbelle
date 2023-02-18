@@ -145,27 +145,29 @@ class PisaEnv:
         # print(f"Returned definition: {returned_string}")
         return returned_string
 
-    def get_premises_and_their_definitions(self, proof_body):
-        # print("-1")
+    def get_premises_and_their_definitions(self, full_name, only_name, proof_body, debug=False):
+        if debug: print("-1")
         self.initialise()
-        # print("0")
+        if debug: print("0")
         # Getting unique name and clone the top level there
-
-        unique_name = str(hashlib.sha256(proof_body.encode("utf-8")).hexdigest())
-        unique_name = ''.join(filter(str.isalpha, unique_name))
-        self.clone_to_new_name(unique_name)
-        # print(0.5, "post clone")
+        tls_unique_name = str(hashlib.sha256(proof_body.encode("utf-8")).hexdigest())
+        tls_unique_name = ''.join(filter(str.isalpha, tls_unique_name))
+        # decorated_name = only_name.format(tls_unique_name)
+        self.clone_to_new_name(tls_unique_name)
+        if debug: print(0.5, "post clone")
         # Substitute proof
-        
-        sub_proof = f"<allow more time> theorem {unique_name}: {proof_body}"
-        # print("1", sub_proof)
-        self.step_to_top_level_state(sub_proof, unique_name, unique_name)
-        # print("2, stepping")
-        premises = self.get_premises(unique_name, unique_name, sub_proof)
-        # print("3", premises)
-        premises_and_their_definitions = [(premise, self.get_fact_defintion(unique_name, premise)) for premise in premises]
-        # print("4", premises_and_their_definitions)
-        self.post(f"<delete> {unique_name}")
+        # if not only_name.strip():
+        #     sub_proof = f"<allow more time> theorem {proof_body}"
+        # else:
+        #     sub_proof = f"<allow more time> theorem {full_name}: {proof_body}"
+        # if debug: print("1", sub_proof)
+        # self.step_to_top_level_state(sub_proof, tls_unique_name, tls_unique_name)
+        if debug: print("2, stepping")
+        premises = self.get_premises(tls_unique_name, only_name, proof_body)
+        if debug: print("3", premises)
+        premises_and_their_definitions = [(premise, self.get_fact_defintion(tls_unique_name, premise)) for premise in premises]
+        if debug: print("4", premises_and_their_definitions)
+        self.post(f"<delete> {tls_unique_name}")
         return premises_and_their_definitions
 
     # def get_premises_and_their_definitions(self, full_theorem_def, theorem_name, theorem_proof_string):

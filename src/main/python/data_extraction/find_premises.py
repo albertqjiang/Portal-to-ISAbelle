@@ -4,6 +4,38 @@ import multiprocessing as mp
 from utils.pisa_server_control import start_server, close_server
 from pisa_client import initialise_env
 
+
+def find_actual_name_indices(decorated_name):
+    # Give the actual name starting and ending indices of a theorem given its decorated name
+    # Example: decorated_name = (in bidirected_digraph) has_dom_arev[simp]
+    #          actual_name = had_dom_arev
+    length = len(decorated_name)
+    if length == 0:
+        return 0, 0
+    si = 0
+    all_actual_indices = []
+    mode = "normal"
+    while si < length:
+        if decorated_name[si] == "(":
+            mode = "("
+        elif decorated_name[si] == ")":
+            assert mode == "("
+            mode = "normal"
+        elif decorated_name[si] == "[":
+            mode = "["
+        elif decorated_name[si] == "]":
+            assert mode == "["
+            mode = "normal"
+        elif mode == "normal":
+            all_actual_indices.append(si)
+        else:
+            pass
+        # print(si, decorated_name[si])
+        si += 1
+    assert all([index+1 == all_actual_indices[i+1] for i, index in enumerate(all_actual_indices[:-1])]), (all_actual_indices, decorated_name)
+    return all_actual_indices[0], all_actual_indices[-1]
+
+
 def find_premises_from_a_file(path_dict):
     problems_path = path_dict["problems_path"]
     jar_path = path_dict["jar_path"]
@@ -70,25 +102,37 @@ def find_premises_from_a_file(path_dict):
                 #   by auto
                 # problem_name = 'lemma easy [simp]: "1+2=3"'
                 # only_name = 'easy'
-                # proof_body = 'by auto'
+                # proof_body = '"1+2=3"\n by auto'
                 # full_proof_text = 'lemma easy [simp]: "1+2=3" 
                 #   by auto'
+                # full_name = 'easy [simp]'
+                
                 problem_name = problem["problem_name"].strip()
                 # print(problem_name)
                 assert problem_name.startswith("lemma") or problem_name.startswith("theorem"), problem_name
                 only_name = problem_name.lstrip("lemma").lstrip("theorem").strip()
-                only_name = only_name.split(":")[0].strip()
-                only_name = only_name.split()[0].strip()
-                only_name = only_name.split("[")[0].strip()
-
+                
                 full_proof_text = problem["full_proof_text"]
-                proof_body = ":".join(full_proof_text.strip().split(":")[1:]).strip()
+                transitions = problem["transitions"]
+                if ":" not in only_name:
+                    proof_body = only_name.strip() + "\n" + "\n".join([element[1].strip() for element in transitions][1:]).strip()
+                    only_name = ""
+                else:
+                    only_name = only_name.split(":")[0].strip()
+                    proof_body = ":".join(full_proof_text.strip().split(":")[1:]).strip()
+
+                # print(proof_body, full_proof_text)
+                
+                actual_name_si, actual_name_ei = find_actual_name_indices(only_name)
+                full_name = only_name
+                only_name = only_name[actual_name_si:actual_name_ei+1]
+                
                 split = problem["split"]
                 # print(f"Problem name: {problem_name}. Only name: {only_name}.")
                 # print(0.0, full_proof_text)
                 env.accumulative_step_before_theorem_starts(problem_name)
-                premises_and_their_definitions = env.get_premises_and_their_definitions(proof_body)
                 env.accumulative_step_through_a_theorem()
+                premises_and_their_definitions = env.get_premises_and_their_definitions(full_name, only_name, proof_body)
                 
                 # premises_and_their_definitions = env.get_premises_and_their_definitions(
                 #     problem_name, only_name, full_proof_text
@@ -160,7 +204,7 @@ if __name__ == "__main__":
         for file in files
     ]
     
-    with mp.Pool(processes=int(mp.cpu_count()/10)) as pool:
+    with mp.Pool(processes=int(mp.cpu_count()/8)) as pool:
     # with mp.Pool(processes=1) as pool:
         pool.map(find_premises_from_a_file, list_of_path_dicts)
 
