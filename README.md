@@ -28,9 +28,8 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
     ```shell
     git clone https://github.com/albertqjiang/Portal-to-ISAbelle.git
     cd Portal-to-ISAbelle
+    git checkout Isabelle2022
     ```
-    Go into the file build.sbt and change the $PWD on line 19 with the actual path of the current working directory, such that we have the absolute path of the scala-isabelle jar file. For example, the line should look like:
-    libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/home/aqj/Portal-to-ISAbelle/lib/scala-isabelle_2.13.jar".
 
     Then compile the project:
     ```shell
@@ -42,29 +41,36 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
     Go back to home directory first and download isabelle2021
     ```shell
     cd ~
-    wget https://isabelle.in.tum.de/website-Isabelle2021/dist/Isabelle2021_linux.tar.gz
-    tar -xzf Isabelle2021_linux.tar.gz
-    alias isabelle=~/Isabelle2021/bin/isabelle
+    wget https://isabelle.in.tum.de/dist/Isabelle2022_linux.tar.gz
+    tar -xzf Isabelle2022_linux.tar.gz
+    alias isabelle=~/Isabelle2022/bin/isabelle
     ``` 
     
 4. **Build Isabelle HOL**
+   
+   To build with 20 parallel processes:
    ```shell
-   isabelle build -b -D Isabelle2021/src/HOL
+   isabelle build -b -D Isabelle2022/src/HOL/ -j 20
    ```
-   This takes ~6 hours of CPU time. The actual time depends on the number of CPUs you have. 
+   This takes ~8 hours of CPU time. The actual time depends on the number of CPUs you have. On a 96-core TPU VM it takes about 15 minutes.
 
 5. **Download and build afp**
+   
+   To build with 10 parallel processes:
    ```shell
-   wget https://www.isa-afp.org/release/afp-2021-10-22.tar.gz
-   tar -xzf afp-2021-10-22.tar.gz
-   export AFP=afp-2021-10-22/thys
-   isabelle build -b -D $AFP
+   wget https://www.isa-afp.org/release/afp-current.tar.gz
+   tar -xzf afp-current.tar.gz
+   export AFP=afp-{$AFP_DATE}/thys
+   isabelle build -b -D $AFP -j 20
    ```
-   This takes ~24 hours on 8 CPUs. We can extract ~93% of all afp theory files.
+   This takes ~150 hours of CPU time. On a 96-core TPU VM it takes ~5 wall-clock hours. We can extract ~93% of all afp theory files.
 
-   We built the heap images of Isabelle2021 with afp-2021-10-22 for linux machines (ubuntu). You can download it at:
+   We built the heap images for two options:
+   1. Isabelle2021 with afp-2021-10-22 for linux machines (ubuntu). You can download it at:
    https://archive.org/download/isabelle_heaps.tar/isabelle_heaps.tar.gz
    and decompress it as ~/.isabelle.
+   2. Isabelle2022 with afp-2022-12-06 for linux machines (ubuntu). You can download it at:
+   https://archive.org/download/isabelle2022_afp20221206_heaps/isabelle2022heaps.tar.gz and decompress it as ~/.isabelle.
 
    Note: this does not always work on different operating systems.
 

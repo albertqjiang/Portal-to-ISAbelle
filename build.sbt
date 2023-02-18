@@ -16,7 +16,9 @@ libraryDependencies ++= Seq(
   "io.grpc" % "grpc-netty" % grpcVersion
 )
 // libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/large_experiments/theorem/aqj/third_party_software/Portal-to-ISAbelle/lib/scala-isabelle_2.13.jar"// development snapshot
-libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:{$PWD}/lib/scala-isabelle_2.13.jar"// development snapshot
+// libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT" from "file:/Users/qj213/Projects/Portal-to-ISAbelle/lib/scala-isabelle_2.13.jar"// development snapshot
+libraryDependencies += "de.unruh" %% "scala-isabelle" % "0.4.1"  // release
+// libraryDependencies += "de.unruh" %% "scala-isabelle" % "master-SNAPSHOT"
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.3"
@@ -38,8 +40,9 @@ libraryDependencies += "org.jetbrains" % "annotations" % "23.0.0"
 libraryDependencies += "com.ibm.icu" % "icu4j" % "70.1"
 
 assemblyMergeStrategy in assembly := {
-    case x if x.contains("io.netty.versions.properties") => MergeStrategy.discard
     case x if x.contains("de/unruh") => MergeStrategy.first
+    case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+    case x if x.contains("META-INF") => MergeStrategy.first
     case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
