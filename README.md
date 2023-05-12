@@ -28,7 +28,6 @@ PISA can also be used to extract proof corpus. We extracted the datasets in our 
     ```shell
     git clone https://github.com/albertqjiang/Portal-to-ISAbelle.git
     cd Portal-to-ISAbelle
-    git checkout Isabelle2022
     ```
 
     Then compile the project:
