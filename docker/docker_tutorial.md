@@ -59,6 +59,6 @@ Premise name: Primes.prime_int_iff'
 Premise defn:  prime_int_iff': fixes p :: "int" shows "prime p = (1 < p \<and> (\<forall>n\<in>{2..<p}. \<not> n dvd p))"
 ```
 
-## Additional info: Build the PISA images yourself
+## Additional info: Building the PISA images yourself
 If you prefer to build the PISA images yourself, you can use Docker to build them from the Dockerfile we added to the current folder "docker".
 We used the same Dockerfile for both pisa-sl and pisa-sl-afp. If you want to build pisa-sl (without afp) you should comment out two lines of the Dockerfile (these are indicated in the Dockerfile).
