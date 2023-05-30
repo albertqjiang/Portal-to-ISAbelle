@@ -3,10 +3,10 @@ from pisa_client import initialise_env
 
 if __name__ == '__main__':
     env = initialise_env(
-        8001, 
-        "/home/qj213/Isabelle2022", 
-        "/home/qj213/Isabelle2022/src/HOL/Computational_Algebra/Primes.thy",
-        "/home/qj213/Isabelle2022/src/HOL/Computational_Algebra"
+        8000, 
+        "/pisa/Isabelle2022", 
+        "/pisa/Isabelle2022/src/HOL/Computational_Algebra/Primes.thy",
+        "/pisa/Isabelle2022/src/HOL/Computational_Algebra"
     )
     env.proceed_to_line('end', 'before')
     env.initialise()
