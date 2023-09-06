@@ -14,7 +14,7 @@ with it.
 - [Extraction](extract)
 - [Documentation of the PISA protocol](protocol)
 
-# To be released
+PISA also offers:
 - REPL-like environment to talk to Isabelle running sessions via gRPC
 - Setup to evaluate automated agents
 
